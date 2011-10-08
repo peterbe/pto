@@ -40,4 +40,5 @@ urlpatterns = patterns('',
    url('^login/', views.login, name='users.login'),
    url('^logout/', views.logout, name='users.logout'),
    url('^ldap-search/', views.ldap_search, name='users.ldap_search'),
+   url('^profile/', views.profile, name='users.profile'),
 )

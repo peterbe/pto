@@ -234,6 +234,9 @@ MINIFY_BUNDLES = {
             'js/libs/jquery.dataTables.js',
             'js/dates/list.js',
         ),
+        'users.profile': (
+            'js/users/profile.js',
+        ),
     }
 }
 

@@ -15,6 +15,7 @@ from mock import Mock
 import ldap
 from users.auth.backends import MozillaLDAPBackend
 from users.utils.ldap_mock import MockLDAP
+from users.models import UserProfile
 
 
 RaiseInvalidCredentials = object()
@@ -386,3 +387,33 @@ class UsersTest(TestCase):
           'label': label,
           'value': value,
         })
+
+    def test_editing_user_profile(self):
+        url = reverse('users.profile')
+
+        mortal = User.objects.create(
+          username='mortal',
+          email='mortal@hotmail.com',
+          first_name='Mortal',
+          last_name='Joe'
+        )
+        mortal.set_password('secret')
+        mortal.save()
+
+        response = self.client.get(url)
+        eq_(response.status_code, 302)
+        assert self.client.login(username='mortal', password='secret')
+
+        response = self.client.get(url)
+        eq_(response.status_code, 200)
+
+        today = datetime.date.today()
+        data = {'start_date': today.strftime(settings.DEFAULT_DATE_FORMAT),
+                'country': 'GB',
+                'city': 'London',
+                }
+        response = self.client.post(url, data)
+        eq_(response.status_code, 302)
+
+        profile = UserProfile.objects.get(user=mortal)
+        eq_(profile.start_date, today)

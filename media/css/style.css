@@ -18,9 +18,9 @@ html {
   }
 
 h1 { font-size:180%; }
-h2 { font-size:140%; 
+h2 { font-size:140%;
   }
-h1, h2, h3, h4 {  
+h1, h2, h3, h4 {
   font-weight: bold;
   margin-bottom: 20px;
   }
@@ -204,6 +204,8 @@ td {
 tr td:first-child label {
   font-weight: bold;
   }
+
+strong { font-weight:bold; }
 
 #pto {
   padding-top: 0.25em;

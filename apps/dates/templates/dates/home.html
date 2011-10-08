@@ -9,7 +9,7 @@
 
 <div id="calendar"></div>
 
-<div id="rightnow">
+<div id="rightnow" class="extra-info">
 <h2>Who's on PTO right now?</h2>
 
 <dl>
@@ -34,6 +34,31 @@
 {% endfor %}
 </dl>
 </div>
+
+<div id="pto_left" class="extra-info">
+<h2>How much PTO do I have left?</h2>
+
+{% if left['hours'] %}
+  <p>You have
+  {% if left['hours'] > 16 %}
+    <strong>{{ left['days'] }}</strong>
+  {% else %}
+    <strong>{{ left['hours'] }} hours</strong>
+  {% endif %}
+  of PTO left this year.</p>
+{% else %}
+  {% if left['missing'] %}
+    <p class="missing">To be able to work this out, enter your
+      <a href="{{ url('users.profile') }}">{{ ' and '.join(left['missing']) }}</a>.</p>
+  {% else %}
+    {% if left['less_than_a_year'] %}
+    <p class="less_than_a_year">Sorry, this can not be automatically worked out if you
+     have worked less than one year (you have worked {{ left['less_than_a_year'] }} days)</p>
+    {% endif %}
+  {% endif %}
+{% endif %}
+</div>
+
 
 {% endblock %}
 

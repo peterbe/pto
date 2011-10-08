@@ -35,37 +35,30 @@
    - ***** END LICENSE BLOCK *****
  -->
 #}
+
 {% extends "base.html" %}
+
 {% block extra_site_css %}
 {{ css('jquery_ui') }}
-{{ css('dates') }}
 {% endblock %}
 
 {% block content %}
+<h2>Settings</h2>
 
 <form action="." method="post">{{ csrf() }}
 <table>
 {{ form|safe }}
 <tr>
-  <td><a href="/">&larr; cancel</a></td>
-  <td><input type="submit" value="Next &rarr;"></td>
-</tr>
-<tr id="managers-notified">
   <td>&nbsp;</td>
-  <td>
-  The following managers will be notified:<br>
-  {% for manager_details in all_managers %}
-    <code>{{ full_name_form(manager_details) }}</code>{% if not loop.last %}, {% endif %}
-  {% endfor %}
-  </td>
+  <td><input type="submit" value="Save"></td>
 </tr>
 </table>
-
 </form>
+
 {% endblock %}
 
 
 {% block extra_site_js %}
 {{ js('jquery_ui') }}
-{{ js('dates.notify') }}
+{{ js('users.profile') }}
 {% endblock %}

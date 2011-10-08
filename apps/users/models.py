@@ -30,6 +30,7 @@ class UserProfile(models.Model):
     manager_user = models.ForeignKey(User, blank=True, null=True,
                                      on_delete=models.SET_NULL,
                                      related_name='manager_user')
+    start_date = models.DateField(blank=True, null=True)
     office = models.CharField(max_length=100, blank=True)
     country = models.CharField(max_length=100, blank=True)
     city = models.CharField(max_length=100, blank=True)

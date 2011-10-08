@@ -12,6 +12,7 @@ from django.core import mail
 from models import Entry, Hours
 from nose.tools import eq_, ok_
 from mock import Mock
+from users.models import UserProfile
 import ldap
 from users.utils.ldap_mock import MockLDAP
 
@@ -37,6 +38,10 @@ class TestUtils(TestCase):
         eq_(parse_datetime('1283140800').year, 2010)
         eq_(parse_datetime('1286744467.0').year, 2010)
         self.assertRaises(DatetimeParseError, parse_datetime, 'junk')
+
+    def test_get_hours_left(self):
+        from dates.utils.pto_left import get_hours_left
+        print "!TEST CURRENTLY INCOMPLETE test_get_hours_left()"
 
 
 class ModelsTest(TestCase):
@@ -1317,3 +1322,50 @@ class ViewsTest(TestCase):
         entry.save()
         response = self.client.get('/')
         ok_('harry' in response.content)
+
+    def test_expect_pto_left_info_dashboard(self):
+        url = reverse('dates.home')
+        peter = User.objects.create(
+          username='peter',
+          email='peter@mozilla.com',
+          first_name='Peter',
+          last_name='Bengtsson',
+        )
+        peter.set_password('secret')
+        peter.save()
+        assert self.client.login(username='peter', password='secret')
+        response = self.client.get(url)
+        eq_(response.status_code, 200)
+
+        ok_('enter your' in response.content)
+        ok_('country and start date' in response.content)
+
+        profile = UserProfile.objects.get(user=peter)
+        profile.country = 'GB'
+        profile.save()
+
+        response = self.client.get(url)
+        eq_(response.status_code, 200)
+        ok_('enter your' in response.content)
+        ok_('country and start date' not in response.content)
+        ok_('start date' in response.content)
+
+        profile.start_date = (datetime.date.today() -
+                              datetime.timedelta(days=100))
+        profile.save()
+        response = self.client.get(url)
+        eq_(response.status_code, 200)
+        ok_('enter your' not in response.content)
+        ok_('less than one year' in response.content)
+        ok_('100 days' in response.content)
+
+        profile.start_date = (datetime.date.today() -
+                              datetime.timedelta(days=400))
+        profile.save()
+        response = self.client.get(url)
+        eq_(response.status_code, 200)
+
+        from utils.pto_left import get_hours_left
+        hours = get_hours_left(profile)
+        days = hours / 8
+        ok_('%s days' % days in response.content)

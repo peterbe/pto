@@ -20,6 +20,7 @@ from users.utils import ldap_lookup
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from .utils import parse_datetime, DatetimeParseError
+from .utils.pto_left import get_hours_left
 import utils
 import forms
 from .decorators import json_view
@@ -43,10 +44,39 @@ def home(request):  # aka dashboard
         first_day = 0  # default to 0=Sunday
     data['first_day'] = first_day
 
+    if profile.start_date and profile.country:
+        diff = datetime.date.today() - profile.start_date
+        if diff.days >= 365:
+            hours = get_hours_left(profile)
+            days = hours / 8
+            if days == 1:
+                days = '1 day'
+            else:
+                days = '%d days' % days
+            remainder = hours % 8
+            if remainder:
+                days += ' and %d hours' % remainder
+            data['left'] = {'hours': hours, 'days': days}
+        else:
+            data['left'] = {'less_than_a_year': diff.days}
+    elif profile.start_date or profile.country:
+        if not profile.start_date:
+            data['left'] = {'missing': ['start date']}
+        else:
+            data['left'] = {'missing': ['country']}
+    else:
+        data['left'] = {'missing': ['country', 'start date']}
+
     right_now_users = []
     right_nows = defaultdict(list)
     _today = datetime.date.today()
-    for entry in Entry.objects.filter(start__lte=_today, end__gte=_today, total_hours__gte=0).order_by('user__first_name', 'user__last_name', 'user__username'):
+    for entry in (Entry.objects
+                  .filter(start__lte=_today,
+                          end__gte=_today,
+                          total_hours__gte=0)
+                  .order_by('user__first_name',
+                            'user__last_name',
+                            'user__username')):
         if entry.user not in right_now_users:
             right_now_users.append(entry.user)
         left = (entry.end - _today).days + 1

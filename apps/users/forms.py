@@ -36,6 +36,8 @@
 from django import forms
 from django.contrib.auth.models import User
 import django.contrib.auth.forms
+from .models import UserProfile
+from dates.forms import BaseModelForm
 
 
 class EmailInput(forms.widgets.Input):
@@ -56,3 +58,9 @@ class AuthenticationForm(django.contrib.auth.forms.AuthenticationForm):
     username = forms.CharField(label="Username", max_length=75,
                                widget=EmailInput())
     #rememberme = forms.BooleanField(label="Remember me", required=False)
+
+
+class ProfileForm(BaseModelForm):
+    class Meta:
+        model = UserProfile
+        fields = ('start_date', 'country', 'city')

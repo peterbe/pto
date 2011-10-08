@@ -14,6 +14,12 @@ $(function() {
 
   $('<a href="#rightnow"></a>')
     .html($('#rightnow h2').text() + ' &darr;')
-      .addClass('rightnow-anchor')
+      .addClass('anchor')
         .prependTo($('#content'));
+
+  $('<a href="#pto_left"></a>')
+    .html($('#pto_left h2').text() + ' &darr;')
+      .addClass('anchor')
+        .prependTo($('#content'));
+
 });

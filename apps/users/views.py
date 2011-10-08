@@ -109,3 +109,20 @@ def ldap_search(request):
                   'value': full_name_and_email}
         results.append(result)
     return results
+
+
+@transaction.commit_on_success
+@login_required
+def profile(request):
+    profile = request.user.get_profile()
+    data = {}
+    if request.method == 'POST':
+        form = forms.ProfileForm(instance=profile, data=request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('/')
+    else:
+        form = forms.ProfileForm(instance=profile)
+
+    data['form'] = form
+    return jingo.render(request, 'users/profile.html', data)
