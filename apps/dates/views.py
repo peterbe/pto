@@ -1,6 +1,40 @@
+# ***** BEGIN LICENSE BLOCK *****
+# Version: MPL 1.1/GPL 2.0/LGPL 2.1
+#
+# The contents of this file are subject to the Mozilla Public License Version
+# 1.1 (the "License"); you may not use this file except in compliance with
+# the License. You may obtain a copy of the License at
+# http://www.mozilla.org/MPL/
+#
+# Software distributed under the License is distributed on an "AS IS" basis,
+# WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+# for the specific language governing rights and limitations under the
+# License.
+#
+# The Original Code is Mozilla Sheriff Duty.
+#
+# The Initial Developer of the Original Code is Mozilla Corporation.
+# Portions created by the Initial Developer are Copyright (C) 2011
+# the Initial Developer. All Rights Reserved.
+#
+# Contributor(s):
+#
+# Alternatively, the contents of this file may be used under the terms of
+# either the GNU General Public License Version 2 or later (the "GPL"), or
+# the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+# in which case the provisions of the GPL or the LGPL are applicable instead
+# of those above. If you wish to allow use of your version of this file only
+# under the terms of either the GPL or the LGPL, and not to allow others to
+# use your version of this file under the terms of the MPL, indicate your
+# decision by deleting the provisions above and replace them with the notice
+# and other provisions required by the GPL or the LGPL. If you do not delete
+# the provisions above, a recipient may use your version of this file under
+# the terms of any one of the MPL, the GPL or the LGPL.
+#
+# ***** END LICENSE BLOCK *****
+
 import datetime
 from urllib import urlencode
-from decimal import Decimal
 from collections import defaultdict
 import jingo
 from django import http
@@ -11,8 +45,8 @@ from django.conf import settings
 from django.shortcuts import redirect, get_object_or_404
 from django.contrib import messages
 from django.db.models import Q
-from django.core.mail import send_mail
 from django.template import Context, loader
+from django.core.mail import get_connection, EmailMessage
 import vobject
 from models import Entry, Hours
 from users.models import UserProfile
@@ -32,6 +66,7 @@ def valid_email(value):
         return True
     except ValidationError:
         return False
+
 
 @login_required
 def home(request):  # aka dashboard
@@ -86,6 +121,7 @@ def home(request):  # aka dashboard
     data['right_now_users'] = right_now_users
     return jingo.render(request, 'dates/home.html', data)
 
+
 @json_view
 def calendar_events(request):
     if not request.user.is_authenticated():
@@ -107,6 +143,7 @@ def calendar_events(request):
         return http.HttpResponseBadRequest('Invalid end')
 
     entries = []
+
     def make_title(entry):
         if entry.user != request.user:
             if entry.user.first_name:
@@ -164,6 +201,7 @@ def calendar_events(request):
 
     return entries
 
+
 def get_minions(user, depth=1, max_depth=2):
     minions = []
     for minion in (UserProfile.objects.filter(manager_user=user)
@@ -176,6 +214,7 @@ def get_minions(user, depth=1, max_depth=2):
                                        depth=depth + 1,
                                        max_depth=max_depth))
     return minions
+
 
 @transaction.commit_on_success
 @login_required
@@ -230,6 +269,7 @@ def notify(request):
     data['form'] = form
     return jingo.render(request, 'dates/notify.html', data)
 
+
 def _clean_unfinished_entries(good_entry):
     # delete all entries that don't have total_hours and touch on the
     # same dates as this good one
@@ -240,6 +280,7 @@ def _clean_unfinished_entries(good_entry):
     for entry in bad_entries:
         entry.delete()
 
+
 @transaction.commit_on_success
 @login_required
 def hours(request, pk):
@@ -248,7 +289,6 @@ def hours(request, pk):
     if entry.user != request.user:
         if not (request.user.is_staff or request.user.is_superuser):
             return http.HttpResponseForbidden('insufficient access')
-    one_day = datetime.timedelta(days=1)
     if request.method == 'POST':
         form = forms.HoursForm(entry, data=request.POST)
         if form.is_valid():
@@ -261,7 +301,8 @@ def hours(request, pk):
                     hours = 0
                 assert hours >= 0 and hours <= settings.WORK_DAY, hours
                 try:
-                    hours_ = Hours.objects.get(entry__user=entry.user, date=date)
+                    hours_ = Hours.objects.get(entry__user=entry.user,
+                                               date=date)
                     if hours_.hours:
                         # this nullifies the previous entry on this date
                         reverse_entry = Entry.objects.create(
@@ -346,7 +387,6 @@ def hours(request, pk):
     return jingo.render(request, 'dates/hours.html', data)
 
 
-from django.core.mail import get_connection, EmailMessage
 def send_email_notification(entry, extra_users, is_edit=False):
     email_addresses = list(settings.HR_MANAGERS)
 
@@ -424,6 +464,7 @@ def send_email_notification(entry, extra_users, is_edit=False):
     success = message.send()
     return success, email_addresses
 
+
 @login_required
 def emails_sent(request, pk):
     data = {}
@@ -462,8 +503,9 @@ def list_(request):
     try:
         data['first_date'] = entries_base.order_by('start')[0].start
         data['last_date'] = entries_base.order_by('-end')[0].end
-        data['first_filed_date'] = entries_base.order_by('add_date')[0].add_date
-        #data['theoretical_max'] = data['first_date'] + datetime.timedelta(days=100)
+        data['first_filed_date'] = (entries_base
+                                    .order_by('add_date')[0]
+                                    .add_date)
     except IndexError:
         # first run, not so important
         data['first_date'] = datetime.date(2000, 1, 1)

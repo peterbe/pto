@@ -60,6 +60,7 @@ def static(context, url):
     """Get a STATIC_URL link with a cache buster querystring."""
     return media(context, url, 'STATIC_URL')
 
+
 @register.function
 @jinja2.contextfunction
 def entry_to_list_url(context, entry):
@@ -71,10 +72,12 @@ def entry_to_list_url(context, entry):
     values_encoded = urllib.urlencode(values)
     return '%s?%s' % (url, values_encoded)
 
+
 @register.function
 @jinja2.contextfunction
 def entry_length(context, entry):
     return (entry.end - entry.start).days + 1
+
 
 @register.function
 @jinja2.contextfunction
@@ -84,6 +87,7 @@ def entry_is_birthday(context, entry):
             if Hours.objects.filter(entry=entry, birthday=True).exists():
                 return True
     return False
+
 
 @register.function
 @jinja2.contextfunction

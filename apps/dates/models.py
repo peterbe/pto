@@ -19,6 +19,7 @@ class Entry(models.Model):
                                          self.start,
                                          self.end)
 
+
 class Hours(models.Model):
     entry = models.ForeignKey(Entry)
     hours = models.IntegerField()

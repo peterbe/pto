@@ -1,6 +1,6 @@
 # django
-from django.contrib.auth.decorators import REDIRECT_FIELD_NAME, user_passes_test
-
+from django.contrib.auth.decorators import (
+  REDIRECT_FIELD_NAME, user_passes_test)
 
 
 def staff_required(function=None, redirect_field_name=REDIRECT_FIELD_NAME):

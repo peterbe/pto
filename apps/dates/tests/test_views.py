@@ -1,3 +1,38 @@
+# ***** BEGIN LICENSE BLOCK *****
+# Version: MPL 1.1/GPL 2.0/LGPL 2.1
+#
+# The contents of this file are subject to the Mozilla Public License Version
+# 1.1 (the "License"); you may not use this file except in compliance with
+# the License. You may obtain a copy of the License at
+# http://www.mozilla.org/MPL/
+#
+# Software distributed under the License is distributed on an "AS IS" basis,
+# WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+# for the specific language governing rights and limitations under the
+# License.
+#
+# The Original Code is Mozilla Sheriff Duty.
+#
+# The Initial Developer of the Original Code is Mozilla Corporation.
+# Portions created by the Initial Developer are Copyright (C) 2011
+# the Initial Developer. All Rights Reserved.
+#
+# Contributor(s):
+#
+# Alternatively, the contents of this file may be used under the terms of
+# either the GNU General Public License Version 2 or later (the "GPL"), or
+# the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+# in which case the provisions of the GPL or the LGPL are applicable instead
+# of those above. If you wish to allow use of your version of this file only
+# under the terms of either the GPL or the LGPL, and not to allow others to
+# use your version of this file under the terms of the MPL, indicate your
+# decision by deleting the provisions above and replace them with the notice
+# and other provisions required by the GPL or the LGPL. If you do not delete
+# the provisions above, a recipient may use your version of this file under
+# the terms of any one of the MPL, the GPL or the LGPL.
+#
+# ***** END LICENSE BLOCK *****
+
 import re
 import time
 from urlparse import urlparse
@@ -9,79 +44,12 @@ from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
 from django.utils import simplejson as json
 from django.core import mail
-from models import Entry, Hours
+from dates.models import Entry, Hours
 from nose.tools import eq_, ok_
 from mock import Mock
 from users.models import UserProfile
 import ldap
 from users.utils.ldap_mock import MockLDAP
-
-
-class TestUtils(TestCase):
-
-    def test_get_weekday_dates(self):
-        from dates.utils import get_weekday_dates
-        d1 = datetime.date(2018, 1, 1)  # a Monday
-        d2 = datetime.date(2018, 1, 9)  # next Tuesday
-        dates = list(get_weekday_dates(d1, d2))
-        eq_(dates[0].strftime('%A'), 'Monday')
-        eq_(dates[1].strftime('%A'), 'Tuesday')
-        eq_(dates[2].strftime('%A'), 'Wednesday')
-        eq_(dates[3].strftime('%A'), 'Thursday')
-        eq_(dates[4].strftime('%A'), 'Friday')
-        eq_(dates[5].strftime('%A'), 'Monday')
-        eq_(dates[6].strftime('%A'), 'Tuesday')
-
-    def test_parse_datetime(self):
-        from dates.utils import parse_datetime, DatetimeParseError
-        eq_(parse_datetime('1285041600000').year, 2010)
-        eq_(parse_datetime('1283140800').year, 2010)
-        eq_(parse_datetime('1286744467.0').year, 2010)
-        self.assertRaises(DatetimeParseError, parse_datetime, 'junk')
-
-    def test_get_hours_left(self):
-        from dates.utils.pto_left import get_hours_left
-        print "!TEST CURRENTLY INCOMPLETE test_get_hours_left()"
-
-
-class ModelsTest(TestCase):
-
-    def test_cascade_delete_entry(self):
-        user = User.objects.create_user(
-          'mortal', 'mortal', password='secret'
-        )
-        entry = Entry.objects.create(
-          user=user,
-          start=datetime.date.today(),
-          end=datetime.date.today(),
-          total_hours=8
-        )
-
-        Hours.objects.create(
-          entry=entry,
-          hours=8,
-          date=datetime.date.today()
-        )
-
-        user2 = User.objects.create_user(
-          'other', 'other@test.com', password='secret'
-        )
-        entry2 = Entry.objects.create(
-          user=user2,
-          start=datetime.date.today(),
-          end=datetime.date.today(),
-          total_hours=4
-        )
-
-        Hours.objects.create(
-          entry=entry2,
-          hours=4,
-          date=datetime.date.today()
-        )
-
-        eq_(Hours.objects.all().count(), 2)
-        entry.delete()
-        eq_(Hours.objects.all().count(), 1)
 
 
 class ViewsTest(TestCase):
@@ -161,10 +129,13 @@ class ViewsTest(TestCase):
         ok_(str(3 * settings.WORK_DAY) in response.content)
 
         # you can expect to see every date laid out
-        ok_(monday.strftime(settings.DEFAULT_DATE_FORMAT) in response.content)
+        ok_(monday.strftime(settings.DEFAULT_DATE_FORMAT)
+            in response.content)
         tuesday = monday + datetime.timedelta(days=1)
-        ok_(tuesday.strftime(settings.DEFAULT_DATE_FORMAT) in response.content)
-        ok_(wednesday.strftime(settings.DEFAULT_DATE_FORMAT) in response.content)
+        ok_(tuesday.strftime(settings.DEFAULT_DATE_FORMAT)
+            in response.content)
+        ok_(wednesday.strftime(settings.DEFAULT_DATE_FORMAT)
+            in response.content)
 
         # check that the default WORK_DAY radio inputs are checked
         radio_inputs = self._get_inputs(response.content, type="radio")
@@ -381,11 +352,11 @@ class ViewsTest(TestCase):
         assert self.client.login(username='peter', password='secret')
         url1 = reverse('dates.hours', args=[entry.pk])
         response = self.client.get(url1)
-        eq_(response.status_code, 403) # forbidden
+        eq_(response.status_code, 403)  # forbidden
 
         url2 = reverse('dates.emails_sent', args=[entry.pk])
         response = self.client.get(url2)
-        eq_(response.status_code, 403) # forbidden
+        eq_(response.status_code, 403)  # forbidden
 
         peter.is_staff = True
         peter.save()
@@ -423,8 +394,10 @@ class ViewsTest(TestCase):
         tuesday = monday + datetime.timedelta(days=1)
         wednesday = monday + datetime.timedelta(days=2)
         thursday = monday + datetime.timedelta(days=3)
+
         def date_to_name(d):
             return d.strftime('d-%Y%m%d')
+
         data = {
           date_to_name(monday): '0',
           date_to_name(tuesday): '4',
@@ -671,20 +644,22 @@ class ViewsTest(TestCase):
         Axel Test <axe l@e..com>
         """
         notify += ';%s' % settings.EMAIL_BLACKLIST[-1]
-        response = self.client.post(url, {'start': monday,
-                                          'end': wednesday,
-                                          'details': "Having fun",
-                                          'notify': notify.replace('\n','\t')
-                                          })
+        response = self.client.post(url, {
+          'start': monday,
+          'end': wednesday,
+          'details': "Having fun",
+          'notify': notify.replace('\n', '\t')
+        })
         eq_(response.status_code, 200)
         ok_('errorlist' in response.content)
 
         notify = notify.replace(settings.EMAIL_BLACKLIST[-1], '')
-        response = self.client.post(url, {'start': monday,
-                                          'end': wednesday,
-                                          'details': "Having fun",
-                                          'notify': notify.replace('\n','\t')
-                                          })
+        response = self.client.post(url, {
+          'start': monday,
+          'end': wednesday,
+          'details': "Having fun",
+          'notify': notify.replace('\n', '\t')
+        })
         eq_(response.status_code, 302)
         url = urlparse(response['location']).path
         response = self.client.get(url)
@@ -934,7 +909,9 @@ class ViewsTest(TestCase):
         response = self.client.get(url)
         eq_(response.status_code, 200)
 
-        radio_inputs = self._get_inputs(response.content, type="radio", checked="checked")
+        radio_inputs = self._get_inputs(response.content,
+                                        type="radio",
+                                        checked="checked")
         attrs = radio_inputs.values()[0]
         date_key = radio_inputs.keys()[0]
         eq_(attrs['value'], '8')
@@ -1223,21 +1200,21 @@ class ViewsTest(TestCase):
         monday = datetime.date(2018, 1, 1)  # I know this is a Monday
         tuesday = monday + one_day
 
-        e0 = Entry.objects.create(
+        Entry.objects.create(
           user=peter,
           start=monday,
           end=monday,
           total_hours=None,
           details='E0 Details'
         )
-        e1 = Entry.objects.create(
+        Entry.objects.create(
           user=peter,
           start=tuesday,
           end=tuesday,
           total_hours=8,
           details='E1 Details'
         )
-        e2 = Entry.objects.create(
+        Entry.objects.create(
           user=laura,
           start=monday,
           end=tuesday,
@@ -1254,7 +1231,7 @@ class ViewsTest(TestCase):
         It should also say how many days they have left.
         """
 
-        jill = User.objects.create_user(
+        User.objects.create_user(
           'jill', 'jill@mozilla.com', password='secret'
         )
         assert self.client.login(username='jill', password='secret')
@@ -1365,7 +1342,7 @@ class ViewsTest(TestCase):
         response = self.client.get(url)
         eq_(response.status_code, 200)
 
-        from utils.pto_left import get_hours_left
+        from dates.utils.pto_left import get_hours_left
         hours = get_hours_left(profile)
         days = hours / 8
         ok_('%s days' % days in response.content)

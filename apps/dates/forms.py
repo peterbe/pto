@@ -1,13 +1,11 @@
 import re
-import datetime
-from django.contrib.auth.models import User
 from django.conf import settings
 from django.utils import formats
 from django.core.validators import validate_email
-from django.db.models import Q
 from django import forms
-from models import Entry, Hours
+from models import Hours
 import utils
+
 
 class _BaseForm(object):
     def __init__(self, *args, **kwargs):
@@ -32,16 +30,19 @@ class _BaseForm(object):
         cleaned_data = super(_BaseForm, self).clean()
         for field in cleaned_data:
             if isinstance(cleaned_data[field], basestring):
-                cleaned_data[field] = \
-                  cleaned_data[field].replace('\r\n','\n').strip()
-
+                cleaned_data[field] = (cleaned_data[field]
+                                       .replace('\r\n', '\n')
+                                       .strip())
         return cleaned_data
+
 
 class BaseModelForm(_BaseForm, forms.ModelForm):
     pass
 
+
 class BaseForm(_BaseForm, forms.Form):
     pass
+
 
 class AddForm(BaseForm):
     start = forms.DateField(required=True)
@@ -89,20 +90,6 @@ class AddForm(BaseForm):
         if 'start' in cleaned_data and 'end' in cleaned_data:
             if cleaned_data['start'] > cleaned_data['end']:
                 raise forms.ValidationError("Start can't be after end")
-#        if 'start' in cleaned_data and 'end' in cleaned_data:
-#            # 'start' can not be inside a range of a previous entry
-#            exclusion = (Q(end__lt=cleaned_data['start']) |
-#                         Q(start__gt=cleaned_data['end']))
-#
-#            for entry in (Entry.objects.filter(user=self.user,
-#                                               total_hours__isnull=False)
-#                          .exclude(exclusion)):
-#                tmpl = "Date range overlaps previous PTO of %s to %s"
-#                raise forms.ValidationError(
-#                   tmpl % (entry.start.strftime(settings.DEFAULT_DATE_FORMAT),
-#                           entry.end.strftime(settings.DEFAULT_DATE_FORMAT))
-#                )
-
         return cleaned_data
 
 
@@ -115,7 +102,8 @@ class HoursForm(BaseForm):
 
             try:
                 hours_ = Hours.objects.get(date=date, entry__user=entry.user)
-                help_text = 'Already logged %d hours on this day' % hours_.hours
+                help_text = ('Already logged %d hours on this day' %
+                             hours_.hours)
             except Hours.DoesNotExist:
                 help_text = ''
             self.fields[field_name] = forms.fields.ChoiceField(
@@ -127,10 +115,9 @@ class HoursForm(BaseForm):
                ),
                required=True,
                label=date.strftime(settings.DEFAULT_DATE_FORMAT),
-               widget=forms.widgets.RadioSelect(attrs={'class':'hours'}),
+               widget=forms.widgets.RadioSelect(attrs={'class': 'hours'}),
                help_text=help_text,
             )
-
 
     def clean(self):
         cleaned_data = super(HoursForm, self).clean()
@@ -148,6 +135,7 @@ class HoursForm(BaseForm):
                 # was called even though not all fields passed
                 continue
         return cleaned_data
+
 
 class ListFilterForm(BaseForm):
     date_from = forms.DateField(required=False)
