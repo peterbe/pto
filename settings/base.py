@@ -186,6 +186,10 @@ MINIFY_BUNDLES = {
         'jquery_ui': (
             'css/libs/jquery_ui/redmond/jquery-ui-1.8.14.datepicker.autocomplete.css',
         ),
+        'mobile': (
+            'css/libs/jquery.mobile-1.0b3pre.min.css',
+            'css/mobile/mobile.css',
+        ),
         'dates': (
             'css/dates/notify.css',
             'css/dates/hours.css',
@@ -204,9 +208,12 @@ MINIFY_BUNDLES = {
     'js': {
         'global': (
             'js/libs/jquery-1.6.2.min.js',
-            #'js/libs/jquery.ui.all.js',
-            #'js/libs/format.js',
-            #'js/pto/pto.js',
+        ),
+        'mobile': (
+            'js/libs/jquery-1.6.2.min.js',
+            'js/libs/date.js',
+            'js/mobile/mobile.js',
+            'js/libs/jquery.mobile-1.0b3pre.js',
         ),
         'dates.home': (
             'js/libs/fullcalendar.min.js',
@@ -289,6 +296,7 @@ INSTALLED_APPS = (
     'dates',
     'users',
     'legacy',
+    'mobile',
 )
 
 # Tells the extract script what files to look for L10n in and what function
