@@ -194,9 +194,14 @@ $(document).ready(function() {
     Notify.init();
   });
 
+  var sample_radio_field;
   $('#hours')
     .bind('pagecreate', function() {
-
+      sample_radio_field = $('#hours .sample').clone(true);
+      $('#hours form').submit(function() {
+        alert("XXX WORK HARDER");
+        return false;
+      });
     })
       .bind('pageshow', function() {
         var entry_id = $('#id_entry').val();
@@ -206,14 +211,13 @@ $(document).ready(function() {
         }
         $.getJSON('/mobile/hours.json', {entry: entry_id}, function(response) {
           if (response.error) return _grr(response.error);
-          var field;
+          var field, fieldset, extra_save_button;
           $.each(response, function(i, day) {
-            field = $('#hours .sample').clone();
-            $('.ui-controlgroup-label', field).text(day.full_day);
-            L(field);
+            field = sample_radio_field.clone(true);
+            $('legend', field).text(day.full_day + ':');
             $('input[name="duration"]', field).attr('name', day.key);
             $.each(['full_day', 'half_day', 'zero', 'bday'], function(j, bit) {
-              if (parseInt($('#duration-' + bit, field).val()) === day.value) {
+              if (parseInt($('#duration-' + bit, field).val()) == day.value) {
                 $('#duration-' + bit, field).attr('checked', 'checked');
               } else {
                 $('#duration-' + bit, field).removeAttr('checked');
@@ -224,17 +228,15 @@ $(document).ready(function() {
                 .attr('for', 'duration-' + bit + '_' + (i + 1));
             });
 
-            /*
-            $('#duration-full_day_0', field)
-              .attr('id', 'duration-full_day_' + (i + 1));
-            $('label[for="duration-full_day_0"]', field)
-              .attr('for', 'duration-full_day_' + (i + 1));
-            */
-            field.removeClass('sample');
             field.show();
+            $('input', field).parent().nextAll('br').remove();
+            field.removeClass('sample');
             $('#hours form').append(field);
-            //$('#hours form').insertBefore($('#hours .save'));
+            field.controlgroup('refresh', true);
+            $('fieldset', field).controlgroup('refresh', true);
+            $('input', field).checkboxradio().checkboxradio("refresh");
           });
+          $('#hours form').append($('#hours fieldset.save').clone(true));
         });
       });
 
