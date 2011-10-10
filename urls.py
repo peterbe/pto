@@ -6,6 +6,7 @@ admin.autodiscover()
 
 urlpatterns = patterns('',
     (r'^users/', include('users.urls')),
+    (r'^mobile/', include('mobile.urls')),
     (r'', include('dates.urls')),
 
     # Uncomment the admin/doc line below to enable admin documentation:

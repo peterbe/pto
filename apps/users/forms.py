@@ -33,6 +33,7 @@
 #
 # ***** END LICENSE BLOCK *****
 
+import datetime
 from django import forms
 from django.contrib.auth.models import User
 import django.contrib.auth.forms
@@ -64,3 +65,9 @@ class ProfileForm(BaseModelForm):
     class Meta:
         model = UserProfile
         fields = ('start_date', 'country', 'city')
+
+    def clean_start_date(self):
+        value = self.cleaned_data['start_date']
+        if value > datetime.date.today():
+            raise forms.ValidationError("Can't be in future")
+        return value

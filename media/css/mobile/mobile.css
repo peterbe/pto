@@ -1,0 +1,20 @@
+/* Nothing cool yet */
+
+#rightnow dl {
+    margin-bottom: 35px; /* 16px is default */
+}
+
+#rightnow dt {
+    font-weight:bold;
+    margin-left:10px;
+}
+
+#rightnow dd {
+    font-size:0.9em;
+}
+
+#rightnow .none {
+  font-style:italic;
+}
+
+form .error { color:red; }
