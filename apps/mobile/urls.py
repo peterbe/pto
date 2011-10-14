@@ -9,5 +9,6 @@ urlpatterns = patterns('',
     url(r'^settings/$', views.save_settings, name='mobile.save_settings'),
     url(r'^notify/$', views.notify, name='mobile.notify'),
     url(r'^hours.json$', views.hours_json, name='mobile.hours'),
+    url(r'^hours/$', views.hours, name='mobile.save_hours'),
     url(r'^exit/$', views.exit_mobile, name='mobile.exit'),
 )

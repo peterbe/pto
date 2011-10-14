@@ -90,6 +90,14 @@ class AddForm(BaseForm):
         if 'start' in cleaned_data and 'end' in cleaned_data:
             if cleaned_data['start'] > cleaned_data['end']:
                 raise forms.ValidationError("Start can't be after end")
+            # if all days are weekends, don't allow it
+            start_day = cleaned_data['start'].strftime('%A')
+            end_day = cleaned_data['end'].strftime('%A')
+            weekends = set(['Sunday', 'Saturday'])
+            days = set([start_day, end_day])
+            # XXX: this needs a unit test
+            if not (days - weekends):
+                raise forms.ValidationError("Days are only weekend days")
         return cleaned_data
 
 

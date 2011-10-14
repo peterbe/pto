@@ -117,7 +117,6 @@ var Notify = (function() {
      init: function() {
        // set up some defaults
        var today = new Date(),
-         // XXX improve this to zero-pad
          today_str = today.getFullYear() + '-' +
            zfill((today.getMonth() + 1)) + '-' +
            zfill(today.getDate());
@@ -138,8 +137,26 @@ var Notify = (function() {
          if (!data.end) return false;
          $.post($('#notify form').attr('action'), data, function(response) {
            if (response.error) return _grr(response.error);
-           $('#id_entry').val(response.entry);
-           $.mobile.changePage('#hours');
+           if (response.form_errors) {
+             $.each(response.form_errors, function(name, errors) {
+               $.each(errors, function(j, error) {
+                 if (name == '__all__') {
+                   $('<span>')
+                     .text(error)
+                       .addClass('error')
+                         .prependTo($('#notify form'));
+                 } else {
+                   $('<span>')
+                     .text(error)
+                       .addClass('error')
+                         .insertBefore($('#notify input[name="' + name + '"]'));
+                 }
+               });
+             });
+           } else {
+             $('#id_entry').val(response.entry);
+             $.mobile.changePage('#hours');
+           }
          });
          return false;
        });
@@ -172,12 +189,12 @@ $(document).ready(function() {
       $.post($('#settings form').attr('action'), data, function(response) {
         if (response.error) return _grr(response.error);
         if (response.form_errors) {
-          $.each(response.form_errors, function(i, errors) {
+          $.each(response.form_errors, function(name, errors) {
             $.each(errors, function(j, error) {
               $('<span>')
                 .text(error)
                   .addClass('error')
-                    .insertBefore($('#settings input[name="start_date"]'));
+                    .insertBefore($('#settings input[name="' + name + '"]'));
             });
           });
         } else {
@@ -199,7 +216,37 @@ $(document).ready(function() {
     .bind('pagecreate', function() {
       sample_radio_field = $('#hours .sample').clone(true);
       $('#hours form').submit(function() {
-        alert("XXX WORK HARDER");
+        var data = {
+           entry: $('#id_entry').val()
+        };
+        $('input[type="radio"]:checked:visible').each(function(i, element) {
+          data[$(element).attr('name')] = $(element).val();
+        });
+        $.post($('#hours form').attr('action'), data, function(response) {
+           if (response.error) return _grr(response.error);
+           if (response.form_errors) {
+             $.each(response.form_errors, function(name, errors) {
+               $.each(errors, function(j, error) {
+                 if (name == '__all__') {
+                   $('<span>')
+                     .text(error)
+                       .addClass('error')
+                         .prependTo($('#hours form'));
+                 } else {
+                   // XXX: not sure this works
+                   $('<span>')
+                     .text(error)
+                       .addClass('error')
+                         .insertBefore($('#hours input[name="' + name + '"]'));
+                 }
+               });
+             });
+           } else {
+             alert('Saved successfully!');
+             Data.settings();
+             $.mobile.changePage('#index');
+           }
+        });
         return false;
       });
     })
@@ -211,7 +258,7 @@ $(document).ready(function() {
         }
         $.getJSON('/mobile/hours.json', {entry: entry_id}, function(response) {
           if (response.error) return _grr(response.error);
-          var field, fieldset, extra_save_button;
+          var field;
           $.each(response, function(i, day) {
             field = sample_radio_field.clone(true);
             $('legend', field).text(day.full_day + ':');
@@ -236,8 +283,9 @@ $(document).ready(function() {
             $('fieldset', field).controlgroup('refresh', true);
             $('input', field).checkboxradio().checkboxradio("refresh");
           });
-          $('#hours form').append($('#hours fieldset.save').clone(true));
         });
+
+        //$('#hours form').append($('#hours fieldset.save').clone(true));
       });
 
 });

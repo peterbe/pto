@@ -58,6 +58,7 @@ from dates.models import Entry, Hours
 #import utils
 #import forms
 from dates.decorators import json_view
+from dates.utils import get_weekday_dates
 
 MOBILE_DATE_FORMAT = '%Y-%m-%d'
 
@@ -124,6 +125,7 @@ def left(request):
     profile = request.user.get_profile()
     return get_left(profile)
 
+
 from django.views.decorators.csrf import csrf_exempt
 @csrf_exempt  # XXX fix this
 @require_POST
@@ -147,11 +149,39 @@ def notify(request):
           end=end,
           details=details,
         )
+        print "ENTRY", entry.pk
+        print start, '---', end
+        print
         clean_unfinished_entries(entry)
         request.session['notify_extra'] = notify
         return {'entry': entry.pk}
     else:
-        return {'error': form.errors}
+        return {'form_errors': form.errors}
+
+
+@csrf_exempt  # XXX fix this
+@require_POST
+@transaction.commit_on_success
+@json_view
+def hours(request):
+    if not request.user.is_authenticated():  # XXX improve this
+        return {'error': 'Not logged in'}
+    entry = get_object_or_404(Entry, pk=request.POST['entry'])
+
+    from dates.forms import HoursForm
+    from dates.views import save_entry_hours, send_email_notification
+    form = HoursForm(entry, data=request.POST)
+    if form.is_valid():
+        total_hours, is_edit = save_entry_hours(entry, form)
+        success, email_addresses = send_email_notification(
+          entry,
+          '',  # extra users to send to
+          is_edit=is_edit,
+        )
+        return {'ok': True}
+
+    else:
+        return {'form_errors': form.errors}
 
 
 @json_view
@@ -166,7 +196,7 @@ def hours_json(request):
     if entry.user != request.user:
         return HttpResponseForbidden("Not your entry")
     days = []
-    from dates.utils import get_weekday_dates
+
     for date in get_weekday_dates(entry.start, entry.end):
         key = date.strftime('d-%Y%m%d')
         try:
@@ -179,7 +209,6 @@ def hours_json(request):
         days.append({'key': key,
                      'value': value,
                      'full_day': date.strftime(settings.DEFAULT_DATE_FORMAT)})
-
     return days
 
 @json_view
