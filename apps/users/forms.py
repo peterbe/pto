@@ -71,3 +71,9 @@ class ProfileForm(BaseModelForm):
         if value > datetime.date.today():
             raise forms.ValidationError("Can't be in future")
         return value
+
+    def clean_country(self):
+        value = self.cleaned_data['country']
+        # XXX: we ought to massage and validate this value
+        # so that for example 'United Kingdom' -> 'GB'
+        return value

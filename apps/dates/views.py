@@ -320,50 +320,7 @@ def hours(request, pk):
     if request.method == 'POST':
         form = forms.HoursForm(entry, data=request.POST)
         if form.is_valid():
-            total_hours = 0
-            for date in utils.get_weekday_dates(entry.start, entry.end):
-                hours = int(form.cleaned_data[date.strftime('d-%Y%m%d')])
-                birthday = False
-                if hours == -1:
-                    birthday = True
-                    hours = 0
-                assert hours >= 0 and hours <= settings.WORK_DAY, hours
-                try:
-                    hours_ = Hours.objects.get(entry__user=entry.user,
-                                               date=date)
-                    if hours_.hours:
-                        # this nullifies the previous entry on this date
-                        reverse_entry = Entry.objects.create(
-                          user=hours_.entry.user,
-                          start=date,
-                          end=date,
-                          details=hours_.entry.details,
-                          total_hours=hours_.hours * -1,
-                        )
-                        Hours.objects.create(
-                          entry=reverse_entry,
-                          hours=hours_.hours * -1,
-                          date=date,
-                        )
-                    #hours_.hours = hours  # nasty stuff!
-                    #hours_.birthday = birthday
-                    #hours_.save()
-                except Hours.DoesNotExist:
-                    # nothing to credit
-                    pass
-                Hours.objects.create(
-                  entry=entry,
-                  hours=hours,
-                  date=date,
-                  birthday=birthday,
-                )
-                total_hours += hours
-            #raise NotImplementedError
-
-            is_edit = entry.total_hours is not None
-            #if entry.total_hours is not None:
-            entry.total_hours = total_hours
-            entry.save()
+            total_hours, is_edit = save_entry_hours(entry, form)
 
             extra_users = request.session.get('notify_extra', '')
             extra_users = [x.strip() for x
@@ -413,6 +370,57 @@ def hours(request, pk):
     data['notify'] = notify
 
     return jingo.render(request, 'dates/hours.html', data)
+
+def save_entry_hours(entry, form):
+    assert form.is_valid()
+
+    total_hours = 0
+    for date in utils.get_weekday_dates(entry.start, entry.end):
+        hours = int(form.cleaned_data[date.strftime('d-%Y%m%d')])
+        birthday = False
+        if hours == -1:
+            birthday = True
+            hours = 0
+        assert hours >= 0 and hours <= settings.WORK_DAY, hours
+        try:
+            hours_ = Hours.objects.get(entry__user=entry.user,
+                                       date=date)
+            if hours_.hours:
+                # this nullifies the previous entry on this date
+                reverse_entry = Entry.objects.create(
+                  user=hours_.entry.user,
+                  start=date,
+                  end=date,
+                  details=hours_.entry.details,
+                  total_hours=hours_.hours * -1,
+                )
+                Hours.objects.create(
+                  entry=reverse_entry,
+                  hours=hours_.hours * -1,
+                  date=date,
+                )
+            #hours_.hours = hours  # nasty stuff!
+            #hours_.birthday = birthday
+            #hours_.save()
+        except Hours.DoesNotExist:
+            # nothing to credit
+            pass
+        Hours.objects.create(
+          entry=entry,
+          hours=hours,
+          date=date,
+          birthday=birthday,
+        )
+        total_hours += hours
+    #raise NotImplementedError
+
+    is_edit = entry.total_hours is not None
+    #if entry.total_hours is not None:
+    entry.total_hours = total_hours
+    entry.save()
+
+    return total_hours, is_edit
+
 
 
 def send_email_notification(entry, extra_users, is_edit=False):
