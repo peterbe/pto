@@ -244,6 +244,8 @@ strong { font-weight:bold; }
   #pto #no-match {
     text-align: center;
     }
+    
+div.clearer {clear: both; line-height: 0; height: 0;}
 
 /* For Django form errors */
 .errorlist li {
@@ -251,32 +253,42 @@ strong { font-weight:bold; }
     list-style-type: none;
 }
 
-/* From: https://github.com/dhgamache/Skeleton/blob/master/stylesheets/layout.css */
-
-/* iPad Portrait/Browser */
-@media only screen and (min-width: 768px) and (max-width: 991px) {
-    body { padding:10px }
-    #page { width: 95% }
+#content a.anchor {
+    display:none;
 }
 
-/* Mobile/Browser */
-@media only screen and (max-width: 767px) {}
-
-/* Mobile Landscape/Browser */
-@media only screen and (min-width: 480px) and (max-width: 767px) {}
-
-/* Anything smaller than standard 960 */
-@media only screen and (max-width: 959px) {}
-
-/* iPad Portrait Only */
-@media only screen and (min-width: 768px) and (max-width: 991px) and (max-device-width: 1000px) {
-    body { padding:5px }
-    #page { width: 95% }
-
+@media only screen and (max-width: 1300px) {
+  body { padding:5px }
+  #page { width: 95% }
 }
 
-/* Mobile Only */
-@media only screen and (max-width: 767px) and (max-device-width: 1000px) {}
+/* Smaller than standard 960 (devices and browsers) */
+@media only screen and (max-width: 959px) {
+    body { padding:3px }
+    #page { width: 96% }
+}
 
-/* Mobile Landscape Only */
-@media only screen and (min-width: 480px) and (max-width: 767px) and (max-device-width: 1000px) {}
+/* Tablet Portrait size to standard 960 (devices and browsers) */
+@media only screen and (min-width: 768px) and (max-width: 959px) {
+    body { padding:1px }
+    #page { width: 98% }
+}
+
+/* All Mobile Sizes (devices and browser) */
+@media only screen and (max-width: 767px) {
+}
+
+/* Mobile Landscape Size to Tablet Portrait (devices and browsers) */
+@media only screen and (min-width: 480px) and (max-width: 767px) {
+    body { padding:3px }
+    #page { width: 100% }
+    section { border-radius:0; padding:0.3em; }
+}
+
+/* Mobile Portrait Size to Mobile Landscape Size (devices and browsers) */
+@media only screen and (max-width: 479px) {
+    body { padding:1px }
+    #page { width: 100% }
+    section { border-radius:0; padding:0.1em; }
+    .extra-info { margin:5px; }
+}
