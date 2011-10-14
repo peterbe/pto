@@ -258,6 +258,8 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'commonware.middleware.FrameOptionsHeader',
     'commonware.middleware.HidePasswordOnException',
+    'mobility.middleware.DetectMobileMiddleware',
+    'mobility.middleware.XMobileMiddleware',
 )
 
 ROOT_URLCONF = '%s.urls' % ROOT_PACKAGE
@@ -275,6 +277,7 @@ INSTALLED_APPS = (
     'commonware.response.cookies',
     #'djcelery',
     'django_nose',
+    'mobility',
 
     # Django contrib apps
     'django.contrib.auth',

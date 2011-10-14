@@ -59,6 +59,10 @@
 {% endif %}
 </div>
 
+{% if mobile %}
+<p>It appears you're on a mobile device. <a href="{{ url('mobile.home') }}">Want the mobile version instead?</a>
+</p>
+{% endif %}
 <div class="clearer">&nbsp;</div>
 {% endblock %}
 
