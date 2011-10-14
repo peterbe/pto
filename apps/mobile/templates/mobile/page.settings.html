@@ -1,0 +1,35 @@
+<div data-role="page" id="settings"><!-- settings page -->
+
+  <div data-role="header">
+    <h1>Settings</h1>
+    {% include "mobile/homeicon.html" %}
+  </div>
+
+  <div data-role="content">
+    <p class="info"></p>
+    <p><a href="/mobile/exit/" data-ajax="false">Exit the mobile version and use the normal web version instead</a></p>
+
+    <form action="{{ url('mobile.save_settings') }}" method="post">
+      <fieldset>
+        <div data-role="fieldcontain">
+        <label for="id_start_date">Start date (YYYY-MM-DD):</label>
+        <input type="text" name="start_date" id="id_start_date" value="">
+        </div>
+
+        <div data-role="fieldcontain">
+        <label for="id_country">Country:</label>
+        <input type="text" name="country" id="id_country" value="">
+        </div>
+
+        <div data-role="fieldcontain">
+        <label for="id_city">City:</label>
+        <input type="text" name="city" id="id_city" value="">
+        </div>
+
+        <button type="submit" data-theme="a">Save</button>
+      </fieldset>
+    </form>
+
+  </div>
+
+</div>

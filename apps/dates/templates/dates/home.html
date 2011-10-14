@@ -53,13 +53,17 @@
   {% else %}
     {% if left['less_than_a_year'] %}
     <p class="less_than_a_year">Sorry, this can not be automatically worked out if you
-     have worked less than one year (you have worked {{ left['less_than_a_year'] }} days)</p>
+     have worked less than one year (you have worked here {{ left['less_than_a_year'] }} days)</p>
     {% endif %}
   {% endif %}
 {% endif %}
 </div>
 
-
+{% if mobile %}
+<p>It appears you're on a mobile device. <a href="{{ url('mobile.home') }}">Want the mobile version instead?</a>
+</p>
+{% endif %}
+<div class="clearer">&nbsp;</div>
 {% endblock %}
 
 

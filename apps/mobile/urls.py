@@ -33,47 +33,17 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import datetime
-from django import forms
-from django.contrib.auth.models import User
-import django.contrib.auth.forms
-from .models import UserProfile
-from dates.forms import BaseModelForm
+from django.conf.urls.defaults import patterns, url
+import views
 
-
-class EmailInput(forms.widgets.Input):
-    input_type = 'email'
-
-    def render(self, name, value, attrs=None):
-        if attrs is None:
-            attrs = {}
-        attrs.update(dict(autocorrect='off',
-                          autocapitalize='off',
-                          spellcheck='false'))
-        return super(EmailInput, self).render(name, value, attrs=attrs)
-
-class AuthenticationForm(django.contrib.auth.forms.AuthenticationForm):
-    """override the authentication form because we use the email address as the
-    key to authentication."""
-    # allows for using email to log in
-    username = forms.CharField(label="Username", max_length=75,
-                               widget=EmailInput())
-    #rememberme = forms.BooleanField(label="Remember me", required=False)
-
-
-class ProfileForm(BaseModelForm):
-    class Meta:
-        model = UserProfile
-        fields = ('start_date', 'country', 'city')
-
-    def clean_start_date(self):
-        value = self.cleaned_data['start_date']
-        if value > datetime.date.today():
-            raise forms.ValidationError("Can't be in future")
-        return value
-
-    def clean_country(self):
-        value = self.cleaned_data['country']
-        # XXX: we ought to massage and validate this value
-        # so that for example 'United Kingdom' -> 'GB'
-        return value
+urlpatterns = patterns('',
+    url(r'^$', views.home, name='mobile.home'),
+    url(r'^rightnow.json$', views.right_now, name='mobile.right_now'),
+    url(r'^left.json$', views.left, name='mobile.left'),
+    url(r'^settings.json$', views.settings_json, name='mobile.settings'),
+    url(r'^settings/$', views.save_settings, name='mobile.save_settings'),
+    url(r'^notify/$', views.notify, name='mobile.notify'),
+    url(r'^hours.json$', views.hours_json, name='mobile.hours'),
+    url(r'^hours/$', views.hours, name='mobile.save_hours'),
+    url(r'^exit/$', views.exit_mobile, name='mobile.exit'),
+)

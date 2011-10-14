@@ -1,0 +1,62 @@
+{% extends "mobile/base.html" %}
+
+{% block body %}
+<div data-role="page" id="index" class="type-index"><!-- index page -->
+
+<div data-role="header">
+        <h1>{{ page_title }}</h1>
+        {% include "mobile/homeicon.html" %}
+</div>
+
+<div data-role="content">
+
+
+        <ul data-role="listview">
+                <li><a href="#notify">Notify of new PTO</a></li>
+                <li><a href="#left">How much PTO do I have left?</a></li>
+                <li><a href="#rightnow">Who is on PTO right now?</a></li>
+                <li><a href="#settings">Settings</a></li>
+        </ul>
+
+</div>
+
+</div>
+
+
+<div data-role="page" id="rightnow"><!-- right now page -->
+
+  <div data-role="header">
+    <h1>PTO right now</h1>
+    {% include "mobile/homeicon.html" %}
+  </div>
+
+  <div data-role="content">
+    <h3>People on PTO right now:</h3>
+    <dl class="now"></dl>
+
+    <h3>Upcoming PTO:</h3>
+    <dl class="upcoming"></dl>
+  </div>
+
+</div>
+
+{% include "mobile/page.settings.html" %}
+
+<div data-role="page" id="left"><!-- left page -->
+
+  <div data-role="header">
+    <h1>PTO left</h1>
+    {% include "mobile/homeicon.html" %}
+  </div>
+
+  <div data-role="content">
+    <p class="info"></p>
+  </div>
+
+</div>
+
+{% include "mobile/page.notify.html" %}
+
+{% include "mobile/page.hours.html" %}
+
+{% endblock %}

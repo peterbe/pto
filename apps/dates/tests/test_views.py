@@ -180,6 +180,7 @@ class ViewsTest(TestCase):
         ok_(entry.details in email.body)
         ok_(entry.start.strftime(settings.DEFAULT_DATE_FORMAT)
             in email.body)
+        ok_('submitted 12 hours of PTO' in email.body)
 
         eq_(email.cc, [peter.email])
         ok_('--\n%s' % settings.EMAIL_SIGNATURE in email.body)

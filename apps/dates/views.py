@@ -71,6 +71,12 @@ def valid_email(value):
 @login_required
 def home(request):  # aka dashboard
     data = {}
+    data['mobile'] = request.MOBILE  # thank you django-mobility (see settings)
+    if data['mobile']:
+        # unless an explicit cookie it set, redirect to /mobile/
+        if not request.COOKIES.get('no-mobile', False):
+            return redirect(reverse('mobile.home'))
+
     data['page_title'] = "Dashboard"
     profile = request.user.get_profile()
     if profile and profile.country in ('GB', 'FR', 'DE'):
@@ -79,32 +85,18 @@ def home(request):  # aka dashboard
         first_day = 0  # default to 0=Sunday
     data['first_day'] = first_day
 
-    if profile.start_date and profile.country:
-        diff = datetime.date.today() - profile.start_date
-        if diff.days >= 365:
-            hours = get_hours_left(profile)
-            days = hours / 8
-            if days == 1:
-                days = '1 day'
-            else:
-                days = '%d days' % days
-            remainder = hours % 8
-            if remainder:
-                days += ' and %d hours' % remainder
-            data['left'] = {'hours': hours, 'days': days}
-        else:
-            data['left'] = {'less_than_a_year': diff.days}
-    elif profile.start_date or profile.country:
-        if not profile.start_date:
-            data['left'] = {'missing': ['start date']}
-        else:
-            data['left'] = {'missing': ['country']}
-    else:
-        data['left'] = {'missing': ['country', 'start date']}
+    right_nows, right_now_users = get_right_nows()
+    data['right_nows'] = right_nows
+    data['right_now_users'] = right_now_users
+    data['left'] = get_left(profile)
 
+    return jingo.render(request, 'dates/home.html', data)
+
+def get_right_nows():
     right_now_users = []
     right_nows = defaultdict(list)
     _today = datetime.date.today()
+
     for entry in (Entry.objects
                   .filter(start__lte=_today,
                           end__gte=_today,
@@ -117,9 +109,51 @@ def home(request):  # aka dashboard
         left = (entry.end - _today).days + 1
         right_nows[entry.user].append((left, entry))
 
-    data['right_nows'] = right_nows
-    data['right_now_users'] = right_now_users
-    return jingo.render(request, 'dates/home.html', data)
+    return right_nows, right_now_users
+
+def get_upcomings(max_days=14):
+    users = []
+    upcoming = defaultdict(list)
+    today = datetime.date.today()
+    max_future = today + datetime.timedelta(days=max_days)
+
+    for entry in (Entry.objects
+                  .filter(start__gt=today,
+                          start__lt=max_future,
+                          total_hours__gte=0)
+                  .order_by('user__first_name',
+                            'user__last_name',
+                            'user__username')):
+        if entry.user not in users:
+            users.append(entry.user)
+        days = (entry.start - today).days + 1
+        upcoming[entry.user].append((days, entry))
+
+    return upcoming, users
+
+def get_left(profile):
+    if profile.start_date and profile.country:
+        diff = datetime.date.today() - profile.start_date
+        if diff.days >= 365:
+            hours = get_hours_left(profile)
+            days = hours / 8
+            if days == 1:
+                days = '1 day'
+            else:
+                days = '%d days' % days
+            remainder = hours % 8
+            if remainder:
+                days += ' and %d hours' % remainder
+            return {'hours': hours, 'days': days}
+        else:
+            return {'less_than_a_year': diff.days}
+    elif profile.start_date or profile.country:
+        if not profile.start_date:
+            return {'missing': ['start date']}
+        else:
+            return {'missing': ['country']}
+    else:
+        return {'missing': ['country', 'start date']}
 
 
 @json_view
@@ -234,7 +268,7 @@ def notify(request):
               end=end,
               details=details,
             )
-            _clean_unfinished_entries(entry)
+            clean_unfinished_entries(entry)
 
             messages.info(request, 'Entry added, now specify hours')
             url = reverse('dates.hours', args=[entry.pk])
@@ -270,7 +304,7 @@ def notify(request):
     return jingo.render(request, 'dates/notify.html', data)
 
 
-def _clean_unfinished_entries(good_entry):
+def clean_unfinished_entries(good_entry):
     # delete all entries that don't have total_hours and touch on the
     # same dates as this good one
     bad_entries = (Entry.objects
@@ -292,50 +326,7 @@ def hours(request, pk):
     if request.method == 'POST':
         form = forms.HoursForm(entry, data=request.POST)
         if form.is_valid():
-            total_hours = 0
-            for date in utils.get_weekday_dates(entry.start, entry.end):
-                hours = int(form.cleaned_data[date.strftime('d-%Y%m%d')])
-                birthday = False
-                if hours == -1:
-                    birthday = True
-                    hours = 0
-                assert hours >= 0 and hours <= settings.WORK_DAY, hours
-                try:
-                    hours_ = Hours.objects.get(entry__user=entry.user,
-                                               date=date)
-                    if hours_.hours:
-                        # this nullifies the previous entry on this date
-                        reverse_entry = Entry.objects.create(
-                          user=hours_.entry.user,
-                          start=date,
-                          end=date,
-                          details=hours_.entry.details,
-                          total_hours=hours_.hours * -1,
-                        )
-                        Hours.objects.create(
-                          entry=reverse_entry,
-                          hours=hours_.hours * -1,
-                          date=date,
-                        )
-                    #hours_.hours = hours  # nasty stuff!
-                    #hours_.birthday = birthday
-                    #hours_.save()
-                except Hours.DoesNotExist:
-                    # nothing to credit
-                    pass
-                Hours.objects.create(
-                  entry=entry,
-                  hours=hours,
-                  date=date,
-                  birthday=birthday,
-                )
-                total_hours += hours
-            #raise NotImplementedError
-
-            is_edit = entry.total_hours is not None
-            #if entry.total_hours is not None:
-            entry.total_hours = total_hours
-            entry.save()
+            total_hours, is_edit = save_entry_hours(entry, form)
 
             extra_users = request.session.get('notify_extra', '')
             extra_users = [x.strip() for x
@@ -385,6 +376,57 @@ def hours(request, pk):
     data['notify'] = notify
 
     return jingo.render(request, 'dates/hours.html', data)
+
+def save_entry_hours(entry, form):
+    assert form.is_valid()
+
+    total_hours = 0
+    for date in utils.get_weekday_dates(entry.start, entry.end):
+        hours = int(form.cleaned_data[date.strftime('d-%Y%m%d')])
+        birthday = False
+        if hours == -1:
+            birthday = True
+            hours = 0
+        assert hours >= 0 and hours <= settings.WORK_DAY, hours
+        try:
+            hours_ = Hours.objects.get(entry__user=entry.user,
+                                       date=date)
+            if hours_.hours:
+                # this nullifies the previous entry on this date
+                reverse_entry = Entry.objects.create(
+                  user=hours_.entry.user,
+                  start=date,
+                  end=date,
+                  details=hours_.entry.details,
+                  total_hours=hours_.hours * -1,
+                )
+                Hours.objects.create(
+                  entry=reverse_entry,
+                  hours=hours_.hours * -1,
+                  date=date,
+                )
+            #hours_.hours = hours  # nasty stuff!
+            #hours_.birthday = birthday
+            #hours_.save()
+        except Hours.DoesNotExist:
+            # nothing to credit
+            pass
+        Hours.objects.create(
+          entry=entry,
+          hours=hours,
+          date=date,
+          birthday=birthday,
+        )
+        total_hours += hours
+    #raise NotImplementedError
+
+    is_edit = entry.total_hours is not None
+    #if entry.total_hours is not None:
+    entry.total_hours = total_hours
+    entry.save()
+
+    return total_hours, is_edit
+
 
 
 def send_email_notification(entry, extra_users, is_edit=False):
