@@ -71,6 +71,12 @@ def valid_email(value):
 @login_required
 def home(request):  # aka dashboard
     data = {}
+    data['mobile'] = request.MOBILE  # thank you django-mobility (see settings)
+    if data['mobile']:
+        # unless an explicit cookie it set, redirect to /mobile/
+        if not request.COOKIES.get('no-mobile', False):
+            return redirect(reverse('mobile.home'))
+
     data['page_title'] = "Dashboard"
     profile = request.user.get_profile()
     if profile and profile.country in ('GB', 'FR', 'DE'):
