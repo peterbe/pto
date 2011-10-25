@@ -58,6 +58,7 @@ from .utils.pto_left import get_hours_left
 import utils
 import forms
 from .decorators import json_view
+from .csv_export import UnicodeWriter as CSVUnicodeWriter
 
 
 def valid_email(value):
@@ -562,41 +563,57 @@ def list_(request):
         data['first_filed_date'] = datetime.date(2000, 1, 1)
 
     data['form'] = form
+    data['query_string'] = request.META.get('QUERY_STRING')
     return jingo.render(request, 'dates/list.html', data)
 
+@login_required
+def list_csv(request):
+    data = []
+    entries = get_entries_from_request(request.GET)
+    response = http.HttpResponse(mimetype='text/csv')
+    writer = CSVUnicodeWriter(response)
+    writer.writerow((
+      'ID',
+      'EMAIL',
+      'FIRST NAME',
+      'LAST NAME',
+      'ADDED',
+      'START',
+      'END',
+      'HOURS',
+      'DETAILS',
+      'CITY',
+      'COUNTRY',
+      'START DATE',
+    ))
+
+    profiles = {}  # basic memoization
+    for entry in entries:
+        if entry.user.pk not in profiles:
+            profiles[entry.user.pk] = entry.user.get_profile()
+        profile = profiles[entry.user.pk]
+        writer.writerow((
+          str(entry.pk),
+          entry.user.email,
+          entry.user.first_name,
+          entry.user.last_name,
+          entry.add_date.strftime('%Y-%m-%d'),
+          entry.start.strftime('%Y-%m-%d'),
+          entry.end.strftime('%Y-%m-%d'),
+          str(entry.total_hours),
+          entry.details,
+          profile.city,
+          profile.country,
+          (profile.start_date and
+           profile.start_date.strftime('%Y-%m-%d') or ''),
+        ))
+
+    return response
 
 @json_view
 @login_required
 def list_json(request):
-    data = []
-    form = forms.ListFilterForm(date_format='%d %B %Y', data=request.GET)
-
-    if form.is_valid():
-        fdata = form.cleaned_data
-        entries = (Entry.objects.exclude(total_hours=None)
-                   .select_related('user'))
-        if fdata.get('date_from'):
-            entries = entries.filter(end__gte=fdata.get('date_from'))
-        if fdata.get('date_to'):
-            entries = entries.filter(start__lte=fdata.get('date_to'))
-        if fdata.get('date_filed_from'):
-            entries = entries.filter(
-              add_date__gte=fdata.get('date_filed_from'))
-        if fdata.get('date_filed_to'):
-            entries = entries.filter(
-              add_date__lt=fdata.get('date_filed_to') +
-                datetime.timedelta(days=1))
-        if fdata.get('name'):
-            name = fdata['name'].strip()
-            if valid_email(name):
-                entries = entries.filter(user__email__iexact=name)
-            else:
-                entries = entries.filter(
-                  Q(user__first_name__istartswith=name.split()[0]) |
-                  Q(user__last_name__iendswith=name.split()[-1])
-                )
-    else:
-        entries = Entry.objects.none()
+    entries = get_entries_from_request(request.GET)
 
     data = []
     profiles = {}
@@ -621,6 +638,39 @@ def list_json(request):
         data.append(row)
 
     return {'aaData': data}
+
+def get_entries_from_request(data):
+    form = forms.ListFilterForm(date_format='%d %B %Y', data=data)
+
+    if not form.is_valid():
+        return Entry.objects.none()
+
+    fdata = form.cleaned_data
+    entries = (Entry.objects.exclude(total_hours=None)
+               .select_related('user'))
+    if fdata.get('date_from'):
+        entries = entries.filter(end__gte=fdata.get('date_from'))
+    if fdata.get('date_to'):
+        entries = entries.filter(start__lte=fdata.get('date_to'))
+    if fdata.get('date_filed_from'):
+        entries = entries.filter(
+          add_date__gte=fdata.get('date_filed_from'))
+    if fdata.get('date_filed_to'):
+        entries = entries.filter(
+          add_date__lt=fdata.get('date_filed_to') +
+            datetime.timedelta(days=1))
+    if fdata.get('name'):
+        name = fdata['name'].strip()
+        if valid_email(name):
+            entries = entries.filter(user__email__iexact=name)
+        else:
+            entries = entries.filter(
+              Q(user__first_name__istartswith=name.split()[0]) |
+              Q(user__last_name__iendswith=name.split()[-1])
+            )
+
+    return entries
+
 
 ## Kumar stuff
 #def home(request):
