@@ -35,6 +35,7 @@
 
 import re
 import time
+import csv
 from urlparse import urlparse
 from collections import defaultdict
 import datetime
@@ -50,6 +51,20 @@ from mock import Mock
 from users.models import UserProfile
 import ldap
 from users.utils.ldap_mock import MockLDAP
+
+def unicode_csv_reader(unicode_csv_data,
+                       encoding='utf-8',
+                       **kwargs):
+    # csv.py doesn't do Unicode; encode temporarily as UTF-8:
+    csv_reader = csv.reader(utf_8_encoder(unicode_csv_data, encoding),
+                             **kwargs)
+    for row in csv_reader:
+        # decode UTF-8 back to Unicode, cell by cell:
+        yield [unicode(cell, encoding) for cell in row]
+
+def utf_8_encoder(unicode_csv_data, encoding):
+    for line in unicode_csv_data:
+        yield line.encode(encoding)
 
 
 class ViewsTest(TestCase):
@@ -80,6 +95,17 @@ class ViewsTest(TestCase):
           credentials={
             settings.AUTH_LDAP_BIND_DN: settings.AUTH_LDAP_BIND_PASSWORD,
           }))
+
+    def _login(self):
+        peter = User.objects.create(
+          username='peter',
+          email='pbengtsson@mozilla.com',
+          first_name='Peter',
+          last_name='Bengtsson',
+        )
+        peter.set_password('secret')
+        peter.save()
+        assert self.client.login(username='peter', password='secret')
 
     def test_404_page(self):
         url = '/ojsfpijweofpjwf/qpijf/'
@@ -1183,15 +1209,8 @@ class ViewsTest(TestCase):
         response = self.client.get(url)
         eq_(response.status_code, 302)
 
-        peter = User.objects.create(
-          username='peter',
-          email='peter@mozilla.com',
-          first_name='Peter',
-          last_name='Bengtsson',
-        )
-        peter.set_password('secret')
-        peter.save()
-        assert self.client.login(username='peter', password='secret')
+        self._login()
+        peter, = User.objects.all()
         response = self.client.get(url)
         eq_(response.status_code, 200)
 
@@ -1353,3 +1372,125 @@ class ViewsTest(TestCase):
         hours = get_hours_left(profile)
         days = hours / 8
         ok_('%s days' % days in response.content)
+
+    def test_list_csv_link(self):
+        self._login()
+        # if you visit the default list, expect to find a link to the csv list
+        # with the replicated query string
+        list_url = reverse('dates.list')
+        response = self.client.get(list_url, {
+          'name': 'Peter',
+        })
+        assert response.status_code == 200
+        url = reverse('dates.list_csv')
+        ok_('href="%s?name=Peter"' % url in response.content)
+
+    def test_list_csv(self):
+        url = reverse('dates.list_csv')
+        response = self.client.get(url)
+        eq_(response.status_code, 302)
+
+        self._login()
+        today = datetime.date.today()
+        data = {
+          'date_from': today,
+          'name': 'peter',
+        }
+        response = self.client.get(url)
+        eq_(response.status_code, 200)
+        eq_(response['Content-Type'], 'text/csv')
+        reader = unicode_csv_reader(response.content.splitlines())
+
+        head = False
+        rows = 0
+        by_ids = {}
+        for row in reader:
+            if not head:
+                head = row
+                continue
+            rows += 1
+            by_ids[int(row[0])] = row
+
+        eq_(rows, 0)
+
+        # now, add entries and test again
+        peter, = User.objects.all()
+        profile = peter.get_profile()
+        profile.city = 'London'
+        profile.country = 'GB'
+        profile.start_date = datetime.date(2010, 4, 1)
+        profile.save()
+
+
+        delta = datetime.timedelta
+
+        entry1 = Entry.objects.create(
+          user=peter,
+          start=today - delta(10),
+          end=today - delta(10),
+          total_hours=8
+        )
+        entry2 = Entry.objects.create(
+          user=peter,
+          start=today - delta(1),
+          end=today,
+          total_hours=16,
+          details='Sailing',
+        )
+        entry3 = Entry.objects.create(
+          user=peter,
+          start=today,
+          end=today + delta(1),
+          total_hours=None
+        )
+        entry4 = Entry.objects.create(
+          user=peter,
+          start=today + delta(1),
+          end=today + delta(2),
+          total_hours=12
+        )
+
+        # also create a user and entries for him
+        bob = User.objects.create(username='bob')
+        entryB = Entry.objects.create(
+          user=bob,
+          start=today,
+          end=today,
+          total_hours=8
+        )
+
+        response = self.client.get(url, data)
+        reader = unicode_csv_reader(response.content.splitlines())
+        head = False
+        rows = 0
+        by_ids = {}
+        for row in reader:
+            if not head:
+                head = row
+                continue
+            assert len(head) == len(row)
+            rows += 1
+            by_ids[int(row[0])] = row
+
+        eq_(rows, 2)
+        ok_(entry2.pk in by_ids.keys())
+        ok_(entry4.pk in by_ids.keys())
+        ok_(entryB.pk not in by_ids.keys())
+
+        row = by_ids[entry2.pk]
+
+        def fmt(d):
+            return d.strftime('%Y-%m-%d')
+
+        eq_(row[0], str(entry2.pk))
+        eq_(row[1], peter.email)
+        eq_(row[2], peter.first_name)
+        eq_(row[3], peter.last_name)
+        eq_(row[4], fmt(entry2.add_date))
+        eq_(row[5], fmt(entry2.start))
+        eq_(row[6], fmt(entry2.end))
+        eq_(row[7], str(entry2.total_hours))
+        eq_(row[8], entry2.details)
+        eq_(row[9], profile.city)
+        eq_(row[10], profile.country)
+        eq_(row[11], fmt(profile.start_date))
