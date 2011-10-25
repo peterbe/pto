@@ -34,29 +34,15 @@
 # ***** END LICENSE BLOCK *****
 
 import datetime
-#from urllib import urlencode
-#from collections import defaultdict
 import jingo
 from django import http
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.views.decorators.http import require_POST
-#from django.core.urlresolvers import reverse
+from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 from django.shortcuts import redirect, get_object_or_404
-#from django.contrib import messages
-#from django.db.models import Q
-#from django.template import Context, loader
-#from django.core.mail import get_connection, EmailMessage
 from dates.models import Entry, Hours
-#from users.models import UserProfile
-#from users.utils import ldap_lookup
-#from django.core.validators import validate_email
-#from django.core.exceptions import ValidationError
-#from .utils import parse_datetime, DatetimeParseError
-#from .utils.pto_left import get_hours_left
-#import utils
-#import forms
 from dates.decorators import json_view
 from dates.utils import get_weekday_dates
 
@@ -126,7 +112,6 @@ def left(request):
     return get_left(profile)
 
 
-from django.views.decorators.csrf import csrf_exempt
 @csrf_exempt  # XXX fix this
 @require_POST
 @transaction.commit_on_success
@@ -149,9 +134,6 @@ def notify(request):
           end=end,
           details=details,
         )
-        print "ENTRY", entry.pk
-        print start, '---', end
-        print
         clean_unfinished_entries(entry)
         request.session['notify_extra'] = notify
         return {'entry': entry.pk}
@@ -163,10 +145,14 @@ def notify(request):
 @require_POST
 @transaction.commit_on_success
 @json_view
-def hours(request):
+def save_hours(request):
     if not request.user.is_authenticated():  # XXX improve this
         return {'error': 'Not logged in'}
+    if not request.POST.get('entry'):
+        return http.HttpResponseBadRequest("No entry parameter provided")
     entry = get_object_or_404(Entry, pk=request.POST['entry'])
+    if entry.user != request.user:
+        return http.HttpResponseForbidden("Not your entry")
 
     from dates.forms import HoursForm
     from dates.views import save_entry_hours, send_email_notification
@@ -194,7 +180,7 @@ def hours_json(request):
         return {'error': 'No entry pre-loaded'}
     entry = get_object_or_404(Entry, pk=entry_id)
     if entry.user != request.user:
-        return HttpResponseForbidden("Not your entry")
+        return http.HttpResponseForbidden("Not your entry")
     days = []
 
     for date in get_weekday_dates(entry.start, entry.end):
