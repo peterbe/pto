@@ -4,6 +4,8 @@ from django.conf.urls.defaults import *
 from django.contrib import admin
 admin.autodiscover()
 
+handler404 = 'dates.views.handler404'
+
 urlpatterns = patterns('',
     (r'^users/', include('users.urls')),
     (r'^mobile/', include('mobile.urls')),
