@@ -47,12 +47,12 @@ from django.contrib import messages
 from django.db.models import Q
 from django.template import Context, loader
 from django.core.mail import get_connection, EmailMessage
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
 import vobject
 from models import Entry, Hours
 from users.models import UserProfile
 from users.utils import ldap_lookup
-from django.core.validators import validate_email
-from django.core.exceptions import ValidationError
 from .utils import parse_datetime, DatetimeParseError
 from .utils.pto_left import get_hours_left
 import utils
@@ -67,6 +67,13 @@ def valid_email(value):
     except ValidationError:
         return False
 
+def handler404(request):
+    # The only reason for defining this is so I can specifically use
+    # jingo.render() otherwise Django wants to render the template with its
+    # default template rendered which means I can extend from base.html which
+    # assumes jinja
+    data = {}
+    return jingo.render(request, '404.html', data, status=404)
 
 @login_required
 def home(request):  # aka dashboard

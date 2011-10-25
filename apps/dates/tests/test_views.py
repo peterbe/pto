@@ -81,6 +81,12 @@ class ViewsTest(TestCase):
             settings.AUTH_LDAP_BIND_DN: settings.AUTH_LDAP_BIND_PASSWORD,
           }))
 
+    def test_404_page(self):
+        url = '/ojsfpijweofpjwf/qpijf/'
+        response = self.client.get(url)
+        eq_(response.status_code, 404)
+        ok_('Page not found' in response.content)
+
     def test_notify_basics(self):
         url = reverse('dates.notify')
         response = self.client.get(url)
