@@ -42,6 +42,7 @@ from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 from django.shortcuts import redirect, get_object_or_404
+from django.contrib.auth import login as auth_login, logout as auth_logout
 from dates.models import Entry, Hours
 from dates.decorators import json_view
 from dates.utils import get_weekday_dates
@@ -49,7 +50,6 @@ from dates.utils import get_weekday_dates
 MOBILE_DATE_FORMAT = '%Y-%m-%d'
 
 
-@login_required
 def home(request):
     data = {}
     data['page_title'] = 'Mozilla PTO'
@@ -57,7 +57,6 @@ def home(request):
     # if you have loaded this page, forget the no-mobile cookie
     response.delete_cookie('no-mobile')
     return response
-
 
 @json_view
 def right_now(request):
@@ -244,3 +243,25 @@ def exit_mobile(request):
     then = datetime.datetime.now() + datetime.timedelta(days=300)
     r.set_cookie('no-mobile', 1, expires=then)
     return r
+
+
+@csrf_exempt  # XXX fix this
+@json_view
+def login(request):
+    if request.method == 'GET':
+        return {'logged_in': request.user.is_authenticated()}
+
+    from users.forms import AuthenticationForm
+    form = AuthenticationForm(data=request.POST)
+    if form.is_valid():
+        auth_login(request, form.get_user())
+        return {'ok': True}
+    else:
+        return {'form_errors': form.errors}
+
+@csrf_exempt  # XXX fix this
+@require_POST
+@json_view
+def logout(request):
+    auth_logout(request)
+    return {'ok': True}

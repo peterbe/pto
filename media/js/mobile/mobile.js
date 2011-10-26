@@ -167,6 +167,72 @@ var Notify = (function() {
 
 
 $(document).ready(function() {
+  $('#index').bind('pageshow', function() {
+    $.getJSON($('#login form').attr('action'), function(response) {
+      if (!response.logged_in) {
+        $.mobile.changePage('#login');
+      }
+    });
+  });
+
+  $('#logout').bind('pageshow', function() {
+    $.getJSON($('#login form').attr('action'), function(response) {
+      // in case the login page is shown to a user already logged in
+      if (!response.logged_in) {
+        $.mobile.changePage('#index');
+      }
+    });
+  }).bind('pagecreate', function() {
+    $('#logout form').submit(function() {
+      $.post($('#logout form').attr('action'), function(response) {
+        $.mobile.changePage('#login');
+      });
+      return false;
+    });
+  });
+
+  $('#login').bind('pageshow', function() {
+    $.getJSON($('#login form').attr('action'), function(response) {
+      // in case the login page is shown to a user already logged in
+      if (response.logged_in) {
+        $.mobile.changePage('#index');
+      }
+    });
+  }).bind('pagecreate', function() {
+    $('#login form').submit(function() {
+      var data = {
+        username: $('#id_username').val(),
+        password: $('#id_password').val()
+      };
+      $('#login form .error').remove();
+      $.post($('#login form').attr('action'), data, function(response) {
+        if (response.error) return _grr(response.error);
+        if (response.form_errors) {
+          $.each(response.form_errors, function(name, errors) {
+            $.each(errors, function(j, error) {
+               $.each(errors, function(j, error) {
+                 if (name == '__all__') {
+                   $('<span>')
+                     .text(error)
+                       .addClass('error')
+                         .prependTo($('#login form'));
+                 } else {
+                   $('<span>')
+                     .text(error)
+                       .addClass('error')
+                         .insertBefore($('#login input[name="' + name + '"]'));
+                 }
+               });
+            });
+          });
+        } else {
+          $.mobile.changePage('#index');
+        }
+      });
+      return false;
+    });
+  });
+
   $('#rightnow').bind('pageshow', function() {
     Data.rightnow();
   });

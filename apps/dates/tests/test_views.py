@@ -1066,7 +1066,7 @@ class ViewsTest(TestCase):
                 raise AssertionError("unknown email")
             eq_(first_name, user.first_name)
             eq_(last_name, user.last_name)
-            eq_(add_date, datetime.date.today())
+            eq_(add_date, datetime.datetime.utcnow().date())
             ok_(total_hours in (8, 12))
             ok_(start_date in (monday, tuesday))
             eq_(end_date, tuesday)
@@ -1136,27 +1136,26 @@ class ViewsTest(TestCase):
         e2.add_date -= datetime.timedelta(days=7)
         e2.save()
 
-        filter = {'date_filed_to': datetime.date.today()}
+        today = datetime.datetime.utcnow().date()
+        filter = {'date_filed_to': today}
         response = self.client.get(url, filter)
         ok_('Peter' in response.content)
         ok_('Laura' in response.content)
 
-        filter = {'date_filed_to': (datetime.date.today() -
-                                    one_day)}
+        filter = {'date_filed_to': (today - one_day)}
         response = self.client.get(url, filter)
         ok_('Peter' not in response.content)
         ok_('Laura' in response.content)
 
-        filter = {'date_filed_to': (datetime.date.today() -
-                                    one_day),
-                  'date_filed_from': (datetime.date.today() -
+        filter = {'date_filed_to': (today - one_day),
+                  'date_filed_from': (today -
                                     datetime.timedelta(days=3)),
                   }
         response = self.client.get(url, filter)
         ok_('Peter' not in response.content)
         ok_('Laura' not in response.content)
 
-        filter = {'date_filed_from': datetime.date.today()}
+        filter = {'date_filed_from': today}
         response = self.client.get(url, filter)
         ok_('Peter' in response.content)
         ok_('Laura' not in response.content)

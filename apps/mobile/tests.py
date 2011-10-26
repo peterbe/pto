@@ -60,9 +60,7 @@ class MobileViewsTest(BaseViewsTest):
     def test_home(self):
         url = reverse('mobile.home')
         response = self.client.get(url)
-        eq_(response.status_code, 302)
-        path = urlparse(response['location']).path
-        eq_(path, settings.LOGIN_URL)
+        eq_(response.status_code, 200)
 
         peter = User.objects.create(
           username='peter',
@@ -78,6 +76,57 @@ class MobileViewsTest(BaseViewsTest):
         url = reverse('mobile.home')
         response = self.client.get(url)
         eq_(response.status_code, 200)
+
+    def test_login(self):
+        peter = User.objects.create(
+          username='peter',
+          email='pbengtsson@mozilla.com',
+          first_name='Peter',
+          last_name='Bengtsson',
+        )
+        peter.set_password('secret')
+        peter.save()
+
+        url = reverse('mobile.login')
+        response = self.client.get(url)
+        eq_(response.status_code, 200)
+        ok_(not json.loads(response.content)['logged_in'])
+
+        response = self.client.post(url, {
+          'username': peter.email,
+          'password': 'wrong'
+        })
+        eq_(response.status_code, 200)
+        struct = json.loads(response.content)
+        ok_(struct['form_errors']['__all__'])
+        response = self.client.post(url, {
+          'username': peter.email.title(),
+          'password': 'secret'
+        })
+        eq_(response.status_code, 200)
+        struct = json.loads(response.content)
+        ok_(struct['ok'])
+
+        response = self.client.get(url)
+        eq_(response.status_code, 200)
+        ok_(json.loads(response.content)['logged_in'])
+
+    def test_logout(self):
+        url = reverse('mobile.logout')
+
+        self._login()
+        response = self.client.get(reverse('mobile.login'))
+        eq_(response.status_code, 200)
+        ok_(json.loads(response.content)['logged_in'])
+
+        response = self.client.post(url)
+        eq_(response.status_code, 200)
+        struct = json.loads(response.content)
+        ok_(struct['ok'])
+
+        response = self.client.get(reverse('mobile.login'))
+        eq_(response.status_code, 200)
+        ok_(not json.loads(response.content)['logged_in'])
 
     def test_right_now_json(self):
         url = reverse('mobile.right_now')

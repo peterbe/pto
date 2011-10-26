@@ -51,6 +51,7 @@ from django.shortcuts import render_to_response as django_render_to_response
 from dates.decorators import json_view
 from utils import ldap_lookup
 
+
 def login(request):
     # mostly copied from zamboni
     logout(request)
