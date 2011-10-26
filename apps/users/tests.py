@@ -254,9 +254,9 @@ class UsersTest(TestCase):
                                           'rememberme': ''})
         eq_(response.status_code, 302)
         expires = self.client.cookies['sessionid']['expires']
-        date = expires.split()[1]
-        then = datetime.datetime.strptime(date, '%d-%b-%Y').date()
-        today = datetime.date.today()
+        date = ' '.join(expires.split()[1:])
+        then = datetime.datetime.strptime(date, '%d-%b-%Y %H:%M:%S %Z')
+        today = datetime.datetime.today()
         days = settings.SESSION_COOKIE_AGE / 24 / 3600
         try:
             eq_((then - today).days, days)

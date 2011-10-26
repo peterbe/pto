@@ -46,4 +46,6 @@ urlpatterns = patterns('',
     url(r'^hours.json$', views.hours_json, name='mobile.hours'),
     url(r'^hours/$', views.save_hours, name='mobile.save_hours'),
     url(r'^exit/$', views.exit_mobile, name='mobile.exit'),
+    url(r'^login/$', views.login, name='mobile.login'),
+    url(r'^logout/$', views.logout, name='mobile.logout'),
 )
