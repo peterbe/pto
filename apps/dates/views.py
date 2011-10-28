@@ -34,11 +34,13 @@
 # ***** END LICENSE BLOCK *****
 
 import datetime
+import urlparse
 from urllib import urlencode
 from collections import defaultdict
 import jingo
 from django import http
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.views import redirect_to_login
 from django.db import transaction
 from django.core.urlresolvers import reverse
 from django.conf import settings
@@ -76,7 +78,6 @@ def handler404(request):
     data = {}
     return jingo.render(request, '404.html', data, status=404)
 
-@login_required
 def home(request):  # aka dashboard
     data = {}
     data['mobile'] = request.MOBILE  # thank you django-mobility (see settings)
@@ -84,6 +85,12 @@ def home(request):  # aka dashboard
         # unless an explicit cookie it set, redirect to /mobile/
         if not request.COOKIES.get('no-mobile', False):
             return redirect(reverse('mobile.home'))
+
+    # now do what the login_required would usually do
+    if not request.user.is_authenticated():
+        url = settings.LOGIN_URL
+        path = request.get_full_path()
+        return redirect_to_login(path)
 
     data['page_title'] = "Dashboard"
     profile = request.user.get_profile()
