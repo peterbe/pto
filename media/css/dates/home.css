@@ -5,9 +5,20 @@
 
 #calendar {
     width: 70%;
-    margin: 0 auto;
+    /*margin: 0 auto;*/
+    margin: 0 10px;
     float:right;
 }
+#calendar-legend {
+  padding:5px 0;
+  font-size: 11.9px;
+}
+#calendar-legend span {
+  margin:2px;
+  padding:2px;
+  border-radius: 3px;
+}
+
 
 .extra-info {
     margin: 30px 0 40px 20px;
@@ -16,7 +27,7 @@
 @media only screen and (max-width: 1200px) {
     #calendar { width:90%; float:none; }
     #content a.anchor { display:inline; }
-    
+
 }
 
 /* Tablet Portrait size to standard 960 (devices and browsers) */

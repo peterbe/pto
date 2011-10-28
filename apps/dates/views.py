@@ -230,16 +230,26 @@ def calendar_events(request):
     _colors = list(COLORS)
     user_ids = [request.user.pk]
     colors = {}
+    colors_fullnames = []
     colors[request.user.pk] = None
+    colors_fullnames.append((request.user.pk, 'Me myself and I', '#3366CC'))
     for minion in get_minions(request.user, max_depth=2):
         user_ids.append(minion.pk)
         colors[minion.pk] = _colors.pop()
+        colors_fullnames.append((
+          minion.pk,
+          minion.get_full_name(),
+          colors[minion.pk]
+        ))
+
+    visible_user_ids = set()
     for entry in (Entry.objects
                    .filter(user__in=user_ids,
                            total_hours__gte=0,
                            total_hours__isnull=False)
                    .select_related('user')
                    .exclude(Q(end__lt=start) | Q(start__gt=end))):
+        visible_user_ids.add(entry.user.pk)
         entries.append({
           'id': entry.pk,
           'title': make_title(entry),
@@ -248,7 +258,9 @@ def calendar_events(request):
           'color': colors[entry.user.pk],
         })
 
-    return entries
+    colors = [dict(name=x, color=y) for (pk, x, y) in colors_fullnames
+              if pk in visible_user_ids]
+    return {'events': entries, 'colors': colors}
 
 
 def get_minions(user, depth=1, max_depth=2):
@@ -638,7 +650,7 @@ def list_json(request):
                entry.end.strftime('%Y-%m-%d'),
                profile.city,
                profile.country,
-               entry.details,
+               '*automatic edit*' if entry.total_hours < 0 else entry.details,
                edit_link,
                hours_link
                ]
