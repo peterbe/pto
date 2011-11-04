@@ -110,12 +110,22 @@ var Data = (function() {
   }
 })(DATA_URL);
 
-$(function() {
-  Dates.init(['date', 'date_filed'], dateFormat);
+var Filter = (function() {
+  return {
+     clearFilters: function() {
+       $('#id_date_from').val('');
+       $('#id_date_to').val('');
+       $('#id_date_filed_from').val('');
+       $('#id_name').val('');
+       $('#id_country').val('');
+     }
+  }
+})();
 
-
+function loadDataTable() {
   $('#pto_table').dataTable({
     bProcessing: true,
+    bDeferRender: true,  // creates page 2 and onwards TRs once loaded
     //bServerSide: true,  // more scalable but more work (for later)
     sAjaxSource: Data.href(),
     //aaSorting: [[ 2, 'asc' ],[ 1, 'asc' ],[ 3, 'desc' ]],
@@ -126,4 +136,20 @@ $(function() {
        5: {sorter: false}
     }
   });
+}
+
+$(function() {
+  Dates.init(['date', 'date_filed'], dateFormat);
+
+  if (location.search) {
+    $('#load-placeholder').remove();
+    loadDataTable();
+  }
+
+  $('#filter_form button[type="reset"]').click(function() {
+    Filter.clearFilters();
+    // reload without the query string
+    location.replace(location.href.replace(location.search, ''));
+  });
+
 });

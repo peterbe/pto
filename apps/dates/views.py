@@ -637,7 +637,7 @@ def list_json(request):
     data = []
     profiles = {}
     for entry in entries:
-        edit_link = hours_link = '&nbsp;'
+        #edit_link = hours_link = '&nbsp;'
         if entry.user.pk not in profiles:
             profiles[entry.user.pk] = entry.user.get_profile()
         profile = profiles[entry.user.pk]
@@ -651,8 +651,8 @@ def list_json(request):
                profile.city,
                profile.country,
                '*automatic edit*' if entry.total_hours < 0 else entry.details,
-               edit_link,
-               hours_link
+               #edit_link,
+               #hours_link
                ]
         data.append(row)
 
