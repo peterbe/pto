@@ -4,6 +4,7 @@ from django.utils import formats
 from django.core.validators import validate_email
 from django import forms
 from models import Hours
+from users.models import UserProfile
 import utils
 
 
@@ -151,6 +152,7 @@ class ListFilterForm(BaseForm):
     date_filed_from = forms.DateField(required=False)
     date_filed_to = forms.DateField(required=False)
     name = forms.CharField(required=False)
+    country = forms.ChoiceField(required=False)
 
     def __init__(self, *args, **kwargs):
         super(ListFilterForm, self).__init__(*args, **kwargs)
@@ -162,3 +164,12 @@ class ListFilterForm(BaseForm):
                   'autocomplete': 'off',
                   'data-input': data_input,
                 })
+        # insert the blank one
+        self.fields['country'].choices = [('', 'Any country')]
+
+        for each in (UserProfile.objects.exclude(country='')
+                     .values('country')
+                     .distinct('country')
+                     .order_by('country')):
+            country = each['country']
+            self.fields['country'].choices.append((country, country))

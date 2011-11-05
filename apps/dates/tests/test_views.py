@@ -341,8 +341,8 @@ class ViewsTest(TestCase):
         # added one and deleted one
         assert Entry.objects.all().count() == 3
 
-    def _get_inputs(self, html, multiple=False, **filters):
-        _input_regex = re.compile('<input (.*?)>', re.M | re.DOTALL)
+    def _get_inputs(self, html, multiple=False, tag='input', **filters):
+        _input_regex = re.compile('<%s (.*?)>' % tag, re.M | re.DOTALL)
         _attrs_regex = re.compile('(\w+)="([^"]+)"')
         if multiple:
             all_attrs = defaultdict(list)
@@ -482,7 +482,7 @@ class ViewsTest(TestCase):
         response = self.client.get(url, data)
         eq_(response.status_code, 200)
         struct = json.loads(response.content)
-        eq_(struct, [])
+        eq_(struct, {'colors': [], 'events': []})
 
         # add some entries
         entry1 = Entry.objects.create(
@@ -509,8 +509,9 @@ class ViewsTest(TestCase):
         response = self.client.get(url, data)
         eq_(response.status_code, 200)
         struct = json.loads(response.content)
-        eq_(len(struct), 3)
-        eq_(set([x['id'] for x in struct]),
+        events = struct['events']
+        eq_(len(events), 3)
+        eq_(set([x['id'] for x in events]),
             set([entry1.pk, entry2.pk, entry3.pk]))
 
         # add some that are outside the search range and should not be returned
@@ -531,9 +532,10 @@ class ViewsTest(TestCase):
         response = self.client.get(url, data)
         eq_(response.status_code, 200)
         struct = json.loads(response.content)
-        eq_(len(struct), 3)
+        events = struct['events']
+        eq_(len(events), 3)
         # unchanged
-        eq_(set([x['id'] for x in struct]),
+        eq_(set([x['id'] for x in events]),
             set([entry1.pk, entry2.pk, entry3.pk]))
 
         # add a curve-ball that spans the whole range
@@ -547,9 +549,10 @@ class ViewsTest(TestCase):
         response = self.client.get(url, data)
         eq_(response.status_code, 200)
         struct = json.loads(response.content)
-        eq_(len(struct), 4)
+        events = struct['events']
+        eq_(len(events), 4)
         # one more now
-        eq_(set([x['id'] for x in struct]),
+        eq_(set([x['id'] for x in events]),
             set([entry1.pk, entry2.pk, entry3.pk, entry6.pk]))
 
     def test_calendar_event_title(self):
@@ -581,8 +584,14 @@ class ViewsTest(TestCase):
         response = self.client.get(url, data)
         eq_(response.status_code, 200)
         struct = json.loads(response.content)
-        eq_(len(struct), 1)
-        eq_(struct[0]['title'], '4 hours')
+        eq_(len(struct), 2)
+        events = struct['events']
+        eq_(len(events), 1)
+        eq_(events[0]['title'], '4 hours')
+        colors = struct['colors']
+        eq_(len(colors), 1)
+        ok_(colors[0]['color'])
+        ok_(colors[0]['name'])
 
         entry.end += datetime.timedelta(days=5)
         entry.total_hours += 8 * 5
@@ -591,8 +600,10 @@ class ViewsTest(TestCase):
         response = self.client.get(url, data)
         eq_(response.status_code, 200)
         struct = json.loads(response.content)
-        eq_(len(struct), 1)
-        eq_(struct[0]['title'], '6 days')
+        eq_(len(struct), 2)
+        events = struct['events']
+        eq_(len(events), 1)
+        eq_(events[0]['title'], '6 days')
 
         umpa = User.objects.create(
           username='umpa',
@@ -610,8 +621,11 @@ class ViewsTest(TestCase):
         response = self.client.get(url, data)
         eq_(response.status_code, 200)
         struct = json.loads(response.content)
-        eq_(len(struct), 1)
-        eq_(struct[0]['title'], 'Umpa Lumpa - 6 days')
+        eq_(len(struct), 2)
+        events = struct['events']
+        eq_(struct['colors'][0]['name'], 'Umpa Lumpa')
+        eq_(len(events), 1)
+        eq_(events[0]['title'], 'Umpa Lumpa - 6 days')
 
         umpa.first_name = ''
         umpa.last_name = ''
@@ -620,25 +634,31 @@ class ViewsTest(TestCase):
         response = self.client.get(url, data)
         eq_(response.status_code, 200)
         struct = json.loads(response.content)
-        eq_(len(struct), 1)
-        eq_(struct[0]['title'], 'umpa - 6 days')
+        eq_(len(struct), 2)
+        events = struct['events']
+        eq_(len(events), 1)
+        eq_(events[0]['title'], 'umpa - 6 days')
 
         entry.details = 'Short'
         entry.save()
         response = self.client.get(url, data)
         eq_(response.status_code, 200)
         struct = json.loads(response.content)
-        eq_(len(struct), 1)
-        eq_(struct[0]['title'], 'umpa - 6 days, Short')
+        eq_(len(struct), 2)
+        events = struct['events']
+        eq_(len(events), 1)
+        eq_(events[0]['title'], 'umpa - 6 days, Short')
 
         entry.details = "This time it's going to be a really long one to test"
         entry.save()
         response = self.client.get(url, data)
         eq_(response.status_code, 200)
         struct = json.loads(response.content)
-        eq_(len(struct), 1)
-        ok_(struct[0]['title'].startswith('umpa - 6 days, This time'))
-        ok_(struct[0]['title'].endswith('...'))
+        eq_(len(struct), 2)
+        events = struct['events']
+        eq_(len(events), 1)
+        ok_(events[0]['title'].startswith('umpa - 6 days, This time'))
+        ok_(events[0]['title'].endswith('...'))
 
         Hours.objects.create(
           entry=entry,
@@ -649,8 +669,10 @@ class ViewsTest(TestCase):
         response = self.client.get(url, data)
         eq_(response.status_code, 200)
         struct = json.loads(response.content)
-        eq_(len(struct), 1)
-        ok_('birthday' in struct[0]['title'])
+        eq_(len(struct), 2)
+        events = struct['events']
+        eq_(len(events), 1)
+        ok_('birthday' in events[0]['title'])
 
     def test_notify_free_input(self):
         url = reverse('dates.notify')
@@ -1203,6 +1225,21 @@ class ViewsTest(TestCase):
         ok_('Peter' in response.content)
         ok_('Laura' in response.content)
 
+        filter = {'country': 'UK'}
+        response = self.client.get(url, filter)
+        ok_('Peter' in response.content)
+        ok_('Laura' not in response.content)
+
+        filter = {'country': 'USA'}
+        response = self.client.get(url, filter)
+        ok_('Peter' not in response.content)
+        ok_('Laura' in response.content)
+
+        filter = {'country': 'AUS'}
+        response = self.client.get(url, filter)
+        ok_('Peter' not in response.content)
+        ok_('Laura' not in response.content)
+
     def test_list(self):
         url = reverse('dates.list')
         response = self.client.get(url)
@@ -1213,6 +1250,10 @@ class ViewsTest(TestCase):
         response = self.client.get(url)
         eq_(response.status_code, 200)
 
+        p = peter.get_profile()
+        p.country = 'GB'
+        p.save()
+
         # now create some entries
         laura = User.objects.create(
           username='laura',
@@ -1220,6 +1261,10 @@ class ViewsTest(TestCase):
           first_name='Laura',
           last_name='van Der Thomson',
         )
+
+        p = laura.get_profile()
+        p.country = 'US'
+        p.save()
 
         one_day = datetime.timedelta(days=1)
         monday = datetime.date(2018, 1, 1)  # I know this is a Monday
@@ -1249,6 +1294,12 @@ class ViewsTest(TestCase):
 
         response = self.client.get(url)
         eq_(response.status_code, 200)
+
+        _options = (response.content
+                    .split('name="country"')[1]
+                    .split('</select>')[0])
+        ok_('<option value="GB">' in _options)
+        ok_('<option value="US">' in _options)
 
     def test_dashboard_on_pto_right_now(self):
         """On the dashboard we can expect to see who is on PTO right now.

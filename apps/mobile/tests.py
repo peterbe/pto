@@ -316,7 +316,8 @@ class MobileViewsTest(BaseViewsTest):
 
         # Create an incomplete entry
         peter = User.objects.get(username='peter')  # see _login()
-        today = datetime.date.today()
+        today = datetime.date(2011, 11, 2)
+        assert today.strftime('%A') == 'Wednesday'
         entry = Entry.objects.create(
           user=peter,
           start=today + datetime.timedelta(days=1),

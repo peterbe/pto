@@ -687,6 +687,10 @@ def get_entries_from_request(data):
               Q(user__first_name__istartswith=name.split()[0]) |
               Q(user__last_name__iendswith=name.split()[-1])
             )
+    if fdata.get('country'):
+        country = fdata['country'].strip()
+        _users = UserProfile.objects.filter(country=country).values('user_id')
+        entries = entries.filter(user__id__in=_users)
 
     return entries
 
