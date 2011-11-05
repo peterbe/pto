@@ -44,7 +44,13 @@ table.tablesorter thead tr .headerSortDown {
 	background-image: url(desc.gif);
 }
 table.tablesorter thead tr .headerSortDown, table.tablesorter thead tr .headerSortUp {
-background-color: #8dbdd8;
+	background-color: #8dbdd8;
+}
+
+#load-placeholder {
+	text-align:center;
+        border:1px solid #ccc;
+        padding:30px;
 }
 </style>
 {% endblock %}
@@ -97,9 +103,7 @@ background-color: #8dbdd8;
 			Country:
 		</td>
 		<td>
-                        <select name="country" id="country">
-				<option value="">Any country</option>
-			</select>
+                        {{ form.country|safe }}
 		</td>
 	</tr>
 </table>
@@ -161,7 +165,7 @@ background-color: #8dbdd8;
         </table>
 </div>
 
-<div id="load-placeholder" style="text-align:center;border:1px solid #ccc; padding:30px;">
+<div id="load-placeholder">
 <p><em>Select something to filter on and I'll get to work!</em></p>
 </div>
 
