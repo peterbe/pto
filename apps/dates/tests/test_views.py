@@ -39,6 +39,7 @@ import csv
 from urlparse import urlparse
 from collections import defaultdict
 import datetime
+from django.test.client import RequestFactory
 from django.test import TestCase
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -112,6 +113,30 @@ class ViewsTest(TestCase):
         response = self.client.get(url)
         eq_(response.status_code, 404)
         ok_('Page not found' in response.content)
+
+    def test_500_page(self):
+        root_urlconf = __import__(settings.ROOT_URLCONF,
+                                  globals(), locals(), ['urls'], -1)
+        # ...so that we can access the 'handler500' defined in there
+        par, end = root_urlconf.handler500.rsplit('.', 1)
+        # ...which is an importable reference to the real handler500 function
+        views = __import__(par, globals(), locals(), [end], -1)
+        # ...and finally we the handler500 function at hand
+        handler500 = getattr(views, end)
+
+        # to make a mock call to the django view functions you need a request
+        fake_request = RequestFactory().request(**{'wsgi.input': None})
+
+        # the reason for first causing an exception to be raised is because
+        # the handler500 function is only called by django when an exception
+        # has been raised which means sys.exc_info() is something.
+        try:
+            raise NameError("sloppy code!")
+        except NameError:
+            # do this inside a frame that has a sys.exc_info()
+            response = handler500(fake_request)
+            eq_(response.status_code, 500)
+            ok_('NameError' in response.content)
 
     def test_notify_basics(self):
         url = reverse('dates.notify')

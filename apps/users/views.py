@@ -36,7 +36,7 @@
 
 import logging
 from django import http
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.core.urlresolvers import reverse
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.contrib.auth.decorators import login_required
@@ -44,7 +44,6 @@ from django.db import transaction
 from django.contrib import messages
 import django.contrib.auth.views
 from django.conf import settings
-import jingo
 import forms
 from models import get_user_profile
 from django.shortcuts import render_to_response as django_render_to_response
@@ -78,8 +77,7 @@ def login(request):
 
 
 def logout(request):
-    django.contrib.auth.views.render_to_response = django_render_to_response
-    django.contrib.auth.views.logout(request)
+    django.contrib.auth.logout(request)
     #if 'to' in request.GET:
     #    request = _clean_next_url(request)
     next = request.GET.get('next') or settings.LOGOUT_REDIRECT_URL
@@ -126,4 +124,4 @@ def profile(request):
         form = forms.ProfileForm(instance=profile)
 
     data['form'] = form
-    return jingo.render(request, 'users/profile.html', data)
+    return render(request, 'users/profile.html', data)

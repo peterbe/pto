@@ -37,7 +37,6 @@ import datetime
 import urlparse
 from urllib import urlencode
 from collections import defaultdict
-import jingo
 from django import http
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import redirect_to_login
@@ -51,6 +50,7 @@ from django.template import Context, loader
 from django.core.mail import get_connection, EmailMessage
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
+from django.shortcuts import render
 import vobject
 from models import Entry, Hours
 from users.models import UserProfile
@@ -70,14 +70,6 @@ def valid_email(value):
     except ValidationError:
         return False
 
-def handler404(request):
-    # The only reason for defining this is so I can specifically use
-    # jingo.render() otherwise Django wants to render the template with its
-    # default template rendered which means I can extend from base.html which
-    # assumes jinja
-    data = {}
-    return jingo.render(request, '404.html', data, status=404)
-
 def handler500(request):
     data = {}
     import sys, traceback
@@ -89,10 +81,9 @@ def handler500(request):
     data['err_type'] = err_type
     data['err_value'] = err_value
     data['err_traceback'] = traceback_formatted
-    return jingo.render(request, '500.html', data)
+    return render(request, '500.html', data, status=500)
 
 def home(request):  # aka dashboard
-    raise NameError('Something is wrong')
     data = {}
     data['mobile'] = request.MOBILE  # thank you django-mobility (see settings)
     if data['mobile']:
@@ -119,7 +110,7 @@ def home(request):  # aka dashboard
     data['right_now_users'] = right_now_users
     data['left'] = get_left(profile)
 
-    return jingo.render(request, 'dates/home.html', data)
+    return render(request, 'dates/home.html', data)
 
 def get_right_nows():
     right_now_users = []
@@ -342,7 +333,7 @@ def notify(request):
     if manager:
         data['all_managers'].append(manager)
     data['form'] = form
-    return jingo.render(request, 'dates/notify.html', data)
+    return render(request, 'dates/notify.html', data)
 
 
 def clean_unfinished_entries(good_entry):
@@ -416,7 +407,7 @@ def hours(request, pk):
     notify = request.session.get('notify_extra', [])
     data['notify'] = notify
 
-    return jingo.render(request, 'dates/hours.html', data)
+    return render(request, 'dates/hours.html', data)
 
 def save_entry_hours(entry, form):
     assert form.is_valid()
@@ -569,7 +560,7 @@ def emails_sent(request, pk):
             data['emailed_users'].append(email)
     show_fireworks = not request.COOKIES.get('no_fw', False)
     data['show_fireworks'] = show_fireworks
-    return jingo.render(request, 'dates/emails_sent.html', data)
+    return render(request, 'dates/emails_sent.html', data)
 
 
 @login_required
@@ -597,7 +588,7 @@ def list_(request):
 
     data['form'] = form
     data['query_string'] = request.META.get('QUERY_STRING')
-    return jingo.render(request, 'dates/list.html', data)
+    return render(request, 'dates/list.html', data)
 
 @login_required
 def list_csv(request):
@@ -707,49 +698,3 @@ def get_entries_from_request(data):
         entries = entries.filter(user__id__in=_users)
 
     return entries
-
-
-## Kumar stuff
-#def home(request):
-#    return jingo.render(request, 'pto/home.html',
-#                        dict(calculate_pto_url=reverse('pto.calculate_pto')))
-#
-#
-#def days_to_hrs(day):
-#    return day * Decimal('8')
-#
-#
-#def hrs_to_days(hour):
-#    return hour / Decimal('8')
-#
-#
-#@json_view
-#def calculate_pto(request):
-#    d = date.today()
-#    today = datetime(d.year, d.month, d.day, 0, 0, 0)
-#    trip_start = parse_datetime(request.GET['start_date'])
-#    pointer = today
-#    hours_per_quarter = Decimal(request.GET['per_quarter'])
-#    hours_avail = Decimal(request.GET['hours_avail'])
-#    while pointer <= trip_start:
-#        if pointer.day == 1 or pointer.day == 15:
-#            hours_avail += hours_per_quarter
-#        if pointer.day > 15:
-#            add_days = days_til_1st(pointer)
-#        else:
-#            add_days = 15 - pointer.day
-#        if add_days == 0:
-#            add_days = 15  # 1st of the month
-#        pointer += timedelta(days=add_days)
-#    return dict(hours_available_on_start=str(round(hours_avail, 2)),
-#                days_available_on_start=str(round(hrs_to_days(hours_avail),
-#                                                  2)))
-#
-#
-#def days_til_1st(a_datetime):
-#    """Returns the number of days until the 1st of the next month."""
-#    next = a_datetime.replace(day=28)
-#    while next.month == a_datetime.month:
-#        next = next + timedelta(days=1)
-#    return (next - a_datetime).days
-#

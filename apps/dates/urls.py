@@ -11,6 +11,4 @@ urlpatterns = patterns('',
     url(r'^list/json/$', views.list_json, name='dates.list_json'),
     url(r'^calendar/events/$', views.calendar_events,
         name='dates.calendar_events'),
-    #url(r'^$', 'home', name='pto.home'),
-    #url(r'^calculate_pto\.json$', 'calculate_pto', name='pto.calculate_pto'),
 )

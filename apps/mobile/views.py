@@ -34,14 +34,13 @@
 # ***** END LICENSE BLOCK *****
 
 import datetime
-import jingo
 from django import http
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
-from django.shortcuts import redirect, get_object_or_404
+from django.shortcuts import redirect, get_object_or_404, render
 from django.contrib.auth import login as auth_login, logout as auth_logout
 from dates.models import Entry, Hours
 from dates.decorators import json_view
@@ -53,7 +52,7 @@ MOBILE_DATE_FORMAT = '%Y-%m-%d'
 def home(request):
     data = {}
     data['page_title'] = 'Mozilla PTO'
-    response = jingo.render(request, 'mobile/mobile.html', data)
+    response = render(request, 'mobile/mobile.html', data)
     # if you have loaded this page, forget the no-mobile cookie
     response.delete_cookie('no-mobile')
     return response
@@ -149,11 +148,11 @@ def save_hours(request):
         return {'error': 'Not logged in'}
     if not request.POST.get('entry'):
         return http.HttpResponseBadRequest("No entry parameter provided")
-    entry = get_object_or_404(Entry, pk=request.POST['entry'])
-    #try:
-    #    entry = Entry.objects.get(pk=request.POST['entry'])
-    #except Entry.DoesNotExist:
-    #    return http.HttpResponseNotFound("Not found")
+    #entry = get_object_or_404(Entry, pk=request.POST['entry'])
+    try:
+        entry = Entry.objects.get(pk=request.POST['entry'])
+    except Entry.DoesNotExist:
+        return http.HttpResponseNotFound("Not found")
     if entry.user != request.user:
         return http.HttpResponseForbidden("Not your entry")
 

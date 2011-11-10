@@ -4,7 +4,6 @@ from django.conf.urls.defaults import *
 from django.contrib import admin
 admin.autodiscover()
 
-handler404 = 'dates.views.handler404'
 handler500 = 'dates.views.handler500'
 
 urlpatterns = patterns('',
