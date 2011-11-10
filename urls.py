@@ -5,6 +5,7 @@ from django.contrib import admin
 admin.autodiscover()
 
 handler404 = 'dates.views.handler404'
+handler500 = 'dates.views.handler500'
 
 urlpatterns = patterns('',
     (r'^users/', include('users.urls')),

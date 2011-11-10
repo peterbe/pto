@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en-US" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Oh nooo! Something went horribly wrong</title>
+    <style>
+html {
+  font: 14px "Lucida Grande", "Lucida Sans Unicode", sans-serif;
+  font-weight: normal;
+  font-style: normal;
+  background: url(/media/css/images/bg.png) #67a7c7 repeat-x fixed;
+  color: #fff;
+  }
+body {
+  padding: 15px;
+  margin: 0;
+  }
+#page {
+  width: 90%;
+  margin: 0 auto;
+  position: relative;
+  }
+section {
+  display: block;
+  color: black;
+  background-color: white;
+  padding: 1em;
+  border-radius: 0.5em;
+  -moz-border-radius: 0.5em;
+  -webkit-border-radius: 0.5em;
+  margin-top: 1em;
+  min-height: 300px;
+  }
+
+h1 a {
+  left: 10%;
+  height: 47px;
+  width: 0;
+  padding-left: 275px;
+  background: url(/media/css/images/pto.png) no-repeat;
+  overflow: hidden;
+  display: block;
+  }
+#error-info {
+  font-size:80%;
+  margin-top:50px;
+}
+    </style>
+  </head>
+  <body>
+  <div id="page">
+    <header>
+      <h1><a href="/">PTO Notification</a></h1>
+    </header>
+
+    <section id="content">
+    <h1>Error: Shit ain't working right</h1>
+    <hr>
+    <p>Things that might help:</p>
+    <ul>
+      <li>Join the #webdev IRC room and let someone know how this happened</li>
+      <li>Try patiently a little bit later. Perhaps a cache was acting up.</li>
+      <li>Restarting your computer. Ideally without saving any documents first.</li>
+      <li>Go back to to <a href="/">home page</a> and try again.</li>
+    </ul>
+    <div id="error-info">
+    <hr>
+    <h3>For the nerdily inclined...</h3>
+    <p>
+      <strong>Error type:</strong> <code>{{ err_type }}</code>
+      <br>
+      <strong>Error value:</strong> <code>{{ err_value }}</code>
+    </p>
+    <pre>{{ err_traceback }}</pre>
+    </div>
+    </section>
+  </div>
+  </body>
+</html>

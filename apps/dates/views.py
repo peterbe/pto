@@ -78,7 +78,21 @@ def handler404(request):
     data = {}
     return jingo.render(request, '404.html', data, status=404)
 
+def handler500(request):
+    data = {}
+    import sys, traceback
+    err_type, err_value, err_traceback = sys.exc_info()
+    from StringIO import StringIO
+    out = StringIO()
+    traceback.print_exc(file=out)
+    traceback_formatted = out.getvalue()
+    data['err_type'] = err_type
+    data['err_value'] = err_value
+    data['err_traceback'] = traceback_formatted
+    return jingo.render(request, '500.html', data)
+
 def home(request):  # aka dashboard
+    raise NameError('Something is wrong')
     data = {}
     data['mobile'] = request.MOBILE  # thank you django-mobility (see settings)
     if data['mobile']:
