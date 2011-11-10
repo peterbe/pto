@@ -148,7 +148,6 @@ def save_hours(request):
         return {'error': 'Not logged in'}
     if not request.POST.get('entry'):
         return http.HttpResponseBadRequest("No entry parameter provided")
-    #entry = get_object_or_404(Entry, pk=request.POST['entry'])
     try:
         entry = Entry.objects.get(pk=request.POST['entry'])
     except Entry.DoesNotExist:
