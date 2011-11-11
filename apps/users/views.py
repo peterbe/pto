@@ -37,26 +37,25 @@
 import logging
 from django import http
 from django.shortcuts import redirect, render
-from django.core.urlresolvers import reverse
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
-from django.contrib import messages
 import django.contrib.auth.views
 from django.conf import settings
+from session_csrf import anonymous_csrf
 import forms
 from models import get_user_profile
-from django.shortcuts import render_to_response as django_render_to_response
 from dates.decorators import json_view
 from utils import ldap_lookup
 
 
+@anonymous_csrf
 def login(request):
     # mostly copied from zamboni
     logout(request)
 
-    from monkeypatch_template_engine import jinja_for_django as jfd
-    django.contrib.auth.views.render_to_response = jfd
+    #from monkeypatch_template_engine import jinja_for_django as jfd
+    #django.contrib.auth.views.render_to_response = jfd
     r = django.contrib.auth.views.login(request,
                          template_name='users/login.html',
                          redirect_field_name=REDIRECT_FIELD_NAME,

@@ -34,7 +34,6 @@
 # ***** END LICENSE BLOCK *****
 
 import datetime
-import urlparse
 from urllib import urlencode
 from collections import defaultdict
 from django import http
@@ -70,11 +69,13 @@ def valid_email(value):
     except ValidationError:
         return False
 
+
 def handler500(request):
     data = {}
-    import sys, traceback
-    err_type, err_value, err_traceback = sys.exc_info()
+    import sys
+    import traceback
     from StringIO import StringIO
+    err_type, err_value, err_traceback = sys.exc_info()
     out = StringIO()
     traceback.print_exc(file=out)
     traceback_formatted = out.getvalue()
@@ -82,6 +83,7 @@ def handler500(request):
     data['err_value'] = err_value
     data['err_traceback'] = traceback_formatted
     return render(request, '500.html', data, status=500)
+
 
 def home(request):  # aka dashboard
     data = {}
@@ -93,7 +95,6 @@ def home(request):  # aka dashboard
 
     # now do what the login_required would usually do
     if not request.user.is_authenticated():
-        url = settings.LOGIN_URL
         path = request.get_full_path()
         return redirect_to_login(path)
 
@@ -110,11 +111,8 @@ def home(request):  # aka dashboard
     data['right_now_users'] = right_now_users
     data['left'] = get_left(profile)
 
-<<<<<<< HEAD
     return render(request, 'dates/home.html', data)
-=======
-    return jingo.render(request, 'dates/home.html', data)
->>>>>>> b129810bb738c30fc16030794cc87178f123c617
+
 
 def get_right_nows():
     right_now_users = []
@@ -135,6 +133,7 @@ def get_right_nows():
 
     return right_nows, right_now_users
 
+
 def get_upcomings(max_days=14):
     users = []
     upcoming = defaultdict(list)
@@ -154,6 +153,7 @@ def get_upcomings(max_days=14):
         upcoming[entry.user].append((days, entry))
 
     return upcoming, users
+
 
 def get_left(profile):
     if profile.start_date and profile.country:
@@ -328,12 +328,13 @@ def notify(request):
     manager = None
     if profile and profile.manager:
         manager = ldap_lookup.fetch_user_details(profile.manager)
-    data['hr_managers'] = [ldap_lookup.fetch_user_details(x)
-                           for x in settings.HR_MANAGERS]
+    data['hr_managers'] = [x.user for x in
+                           (UserProfile.objects
+                            .filter(hr_manager=True)
+                            .select_related('user'))]
 
     data['manager'] = manager
-    data['all_managers'] = [x for x in data['hr_managers']
-                            if x]
+    data['all_managers'] = [x for x in data['hr_managers'] if x]
     if manager:
         data['all_managers'].append(manager)
     data['form'] = form
@@ -413,56 +414,6 @@ def hours(request, pk):
 
     return render(request, 'dates/hours.html', data)
 
-def save_entry_hours(entry, form):
-    assert form.is_valid()
-
-    total_hours = 0
-    for date in utils.get_weekday_dates(entry.start, entry.end):
-        hours = int(form.cleaned_data[date.strftime('d-%Y%m%d')])
-        birthday = False
-        if hours == -1:
-            birthday = True
-            hours = 0
-        assert hours >= 0 and hours <= settings.WORK_DAY, hours
-        try:
-            hours_ = Hours.objects.get(entry__user=entry.user,
-                                       date=date)
-            if hours_.hours:
-                # this nullifies the previous entry on this date
-                reverse_entry = Entry.objects.create(
-                  user=hours_.entry.user,
-                  start=date,
-                  end=date,
-                  details=hours_.entry.details,
-                  total_hours=hours_.hours * -1,
-                )
-                Hours.objects.create(
-                  entry=reverse_entry,
-                  hours=hours_.hours * -1,
-                  date=date,
-                )
-            #hours_.hours = hours  # nasty stuff!
-            #hours_.birthday = birthday
-            #hours_.save()
-        except Hours.DoesNotExist:
-            # nothing to credit
-            pass
-        Hours.objects.create(
-          entry=entry,
-          hours=hours,
-          date=date,
-          birthday=birthday,
-        )
-        total_hours += hours
-    #raise NotImplementedError
-
-    is_edit = entry.total_hours is not None
-    #if entry.total_hours is not None:
-    entry.total_hours = total_hours
-    entry.save()
-
-    return total_hours, is_edit
-
 
 def save_entry_hours(entry, form):
     assert form.is_valid()
@@ -513,11 +464,14 @@ def save_entry_hours(entry, form):
     entry.save()
 
     return total_hours, is_edit
-
 
 
 def send_email_notification(entry, extra_users, is_edit=False):
-    email_addresses = list(settings.HR_MANAGERS)
+    email_addresses = []
+    for profile in (UserProfile.objects
+                     .filter(hr_manager=True,
+                             user__email__isnull=False)):
+        email_addresses.append(profile.user.email)
 
     profile = entry.user.get_profile()
     if profile and profile.manager:
@@ -643,15 +597,11 @@ def list_(request):
 
     data['form'] = form
     data['query_string'] = request.META.get('QUERY_STRING')
-<<<<<<< HEAD
     return render(request, 'dates/list.html', data)
-=======
-    return jingo.render(request, 'dates/list.html', data)
->>>>>>> b129810bb738c30fc16030794cc87178f123c617
+
 
 @login_required
 def list_csv(request):
-    data = []
     entries = get_entries_from_request(request.GET)
     response = http.HttpResponse(mimetype='text/csv')
     writer = CSVUnicodeWriter(response)
@@ -693,6 +643,7 @@ def list_csv(request):
 
     return response
 
+
 @json_view
 @login_required
 def list_json(request):
@@ -721,6 +672,7 @@ def list_json(request):
         data.append(row)
 
     return {'aaData': data}
+
 
 def get_entries_from_request(data):
     form = forms.ListFilterForm(date_format='%d %B %Y', data=data)
@@ -757,52 +709,3 @@ def get_entries_from_request(data):
         entries = entries.filter(user__id__in=_users)
 
     return entries
-<<<<<<< HEAD
-=======
-
-
-## Kumar stuff
-#def home(request):
-#    return jingo.render(request, 'pto/home.html',
-#                        dict(calculate_pto_url=reverse('pto.calculate_pto')))
-#
-#
-#def days_to_hrs(day):
-#    return day * Decimal('8')
-#
-#
-#def hrs_to_days(hour):
-#    return hour / Decimal('8')
-#
-#
-#@json_view
-#def calculate_pto(request):
-#    d = date.today()
-#    today = datetime(d.year, d.month, d.day, 0, 0, 0)
-#    trip_start = parse_datetime(request.GET['start_date'])
-#    pointer = today
-#    hours_per_quarter = Decimal(request.GET['per_quarter'])
-#    hours_avail = Decimal(request.GET['hours_avail'])
-#    while pointer <= trip_start:
-#        if pointer.day == 1 or pointer.day == 15:
-#            hours_avail += hours_per_quarter
-#        if pointer.day > 15:
-#            add_days = days_til_1st(pointer)
-#        else:
-#            add_days = 15 - pointer.day
-#        if add_days == 0:
-#            add_days = 15  # 1st of the month
-#        pointer += timedelta(days=add_days)
-#    return dict(hours_available_on_start=str(round(hours_avail, 2)),
-#                days_available_on_start=str(round(hrs_to_days(hours_avail),
-#                                                  2)))
-#
-#
-#def days_til_1st(a_datetime):
-#    """Returns the number of days until the 1st of the next month."""
-#    next = a_datetime.replace(day=28)
-#    while next.month == a_datetime.month:
-#        next = next + timedelta(days=1)
-#    return (next - a_datetime).days
-#
->>>>>>> b129810bb738c30fc16030794cc87178f123c617

@@ -53,6 +53,7 @@ from users.models import UserProfile
 import ldap
 from users.utils.ldap_mock import MockLDAP
 
+
 def unicode_csv_reader(unicode_csv_data,
                        encoding='utf-8',
                        **kwargs):
@@ -62,6 +63,7 @@ def unicode_csv_reader(unicode_csv_data,
     for row in csv_reader:
         # decode UTF-8 back to Unicode, cell by cell:
         yield [unicode(cell, encoding) for cell in row]
+
 
 def utf_8_encoder(unicode_csv_data, encoding):
     for line in unicode_csv_data:
@@ -79,7 +81,6 @@ class ViewsTest(TestCase):
         ldap.open.mock_returns = Mock('ldap_connection')
         ldap.set_option = Mock(return_value=None)
 
-        settings.HR_MANAGERS = ('boss@mozilla.com',)
         boss = [
           ('mail=boss@mozilla.com,o=com,dc=mozilla',
            {'cn': ['Hugo Boss'],
@@ -107,6 +108,16 @@ class ViewsTest(TestCase):
         peter.set_password('secret')
         peter.save()
         assert self.client.login(username='peter', password='secret')
+
+    def _create_hr_manager(self, username='jill', email='jill@mozilla.com'):
+        user = User.objects.create(
+          username=username,
+          email=email
+        )
+        profile = user.get_profile()
+        profile.hr_manager = True
+        profile.save()
+        return user
 
     def test_404_page(self):
         url = '/ojsfpijweofpjwf/qpijf/'
@@ -700,6 +711,12 @@ class ViewsTest(TestCase):
         ok_('birthday' in events[0]['title'])
 
     def test_notify_free_input(self):
+        hr_manager = self._create_hr_manager()
+        hr_manager2 = self._create_hr_manager(
+          username='betty',
+          email='betty@mozilla.com',
+        )
+
         url = reverse('dates.notify')
         peter = User.objects.create(
           username='peter',
@@ -713,6 +730,13 @@ class ViewsTest(TestCase):
         assert self.client.login(username='peter', password='secret')
         response = self.client.get(url)
         eq_(response.status_code, 200)
+
+        _point = 'The following managers will be notified:'
+        assert _point in response.content
+        default_notified = response.content.split(_point)[1]
+        default_notified = default_notified.split('</form>')[0]
+        ok_(hr_manager.email in default_notified)
+        ok_(hr_manager2.email in default_notified)
 
         monday = datetime.date(2018, 1, 1)  # I know this is a Monday
         wednesday = monday + datetime.timedelta(days=2)
@@ -757,7 +781,8 @@ class ViewsTest(TestCase):
         ok_('mail@email.com' in response.content)
         ok_('valid@ test.com' not in response.content)
         ok_('axe l@e..com' not in response.content)
-        ok_(settings.HR_MANAGERS[0] in response.content)
+        ok_(hr_manager.email in response.content)
+        ok_(hr_manager2.email in response.content)
 
     def test_notify_notification_attachment(self):
         url = reverse('dates.notify')
@@ -1495,7 +1520,6 @@ class ViewsTest(TestCase):
         profile.country = 'GB'
         profile.start_date = datetime.date(2010, 4, 1)
         profile.save()
-
 
         delta = datetime.timedelta
 

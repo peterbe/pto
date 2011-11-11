@@ -136,30 +136,17 @@ USE_L10N = True
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = 'override this with something secret and unique'
 
-# List of callables that know how to import templates from various sources.
-#TEMPLATE_LOADERS = (
-#    'django.template.loaders.filesystem.Loader',
-#    'django.template.loaders.app_directories.Loader',
-##     'django.template.loaders.eggs.Loader',
-#)
-
-TEMPLATE_CONTEXT_PROCESSORS = (
-    'django.contrib.auth.context_processors.auth',
-    'django.core.context_processors.debug',
-    'django.core.context_processors.media',
-    'django.core.context_processors.request',
-    'django.core.context_processors.csrf',
-    'django.contrib.messages.context_processors.messages',
-
+TEMPLATE_CONTEXT_PROCESSORS += (
     'dates.context_processors.global_settings',
     'jingo_minify.helpers.build_ids',
 )
+
 TEMPLATE_DIRS = (
     path('templates'),
 )
 
-
 JINGO_EXCLUDE_APPS = (
+    # XXX need to figure out which of these is the right setting
     'django.contrib.admin',
     'admin',
 )
@@ -245,7 +232,6 @@ MIDDLEWARE_CLASSES.append('mobility.middleware.DetectMobileMiddleware')
 MIDDLEWARE_CLASSES.append('mobility.middleware.XMobileMiddleware')
 MIDDLEWARE_CLASSES = tuple(MIDDLEWARE_CLASSES)
 
-
 ROOT_URLCONF = '%s.urls' % ROOT_PACKAGE
 
 INSTALLED_APPS += (
@@ -323,8 +309,13 @@ HMAC_KEYS = {  # for bcrypt only
 SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
 
 ## Memcache
-CACHE_BACKEND = 'memcached://127.0.0.1:11211/'
-CACHE_MIDDLEWARE_KEY_PREFIX = 'pto'
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+        'LOCATION': '127.0.0.1:11211',
+        'KEY_PREFIX': 'pto',
+    }
+}
 
 ## Tests
 TEST_RUNNER = 'test_utils.runner.RadicalTestSuiteRunner'
@@ -355,17 +346,12 @@ WORK_DAY = 8  # hours
 EMAIL_SUBJECT = 'PTO notification from %(first_name)s %(last_name)s'
 EMAIL_SUBJECT_EDIT = 'PTO update from %(first_name)s %(last_name)s'
 EMAIL_SIGNATURE = "The Mozilla PTO cruncher"
-FALLBACK_TO_ADDRESS = 'karen@mozilla.com'
+FALLBACK_TO_ADDRESS = 'jvandeven@mozilla.com'
 
 # People you're not allowed to notify additionally
 EMAIL_BLACKLIST = (
   'all@mozilla.com',
   'all-mv@mozilla.com',
-)
-
-# People who get notifications every time
-HR_MANAGERS = (
-  'jvandeven@mozilla.com',
 )
 
 try:

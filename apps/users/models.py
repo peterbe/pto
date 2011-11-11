@@ -13,16 +13,19 @@ def valid_email(value):
     except ValidationError:
         return False
 
+
 def get_user_profile(user):
     try:
         return user.get_profile()
     except UserProfile.DoesNotExist:
         return UserProfile.objects.create(user=user)
 
+
 @receiver(post_save, sender=User)
 def force_profile_creation(sender, instance, **kwargs):
     # django-auth-ldap needs to to map stuff like 'manager' and 'office'
     get_user_profile(instance)
+
 
 class UserProfile(models.Model):
     user = models.ForeignKey(User)
@@ -35,9 +38,11 @@ class UserProfile(models.Model):
     country = models.CharField(max_length=100, blank=True)
     city = models.CharField(max_length=100, blank=True)
     notes = models.TextField(blank=True)
+    hr_manager = models.BooleanField(default=False)
 
     def __repr__(self):
         return "<UserProfile: %s>" % self.user
+
 
 @receiver(pre_save, sender=UserProfile)
 def explode_office_to_country_and_city(sender, instance, **kwargs):
@@ -45,6 +50,7 @@ def explode_office_to_country_and_city(sender, instance, **kwargs):
         city, country = instance.office.split(':::')
         instance.city = city
         instance.country = country
+
 
 @receiver(pre_save, sender=UserProfile)
 def explode_find_manager_user(sender, instance, **kwargs):

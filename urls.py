@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.conf.urls.defaults import *
+from django.conf.urls.defaults import patterns, include
 
 from django.contrib import admin
 admin.autodiscover()
@@ -30,3 +30,9 @@ if settings.DEBUG:
 # Monkey-patch django forms to avoid having to use Jinja2's |safe everywhere.
 import safe_django_forms
 safe_django_forms.monkeypatch()
+
+# Monkey-patch Django's csrf_protect decorator to use session-based CSRF
+# tokens:
+if 'session_csrf' in settings.INSTALLED_APPS:
+    import session_csrf
+    session_csrf.monkeypatch()
