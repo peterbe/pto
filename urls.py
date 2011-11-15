@@ -9,6 +9,7 @@ handler500 = 'dates.views.handler500'
 urlpatterns = patterns('',
     (r'^users/', include('users.urls')),
     (r'^mobile/', include('mobile.urls')),
+    (r'^autocomplete/', include('autocomplete.urls')),
     (r'', include('dates.urls')),
 
     # Uncomment the admin/doc line below to enable admin documentation:

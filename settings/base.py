@@ -270,6 +270,7 @@ INSTALLED_APPS += (
     'users',
     'legacy',
     'mobile',
+    'autocomplete',
 )
 
 # Tells the extract script what files to look for L10n in and what function

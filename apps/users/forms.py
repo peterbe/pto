@@ -39,7 +39,7 @@ from django.contrib.auth.models import User
 import django.contrib.auth.forms
 from .models import UserProfile
 from dates.forms import BaseModelForm
-
+from lib.country_aliases import ALIASES as COUNTRY_ALIASES
 
 class EmailInput(forms.widgets.Input):
     input_type = 'email'
@@ -62,9 +62,35 @@ class AuthenticationForm(django.contrib.auth.forms.AuthenticationForm):
 
 
 class ProfileForm(BaseModelForm):
+    country = forms.ChoiceField(widget=forms.widgets.Select())
+
     class Meta:
         model = UserProfile
-        fields = ('start_date', 'country', 'city')
+        fields = ('city',)
+
+    def __init__(self, *args, **kwargs):
+        super(ProfileForm, self).__init__(*args, **kwargs)
+
+        country_choices = []
+        _all_longforms = []
+        for each in (UserProfile.objects.exclude(country='')
+                     .values('country')
+                     .distinct('country')
+                     .order_by('country')):
+            country = each['country']
+            long_form = country
+            if long_form in COUNTRY_ALIASES.values():
+                long_form = [k for (k, v) in COUNTRY_ALIASES.items()
+                             if v == country][0]
+            _all_longforms.append(long_form)
+            country_choices.append((country, long_form))
+        for alias, country in COUNTRY_ALIASES.items():
+            if alias not in _all_longforms:
+                _all_longforms.append(alias)
+                country_choices.append((country, alias))
+
+        country_choices.sort(lambda x,y: cmp(x[1], y[1]))
+        self.fields['country'].choices = country_choices
 
     def clean_start_date(self):
         value = self.cleaned_data['start_date']
@@ -74,6 +100,14 @@ class ProfileForm(BaseModelForm):
 
     def clean_country(self):
         value = self.cleaned_data['country']
-        # XXX: we ought to massage and validate this value
-        # so that for example 'United Kingdom' -> 'GB'
+        if value in COUNTRY_ALIASES.values():
+            pass
+        elif value in COUNTRY_ALIASES:
+            value = COUNTRY_ALIASES.get(value)
+        else:
+            # search case-insensitively
+            for alias in COUNTRY_ALIASES:
+                if alias.lower() == value.lower():
+                    value = COUNTRY_ALIASES[alias]
+                    break
         return value

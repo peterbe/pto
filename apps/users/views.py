@@ -117,7 +117,12 @@ def profile(request):
     if request.method == 'POST':
         form = forms.ProfileForm(instance=profile, data=request.POST)
         if form.is_valid():
-            form.save()
+            city = form.cleaned_data['city']
+            country = form.cleaned_data['country']
+            profile.city = city
+            profile.country = country
+            profile.save()
+
             return redirect('/')
     else:
         form = forms.ProfileForm(instance=profile)
