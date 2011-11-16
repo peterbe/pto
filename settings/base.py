@@ -162,7 +162,7 @@ MINIFY_BUNDLES = {
             'css/libs/jquery_ui/redmond/jquery-ui-1.8.14.datepicker.autocomplete.css',
         ),
         'mobile': (
-            'css/libs/jquery.mobile-1.0b3pre.min.css',
+            'css/libs/jquery.mobile-1.0rc3.min.css',
             'css/mobile/mobile.css',
         ),
         'dates': (
@@ -182,13 +182,14 @@ MINIFY_BUNDLES = {
     },
     'js': {
         'global': (
-            'js/libs/jquery-1.6.2.min.js',
+            'js/libs/jquery-1.6.4.min.js',
         ),
         'mobile': (
-            'js/libs/jquery-1.6.2.min.js',
+            'js/libs/jquery-1.6.4.min.js',  # jquery mobile 1.0rc3 requires jquery 1.6.4
             'js/libs/date.js',
             'js/mobile/mobile.js',
-            'js/libs/jquery.mobile-1.0b3pre.js',
+            #'js/libs/jquery.mobile-1.0rc3.min.js',
+            'js/libs/jquery.mobile-1.0rc3.js',
         ),
         'dates.home': (
             'js/libs/fullcalendar.min.js',

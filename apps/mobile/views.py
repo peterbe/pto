@@ -231,10 +231,7 @@ def save_settings(request):
     profile = request.user.get_profile()
     form = ProfileForm(instance=profile, data=request.POST)
     if form.is_valid():
-        #print form.cleaned_data['start_date']
         form.save()
-        #form.save(commit=True)
-        #print request.user.get_profile().start_date
         return {'ok': True}
     else:
         return {'form_errors': form.errors}

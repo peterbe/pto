@@ -1,4 +1,4 @@
-<div data-role="page" id="settings"><!-- settings page -->
+<div data-role="page" id="settings" data-add-back-btn="true"><!-- settings page -->
 
   <div data-role="header">
     <h1>Settings</h1>
@@ -11,10 +11,6 @@
 
     <form action="{{ url('mobile.save_settings') }}" method="post">
       <fieldset>
-        <div data-role="fieldcontain">
-        <label for="id_start_date">Start date (YYYY-MM-DD):</label>
-        <input type="text" name="start_date" id="id_start_date" value="">
-        </div>
 
         <div data-role="fieldcontain">
         <label for="id_country">Country:</label>

@@ -9,6 +9,7 @@ function _grr(error) {
 
 
 $(document).bind("mobileinit", function () {
+  $.mobile.touchOverflowEnabled = true;  // http://jquerymobile.com/test/docs/pages/touchoverflow.html
   $.extend($.mobile, { ajaxFormsEnabled: false });
 });
 
@@ -25,6 +26,7 @@ var Data = (function() {
        $.getJSON('/mobile/rightnow.json', function(response) {
          if (response.error) return _grr(response.error);
 
+         $('dt,dd', '#rightnow .now').remove();
          var p = $('#rightnow .now');
          $.each(response.now, function(i, each) {
            $('<dt>').text(each.name).appendTo(p);
@@ -39,6 +41,7 @@ var Data = (function() {
                  .appendTo(p);
          }
 
+         $('dt,dd', '#rightnow .upcoming').remove();
          p = $('#rightnow .upcoming');
          $.each(response.upcoming, function(i, each) {
            $('<dt>').text(each.name).appendTo(p);
@@ -90,10 +93,6 @@ var Data = (function() {
         var html = "You're currently logged in as ";
         html += '<strong>' + html_escape(response.full_name) + '</strong>.';
         $('#settings p.info').html(html);
-
-        if (response.start_date) {
-          $('#id_start_date').val(response.start_date);
-        }
         if (response.country) {
           $('#id_country').val(response.country);
         }
@@ -264,8 +263,9 @@ $(document).ready(function() {
             });
           });
         } else {
-          alert('Saved successfully!');
-          Data.settings();
+          alert('Saved successfully');
+          $.mobile.changePage('#index');
+          //Data.settings();
         }
       });
       return false;
