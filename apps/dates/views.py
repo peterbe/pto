@@ -218,7 +218,6 @@ def calendar_events(request):
             elif hour.hours == 4:
                 days += 0.5
 
-        raise Exception
         if days > 1:
             title += '%s days' % days
             if Hours.objects.filter(entry=entry, birthday=True).exists():
