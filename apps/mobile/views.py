@@ -186,7 +186,11 @@ def hours_json(request):
     for date in get_weekday_dates(entry.start, entry.end):
         key = date.strftime('d-%Y%m%d')
         try:
-            hours_ = Hours.objects.get(date=date, entry__user=entry.user)
+            hours_ = Hours.objects.get(
+              date=date,
+              entry__user=entry.user,
+              hours__gt=0,
+            )
             #initial[date.strftime('d-%Y%m%d')] = hours_.hours
             value = hours_.hours
         except Hours.DoesNotExist:
