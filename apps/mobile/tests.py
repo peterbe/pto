@@ -190,47 +190,25 @@ class MobileViewsTest(TestCase, ViewsTestMixin):
         names = [x['name'] for x in struct['upcoming']]
         ok_('harry' in names[0])
 
-    def test_left_json(self):
-        url = reverse('mobile.left')
+    def test_taken_json(self):
+        url = reverse('mobile.taken')
         response = self.client.get(url)
         eq_(response.status_code, 200)
         ok_(json.loads(response.content)['error'])
 
-        self._login()
+        user = self._login()
         response = self.client.get(url)
         struct = json.loads(response.content)
-        eq_(struct['missing'], ['country', 'start date'])
+        eq_(struct['taken'], '0 days')
 
-        peter, = User.objects.all()
-        profile = peter.get_profile()
+        profile = user.get_profile()
         profile.country = 'US'
         profile.save()
 
         response = self.client.get(url)
         struct = json.loads(response.content)
-        eq_(struct['missing'], ['start date'])
-
-        profile = peter.get_profile()
-        today = datetime.date.today()
-        profile.start_date = today - datetime.timedelta(days=30)
-        profile.save()
-        response = self.client.get(url)
-        struct = json.loads(response.content)
-        eq_(struct['less_than_a_year'], 30)
-
-        profile.start_date = today - datetime.timedelta(days=400)
-        profile.save()
-
-        response = self.client.get(url)
-        struct = json.loads(response.content)
-
-        hours = struct['hours']
-        ok_(isinstance(hours, int))
-        ok_(hours > 0)
-
-        hours = struct['days']
-        ok_(isinstance(hours, basestring))
-
+        from dates.views import get_taken_info
+        eq_(struct, get_taken_info(user))
 
     def test_notify(self):
         url = reverse('mobile.notify')
