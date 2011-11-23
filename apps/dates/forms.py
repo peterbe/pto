@@ -3,7 +3,7 @@ from django.conf import settings
 from django.utils import formats
 from django.core.validators import validate_email
 from django import forms
-from models import Hours
+from models import Hours, Entry
 from users.models import UserProfile
 import utils
 
@@ -136,7 +136,13 @@ class HoursForm(BaseForm):
             try:
                 value = int(cleaned_data[field_name])
                 if date == dates[0] and not value:
-                    raise forms.ValidationError("First date can't be 0 hours")
+                    _search = dict(
+                      start__gte=date,
+                      end__gte=date,
+                      user=self.entry.user
+                    )
+                    if not Entry.objects.filter(**_search).exists():
+                        raise forms.ValidationError("First date can't be 0 hours")
                 elif date == dates[-1] and not value:
                     raise forms.ValidationError("Last date can't be 0 hours")
             except (KeyError, ValueError):

@@ -69,8 +69,47 @@ def utf_8_encoder(unicode_csv_data, encoding):
     for line in unicode_csv_data:
         yield line.encode(encoding)
 
+class ViewsTestMixin(object):
+    def _login(self):
+        peter = User.objects.create(
+          username='peter',
+          email='pbengtsson@mozilla.com',
+          first_name='Peter',
+          last_name='Bengtsson',
+        )
+        peter.set_password('secret')
+        peter.save()
+        assert self.client.login(username='peter', password='secret')
+        return peter
 
-class ViewsTest(TestCase):
+    def _create_hr_manager(self, username='jill', email='jill@mozilla.com'):
+        user = User.objects.create(
+          username=username,
+          email=email
+        )
+        profile = user.get_profile()
+        profile.hr_manager = True
+        profile.save()
+        return user
+
+    def _create_entry_hours(self, entry, *hours):
+        date = entry.start
+        i = 0
+        while date <= entry.end:
+            try:
+                h = hours[i]
+            except IndexError:
+                h = 8
+            Hours.objects.create(
+              entry=entry,
+              date=date,
+              hours=h,
+            )
+            i += 1
+            date += datetime.timedelta(days=1)
+
+
+class ViewsTest(TestCase, ViewsTestMixin):
 
     def setUp(self):
         super(ViewsTest, self).setUp()
@@ -98,42 +137,6 @@ class ViewsTest(TestCase):
             settings.AUTH_LDAP_BIND_DN: settings.AUTH_LDAP_BIND_PASSWORD,
           }))
 
-    def _login(self):
-        peter = User.objects.create(
-          username='peter',
-          email='pbengtsson@mozilla.com',
-          first_name='Peter',
-          last_name='Bengtsson',
-        )
-        peter.set_password('secret')
-        peter.save()
-        assert self.client.login(username='peter', password='secret')
-
-    def _create_hr_manager(self, username='jill', email='jill@mozilla.com'):
-        user = User.objects.create(
-          username=username,
-          email=email
-        )
-        profile = user.get_profile()
-        profile.hr_manager = True
-        profile.save()
-        return user
-
-    def _create_entry_hours(self, entry, *hours):
-        date = entry.start
-        i = 0
-        while date <= entry.end:
-            try:
-                h = hours[i]
-            except IndexError:
-                h = 8
-            Hours.objects.create(
-              entry=entry,
-              date=date,
-              hours=h,
-            )
-            i += 1
-            date += datetime.timedelta(days=1)
 
     def test_404_page(self):
         url = '/ojsfpijweofpjwf/qpijf/'
@@ -1690,3 +1693,42 @@ class ViewsTest(TestCase):
         eq_(row[9], profile.city)
         eq_(row[10], profile.country)
         eq_(row[11], fmt(profile.start_date))
+
+    def test_adding_a_single_day_of_zero(self):
+        print self._login
+
+        user = self._login()
+        assert user
+        monday = datetime.date(2018, 1, 1)  # I know this is a Monday
+        wednesday = monday + datetime.timedelta(days=2)
+        friday = monday + datetime.timedelta(days=4)
+        print "USER", repr(user)
+        entry = Entry.objects.create(
+          user=user,
+          start=monday,
+          end=friday,
+          total_hours=settings.WORK_DAY * 5
+        )
+        print "ENTRY", repr(entry)
+        self._create_entry_hours(entry)
+
+        # now begin to change your mind by adding one day of zero on top
+        url = reverse('dates.notify')
+        data = {'start': wednesday, 'end': wednesday,
+                'details': 'Change of minds'}
+        response = self.client.post(url, data)
+        eq_(response.status_code, 302)
+        entry0 = Entry.objects.get(details=data['details'])
+        url = reverse('dates.hours', args=[entry0.pk])
+        response = self.client.get(url)
+        assert response.status_code == 200
+        ok_('Already logged 8 hours on this day' in response.content)
+
+        data = {
+          wednesday.strftime('d-%Y%m%d'): '0'
+        }
+        response = self.client.post(url, data)
+        eq_(response.status_code, 302)
+
+        sum_hours = sum(x.total_hours for x in Entry.objects.all())
+        eq_(sum_hours, settings.WORK_DAY * 5 + 0 + -8)

@@ -36,17 +36,18 @@
 import datetime
 from urlparse import urlparse
 from nose.tools import eq_, ok_
+from django.test import TestCase
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.utils import simplejson as json
-from dates.tests.test_views import ViewsTest as BaseViewsTest
+from dates.tests.test_views import ViewsTestMixin
 from dates.models import Entry, Hours
 
 
-class MobileViewsTest(BaseViewsTest):
+class MobileViewsTest(TestCase, ViewsTestMixin):
 
-    def _login(self):
+    def xx_login(self):
         peter = User.objects.create(
           username='peter',
           email='pbengtsson@mozilla.com',
