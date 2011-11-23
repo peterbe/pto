@@ -439,6 +439,12 @@ class MobileViewsTest(BaseViewsTest):
         eq_(struct['city'], 'London')
 
     def test_save_settings(self):
+        # to be able to save country='GB' this must be a valid choice
+        bob = User.objects.create(username='bob')
+        bob_profile = bob.get_profile()
+        bob_profile.country = 'GB'
+        bob_profile.save()
+
         url = reverse('mobile.save_settings')
         response = self.client.get(url)
         eq_(response.status_code, 405)
@@ -454,23 +460,16 @@ class MobileViewsTest(BaseViewsTest):
         data = {
           'city': 'London',
           'country': 'GB',
-          'start_date': '2010-xxx',
         }
-        response = self.client.post(url, data)
-        eq_(response.status_code, 200)
-        struct = json.loads(response.content)
-        ok_(struct['form_errors']['start_date'])
-        data['start_date'] = '2010-04-01'
         response = self.client.post(url, data)
         eq_(response.status_code, 200)
         struct = json.loads(response.content)
         ok_(struct['ok'])
 
         from users.models import UserProfile
-        profile, = UserProfile.objects.all()
+        profile = UserProfile.objects.get(user__username='peter')
         eq_(profile.country, 'GB')
         eq_(profile.city, 'London')
-        eq_(profile.start_date, datetime.date(2010, 4, 1))
 
     def test_exit_mobile(self):
         self._login()

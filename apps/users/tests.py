@@ -408,7 +408,7 @@ class UsersTest(TestCase):
         eq_(response.status_code, 200)
 
         today = datetime.date.today()
-        data = {'start_date': today.strftime(settings.DEFAULT_DATE_FORMAT),
+        data = {
                 'country': 'GB',
                 'city': 'London',
                 }
@@ -416,4 +416,5 @@ class UsersTest(TestCase):
         eq_(response.status_code, 302)
 
         profile = UserProfile.objects.get(user=mortal)
-        eq_(profile.start_date, today)
+        eq_(profile.country, 'GB')
+        eq_(profile.city, 'London')

@@ -231,7 +231,9 @@ def save_settings(request):
     profile = request.user.get_profile()
     form = ProfileForm(instance=profile, data=request.POST)
     if form.is_valid():
-        form.save()
+        profile = form.save(commit=False)
+        profile.country = form.cleaned_data['country']
+        profile.save()
         return {'ok': True}
     else:
         return {'form_errors': form.errors}

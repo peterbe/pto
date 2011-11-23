@@ -22,7 +22,7 @@ from django.utils.functional import lazy
 #ADMINS = ()
 #MANAGERS = ADMINS
 
-DATABASES = {}  # See settings_local.
+DATABASES = {}  # See settings/local.py
 
 # Site ID is used by Django's Sites framework.
 SITE_ID = 1
