@@ -39,7 +39,7 @@ import views
 urlpatterns = patterns('',
     url(r'^$', views.home, name='mobile.home'),
     url(r'^rightnow.json$', views.right_now, name='mobile.right_now'),
-    url(r'^left.json$', views.left, name='mobile.left'),
+    url(r'^taken.json$', views.taken, name='mobile.taken'),
     url(r'^settings.json$', views.settings_json, name='mobile.settings'),
     url(r'^settings/$', views.save_settings, name='mobile.save_settings'),
     url(r'^notify/$', views.notify, name='mobile.notify'),

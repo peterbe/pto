@@ -37,27 +37,29 @@
 </div>
 
 <div id="pto_left" class="extra-info">
-<h2>How much PTO do I have left?</h2>
+<h2>How much PTO have I taken?</h2>
 
-{% if left['hours'] %}
-  <p>You have
-  {% if left['hours'] > 16 %}
-    <strong>{{ left['days'] }}</strong>
-  {% else %}
-    <strong>{{ left['hours'] }} hours</strong>
-  {% endif %}
-  of PTO left this year.</p>
+<p>You have taken
+<strong>{{ taken }}</strong>
+this year.
+</p>
+
+{% if country_total %}
+<p>Out of a total of <strong>{{ country_total }}</strong> in your country ({{ country }}).</p>
 {% else %}
-  {% if left['missing'] %}
-    <p class="missing">To be able to work this out, enter your
-      <a href="{{ url('users.profile') }}">{{ ' and '.join(left['missing']) }}</a>.</p>
+  {% if unrecognized_country %}
+  <p>Unfortunately not able to quickly give a number of total days for your country ({{ country }}).</p>
   {% else %}
-    {% if left['less_than_a_year'] %}
-    <p class="less_than_a_year">Sorry, this can not be automatically worked out if you
-     have worked less than one year (you have worked here {{ left['less_than_a_year'] }} days)</p>
-    {% endif %}
+  <p>You have not specified what country you are in.
+  <a href="{{ url('users.profile') }}">Check your profile settings</a>.
+  </p>
   {% endif %}
 {% endif %}
+
+<p>See the Intranet about
+<a href="https://intranet.mozilla.org/JILL?">PTO per country</a> to find out more.
+</p>
+
 </div>
 
 {% if mobile %}

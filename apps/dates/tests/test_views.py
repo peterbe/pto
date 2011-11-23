@@ -1732,3 +1732,80 @@ class ViewsTest(TestCase, ViewsTestMixin):
 
         sum_hours = sum(x.total_hours for x in Entry.objects.all())
         eq_(sum_hours, settings.WORK_DAY * 5 + 0 + -8)
+
+    def test_get_taken_info(self):
+        user = User.objects.create(username='bob')
+        from dates.views import get_taken_info
+        def function():
+            return get_taken_info(user)
+
+        result = function()
+        eq_(result['taken'], '0 days')
+        ok_(not result.get('unrecognized_country'))
+        ok_(not result.get('country_total'))
+
+        profile = user.get_profile()
+        profile.country = 'US'
+        profile.save()
+        result = function()
+        ok_(not result.get('unrecognized_country'))
+        ok_(result.get('country_total'))
+        ok_(result.get('country'), 'US')
+
+        profile.country = 'New Zealand'
+        profile.save()
+        result = function()
+        ok_(result.get('unrecognized_country'))
+        ok_(not result.get('country_total'))
+        ok_(result.get('country'), 'New Zealand')
+
+        date = datetime.date(2011, 11, 23)  # a Wednesday
+        entry = Entry.objects.create(
+          user=user,
+          start=date,
+          end=date,
+          total_hours=settings.WORK_DAY,
+        )
+        self._create_entry_hours(entry)
+
+        result = function()
+        eq_(result['taken'], '1 day')
+
+        entry.total_hours = settings.WORK_DAY / 2
+        entry.save()
+        result = function()
+        eq_(result['taken'], '%s hours' % (settings.WORK_DAY / 2))
+
+        one_week = datetime.timedelta(days=7)
+        entry = Entry.objects.create(
+          user=user,
+          start=date + one_week,
+          end=date + one_week,
+          total_hours=settings.WORK_DAY,
+        )
+        self._create_entry_hours(entry)
+
+        result = function()
+        eq_(result['taken'], '1.5 days')
+
+        entry = Entry.objects.create(
+          user=user,
+          start=date + one_week * 2,
+          end=date + one_week * 2,
+          total_hours=settings.WORK_DAY / 2,
+        )
+        self._create_entry_hours(entry, 4)
+
+        result = function()
+        eq_(result['taken'], '2 days')
+
+        entry = Entry.objects.create(
+          user=user,
+          start=date + one_week * 3,
+          end=date + one_week * 5,
+          total_hours=settings.WORK_DAY * 14,
+        )
+        self._create_entry_hours(entry)
+
+        result = function()
+        eq_(result['taken'], '16 days')

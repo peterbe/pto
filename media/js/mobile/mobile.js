@@ -60,33 +60,33 @@ var Data = (function() {
 
      },  // end rightnow
 
-    left: function() {
-       $.getJSON('/mobile/left.json', function(response) {
+    taken: function() {
+       $.getJSON('/mobile/taken.json', function(response) {
          if (response.error) return _grr(response.error);
 
-         var p = $('#left p.info');
+         //var p = $('#taken p.info');
          var html;
-         if (response.hours) {
-           html = 'You have ';
-           if (response.hours > 16) {
-             html += '<strong>' + response.days + '</strong>';
-           } else {
-             html += '<strong>' + response.hours + ' hours</strong>';
-           }
-           html += ' of PTO left this year.';
-         } else {
-           if (response.missing) {
-             html = 'To be able to work this out, enter your ';
-             html += '<a href="#settings">' + response.missing.join(' and ') + '</a>.';
-           } else if (response.less_than_a_year) {
-             html = 'Sorry, this can not be automatically worked out if you have worked less than one year ';
-             html += '(you have worked here ' + response.less_than_a_year + ' days)';
-           }
+         if (response.taken) {
+           html = 'You have taken ';
+           html += '<strong>' + response.taken + '</strong> ';
+           html += 'this year.';
          }
-         p.html(html);
+         $('<p>').html(html).appendTo($('#taken .content'));
+
+         if (response.country_total) {
+           html = 'Out of a total of <strong>' + response.country_total;
+           html += '</strong> if your country (' + response.country + ')';
+         } else if (response.unrecognized_country) {
+           html = 'Unfortunately not able to quickly give a number of total ';
+           html += 'days for your country (' + response.country + ')';
+         } else {
+           html = 'You have not specified what country you are in. ';
+           html += '<a href="#settings">Update your profile settings</a>.';
+         }
+         $('<p>').html(html).appendTo($('#taken .content'));
 
        });
-    },  // end left
+    },  // end taken
 
     settings: function() {
       $.getJSON('/mobile/settings.json', function(response) {
@@ -236,8 +236,8 @@ $(document).ready(function() {
     Data.rightnow();
   });
 
-  $('#left').bind('pageshow', function() {
-    Data.left();
+  $('#taken').bind('pageshow', function() {
+    Data.taken();
   });
 
   $('#settings')

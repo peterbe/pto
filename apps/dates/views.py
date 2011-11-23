@@ -56,6 +56,7 @@ from users.models import UserProfile
 from users.utils import ldap_lookup
 from .utils import parse_datetime, DatetimeParseError
 from .utils.pto_left import get_hours_left
+from .utils.countrytotals import UnrecognizedCountryError, get_country_total
 import utils
 import forms
 from .decorators import json_view
@@ -109,9 +110,55 @@ def home(request):  # aka dashboard
     right_nows, right_now_users = get_right_nows()
     data['right_nows'] = right_nows
     data['right_now_users'] = right_now_users
-    data['left'] = get_left(profile)
+
+    data.update(get_taken_info(request.user))
 
     return render(request, 'dates/home.html', data)
+
+
+def get_taken_info(user):
+    data = {}
+
+    profile = user.get_profile()
+    if profile.country:
+        data['country'] = profile.country
+        try:
+            data['country_total'] = get_country_total(profile.country)
+        except UnrecognizedCountryError:
+            data['unrecognized_country'] = True
+
+    today = datetime.date.today()
+    start_date = datetime.date(today.year, 1, 1)
+    last_date = datetime.date(today.year + 1, 1, 1)
+    from django.db.models import Sum
+    qs = Entry.objects.filter(
+      user=user,
+      start__gte=start_date,
+      end__lt=last_date
+    )
+    agg = qs.aggregate(Sum('total_hours'))
+    total_hours = agg['total_hours__sum']
+    if total_hours is None:
+        total_hours = 0
+    data['taken'] = _friendly_format_hours(total_hours)
+
+    return data
+
+def _friendly_format_hours(total_hours):
+    days = 1.0 * total_hours / settings.WORK_DAY
+    hours = total_hours % settings.WORK_DAY
+
+    if not total_hours:
+        return '0 days'
+    elif total_hours < settings.WORK_DAY:
+        return '%s hours' % total_hours
+    elif total_hours == settings.WORK_DAY:
+        return '1 day'
+    else:
+        if not hours:
+            return '%d days' % days
+        else:
+            return '%s days' % days
 
 
 def get_right_nows():
@@ -401,7 +448,6 @@ def hours(request, pk):
             except Hours.DoesNotExist:
                 initial[date.strftime('d-%Y%m%d')] = settings.WORK_DAY
 
-        #print initial
         form = forms.HoursForm(entry, initial=initial)
     data['form'] = form
 

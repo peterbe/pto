@@ -102,12 +102,11 @@ def right_now(request):
 
 
 @json_view
-def left(request):
+def taken(request):
     if not request.user.is_authenticated():  # XXX improve this
         return {'error': 'Not logged in'}
-    from dates.views import get_left
-    profile = request.user.get_profile()
-    return get_left(profile)
+    from dates.views import get_taken_info
+    return get_taken_info(request.user)
 
 
 @csrf_exempt  # XXX fix this
