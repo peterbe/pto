@@ -211,7 +211,13 @@ def calendar_events(request):
                 title = '%s - ' % entry.user.username
         else:
             title = ''
-        days = (entry.end - entry.start).days + 1
+        days = 0
+        for hour in Hours.objects.filter(entry=entry):
+            if hour.hours == 8:
+                days += 1
+            elif hour.hours == 4:
+                days += 0.5
+
         if days > 1:
             title += '%s days' % days
             if Hours.objects.filter(entry=entry, birthday=True).exists():
@@ -219,6 +225,8 @@ def calendar_events(request):
         elif (days == 1 and entry.total_hours == 0 and
             Hours.objects.filter(entry=entry, birthday=True)):
             title += 'Birthday!'
+        elif days == 1 and entry.total_hours == 8:
+            title += '1 day'
         else:
             title += '%s hours' % entry.total_hours
         if entry.details:

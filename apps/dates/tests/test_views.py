@@ -119,6 +119,22 @@ class ViewsTest(TestCase):
         profile.save()
         return user
 
+    def _create_entry_hours(self, entry, *hours):
+        date = entry.start
+        i = 0
+        while date <= entry.end:
+            try:
+                h = hours[i]
+            except IndexError:
+                h = 8
+            Hours.objects.create(
+              entry=entry,
+              date=date,
+              hours=h,
+            )
+            i += 1
+            date += datetime.timedelta(days=1)
+
     def test_404_page(self):
         url = '/ojsfpijweofpjwf/qpijf/'
         response = self.client.get(url)
@@ -591,6 +607,85 @@ class ViewsTest(TestCase):
         eq_(set([x['id'] for x in events]),
             set([entry1.pk, entry2.pk, entry3.pk, entry6.pk]))
 
+    def test_calendar_events_summation(self):
+        url = reverse('dates.calendar_events')
+
+        peter = User.objects.create(
+          username='peter',
+          email='pbengtsson@mozilla.com',
+          first_name='Peter',
+          last_name='Bengtsson',
+        )
+        peter.set_password('secret')
+        peter.save()
+        assert self.client.login(username=peter.email, password='secret')
+
+        # add some entries
+        entry = Entry.objects.create(
+          user=peter,
+          start=datetime.date(2011, 7, 2),
+          end=datetime.date(2011, 7, 4),
+          total_hours=8 + 4 + 8,
+        )
+
+        Hours.objects.create(
+          entry=entry,
+          date=datetime.date(2011, 7, 2),
+          hours=8
+        )
+
+        Hours.objects.create(
+          entry=entry,
+          date=datetime.date(2011, 7, 3),
+          hours=4
+        )
+
+        Hours.objects.create(
+          entry=entry,
+          date=datetime.date(2011, 7, 4),
+          hours=8
+        )
+
+        _start = datetime.datetime(2011, 7, 1)
+        _end = datetime.datetime(2011, 8, 1) - datetime.timedelta(days=1)
+        data = {
+          'start': time.mktime(_start.timetuple()),
+          'end': time.mktime(_end.timetuple())
+        }
+        response = self.client.get(url, data)
+        eq_(response.status_code, 200)
+        struct = json.loads(response.content)
+        events = struct['events']
+        event = events[0]
+        eq_(event['title'], '2.5 days')
+
+
+        Hours.objects.all().delete()
+        entry.end = datetime.date(2011, 7, 2)
+        entry.total_hours = 8
+        entry.save()
+        self._create_entry_hours(entry)
+
+        response = self.client.get(url, data)
+        eq_(response.status_code, 200)
+        struct = json.loads(response.content)
+        events = struct['events']
+        event = events[0]
+        eq_(event['title'], '1 day')
+
+        Hours.objects.all().delete()
+        entry.end = datetime.date(2011, 7, 2)
+        entry.total_hours = 4
+        entry.save()
+        self._create_entry_hours(entry, 4)
+
+        response = self.client.get(url, data)
+        eq_(response.status_code, 200)
+        struct = json.loads(response.content)
+        events = struct['events']
+        event = events[0]
+        eq_(event['title'], '4 hours')
+
     def test_calendar_event_title(self):
         url = reverse('dates.calendar_events')
         peter = User.objects.create(
@@ -632,6 +727,8 @@ class ViewsTest(TestCase):
         entry.end += datetime.timedelta(days=5)
         entry.total_hours += 8 * 5
         entry.save()
+
+        self._create_entry_hours(entry)
 
         response = self.client.get(url, data)
         eq_(response.status_code, 200)
