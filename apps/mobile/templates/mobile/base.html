@@ -1,9 +1,10 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html{% if use_manifest %} manifest="{{ url('mobile.appcache') }}"{% endif %}>
 <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{% block page_title %}Mozilla PTO{% endblock %}</title>
+        {{ css('libs/jquery_mobile') }}
         {{ css('mobile') }}
         {{ js('mobile') }}
 
@@ -13,4 +14,3 @@
 {% endblock %}
 </body>
 </html>
-

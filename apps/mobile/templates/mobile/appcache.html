@@ -1,0 +1,20 @@
+CACHE MANIFEST
+# version: {{ BUILD_ID_JS }}-{{ BUILD_ID_CSS }}
+
+NETWORK:
+{{ url('mobile.right_now') }}
+{{ url('mobile.taken') }}
+{{ url('mobile.settings') }}
+{{ url('mobile.settings') }}
+{{ url('mobile.save_settings') }}
+{{ url('mobile.notify') }}
+{{ url('mobile.hours') }}
+{{ url('mobile.save_hours') }}
+{{ url('mobile.exit') }}
+{{ url('mobile.login') }}
+{{ url('mobile.logout') }}
+
+CACHE:
+{{ bundle_list_css('libs/jquery_mobile', BUILD_ID_CSS) }}
+{{ bundle_list_css('mobile', BUILD_ID_CSS) }}
+{{ bundle_list_js('mobile', BUILD_ID_JS) }}

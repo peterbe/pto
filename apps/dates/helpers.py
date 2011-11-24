@@ -133,4 +133,5 @@ def format_date(context, date, format=None, shorter=False):
         format = settings.DEFAULT_DATE_FORMAT
     if shorter:
         format = format.replace('%B', '%b')
+        format = format.replace('%A', '%a')
     return date.strftime(format)

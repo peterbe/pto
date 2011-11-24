@@ -23,14 +23,24 @@ var Data = (function() {
 
   return {
      rightnow: function() {
+
+       function format_name_email(name, email) {
+         return $('<a>')
+           .attr('href', 'mailto:' + email)
+             .text(name);
+       }
+
        $.getJSON('/mobile/rightnow.json', function(response) {
          if (response.error) return _grr(response.error);
 
          $('dt,dd', '#rightnow .now').remove();
-         var p = $('#rightnow .now');
+         var p = $('#rightnow .now'), html;
          $.each(response.now, function(i, each) {
-           $('<dt>').text(each.name).appendTo(p);
+           $('<dt>')
+             .append(format_name_email(each.name, each.email))
+               .appendTo(p);
            $.each(each.descriptions, function(j, description) {
+             L(description);
              $('<dd>').text(description).appendTo(p);
            });
          });
@@ -44,7 +54,9 @@ var Data = (function() {
          $('dt,dd', '#rightnow .upcoming').remove();
          p = $('#rightnow .upcoming');
          $.each(response.upcoming, function(i, each) {
-           $('<dt>').text(each.name).appendTo(p);
+           $('<dt>')
+             .append(format_name_email(each.name, each.email))
+               .appendTo(p);
            $.each(each.descriptions, function(j, description) {
              $('<dd>').text(description).appendTo(p);
            });

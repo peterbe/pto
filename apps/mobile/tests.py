@@ -34,6 +34,7 @@
 # ***** END LICENSE BLOCK *****
 
 import datetime
+from collections import defaultdict
 from urlparse import urlparse
 from nose.tools import eq_, ok_
 from django.test import TestCase
@@ -465,3 +466,21 @@ class MobileViewsTest(TestCase, ViewsTestMixin):
         response = self.client.get(url)
         eq_(response.status_code, 200)
         ok_(not self.client.cookies['no-mobile'].value)
+
+    def test_appcache(self):
+        url = reverse('mobile.appcache')
+        response = self.client.get(url)
+        eq_(response['Content-Type'], 'text/cache-manifest')
+        lines = response.content.splitlines()
+        eq_(lines[0], 'CACHE MANIFEST')
+        buckets = defaultdict(list)
+        for line in lines[1:]:
+            if not line.strip() or line.strip().startswith('#'):
+                continue
+            if line.strip().endswith(':'):
+                bucket = line.strip()
+            else:
+                buckets[bucket].append(line)
+
+        ok_(buckets['NETWORK:'])
+        ok_(buckets['CACHE:'])

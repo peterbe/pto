@@ -161,8 +161,10 @@ MINIFY_BUNDLES = {
         'jquery_ui': (
             'css/libs/jquery_ui/redmond/jquery-ui-1.8.14.datepicker.autocomplete.css',
         ),
-        'mobile': (
+        'libs/jquery_mobile': (
             'css/libs/jquery.mobile-1.0rc3.min.css',
+        ),
+        'mobile': (
             'css/mobile/mobile.css',
         ),
         'dates': (
@@ -198,9 +200,6 @@ MINIFY_BUNDLES = {
         'dates.hours': (
             'js/dates/hours.js',
         ),
-        'soundmanager.swf': (
-            'js/libs/swf/soundmanager2.swf',
-        ),
         'dates.emails_sent': (
             'js/libs/soundmanager2-nodebug-jsmin.js',
             'js/libs/fireworks.js',
@@ -222,7 +221,6 @@ MINIFY_BUNDLES = {
         ),
     }
 }
-
 
 ## Middlewares, apps, URL configs.
 

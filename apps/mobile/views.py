@@ -52,17 +52,24 @@ MOBILE_DATE_FORMAT = '%Y-%m-%d'
 def home(request):
     data = {}
     data['page_title'] = 'Mozilla PTO'
+    data['use_manifest'] = True#not settings.DEBUG
+
     response = render(request, 'mobile/mobile.html', data)
     # if you have loaded this page, forget the no-mobile cookie
     response.delete_cookie('no-mobile')
     return response
+
+def appcache(request):
+    data = {}
+    return render(request, 'mobile/appcache.html', data,
+                  content_type='text/cache-manifest')
 
 @json_view
 def right_now(request):
     if not request.user.is_authenticated():  # XXX improve this
         return {'error': 'Not logged in'}
     from dates.views import get_right_nows, get_upcomings
-    from dates.helpers import full_name_form, format_date
+    from dates.helpers import format_date
     right_nows, right_now_users = get_right_nows()
     upcomings, upcoming_users = get_upcomings(14)
 
@@ -75,9 +82,13 @@ def right_now(request):
                 description += '1 day '
             else:
                 description += '%d days ' % days_left
-            description += 'on %s' % format_date(None, entry.end)
+            description += 'on %s' % format_date(None, entry.end, shorter=True)
             descriptions.append(description)
-        now.append({'name': full_name_form(None, user),
+        name = user.get_full_name()
+        if not name:
+            name = user.username
+        now.append({'name': name,
+                    'email': user.email,
                     'descriptions': descriptions})
 
     upcoming = []
@@ -93,10 +104,16 @@ def right_now(request):
                 description += '2 weeks '
             else:
                 description += '%d days ' % days
-            description += 'on %s' % format_date(None, entry.end)
+            description += 'on %s' % format_date(None, entry.end, shorter=True)
             descriptions.append(description)
-        upcoming.append({'name': full_name_form(None, user),
-                    'descriptions': descriptions})
+        name = user.get_full_name()
+        if not name:
+            name = user.username
+        upcoming.append({
+          'name': name,
+          'email': user.email,
+          'descriptions': descriptions
+        })
 
     return {'now': now, 'upcoming': upcoming}
 

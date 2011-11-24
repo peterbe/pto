@@ -38,6 +38,7 @@ import views
 
 urlpatterns = patterns('',
     url(r'^$', views.home, name='mobile.home'),
+    url(r'^cache.appcache$', views.appcache, name='mobile.appcache'),
     url(r'^rightnow.json$', views.right_now, name='mobile.right_now'),
     url(r'^taken.json$', views.taken, name='mobile.taken'),
     url(r'^settings.json$', views.settings_json, name='mobile.settings'),
