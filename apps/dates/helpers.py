@@ -128,7 +128,9 @@ def full_name_form(context, user):
 
 @register.function
 @jinja2.contextfunction
-def format_date(context, date, format=None):
+def format_date(context, date, format=None, shorter=False):
     if format is None:
         format = settings.DEFAULT_DATE_FORMAT
+    if shorter:
+        format = format.replace('%B', '%b')
     return date.strftime(format)

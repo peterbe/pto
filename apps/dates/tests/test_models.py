@@ -36,8 +36,10 @@
 import datetime
 from django.contrib.auth.models import User
 from django.test import TestCase
-from dates.models import Entry, Hours
-from nose.tools import eq_
+from dates.models import (Entry, Hours, BlacklistedUser, FollowingUser,
+                          FollowingIntegrityError,
+                          BlacklistIntegityError)
+from nose.tools import eq_, ok_
 
 
 class ModelsTest(TestCase):
@@ -78,3 +80,50 @@ class ModelsTest(TestCase):
         eq_(Hours.objects.all().count(), 2)
         entry.delete()
         eq_(Hours.objects.all().count(), 1)
+
+    def test_following_blacklisted_integrity(self):
+        peter = User.objects.create(username='peter')
+        axel = User.objects.create(username='axel')
+
+        assert not BlacklistedUser.objects.filter(observer=peter)
+        assert not FollowingUser.objects.filter(follower=peter)
+
+        BlacklistedUser.objects.create(
+          observer=peter,
+          observable=axel
+        )
+        assert BlacklistedUser.objects.filter(observer=peter)
+        assert not FollowingUser.objects.filter(follower=peter)
+
+        FollowingUser.objects.create(
+          follower=peter,
+          following=axel
+        )
+        ok_(not BlacklistedUser.objects.filter(observer=peter))
+        ok_(FollowingUser.objects.filter(follower=peter))
+
+        # change back
+        BlacklistedUser.objects.create(
+          observer=peter,
+          observable=axel
+        )
+        ok_(BlacklistedUser.objects.filter(observer=peter))
+        ok_(not FollowingUser.objects.filter(follower=peter))
+
+    def test_self_following_integrity_check(self):
+        peter = User.objects.create(username='peter')
+
+        self.assertRaises(FollowingIntegrityError,
+                          FollowingUser.objects.create,
+                          follower=peter,
+                          following=peter
+        )
+
+    def test_self_blacklisting_integrity_check(self):
+        peter = User.objects.create(username='peter')
+
+        self.assertRaises(BlacklistIntegityError,
+                          BlacklistedUser.objects.create,
+                          observer=peter,
+                          observable=peter
+        )

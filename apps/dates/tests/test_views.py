@@ -46,7 +46,7 @@ from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
 from django.utils import simplejson as json
 from django.core import mail
-from dates.models import Entry, Hours
+from dates.models import Entry, Hours, BlacklistedUser, FollowingUser
 from nose.tools import eq_, ok_
 from mock import Mock
 from users.models import UserProfile
@@ -70,17 +70,18 @@ def utf_8_encoder(unicode_csv_data, encoding):
         yield line.encode(encoding)
 
 class ViewsTestMixin(object):
-    def _login(self):
-        peter = User.objects.create(
-          username='peter',
-          email='pbengtsson@mozilla.com',
-          first_name='Peter',
-          last_name='Bengtsson',
-        )
-        peter.set_password('secret')
-        peter.save()
-        assert self.client.login(username='peter', password='secret')
-        return peter
+    def _login(self, user=None):
+        if not user:
+            user = User.objects.create(
+              username='peter',
+              email='pbengtsson@mozilla.com',
+              first_name='Peter',
+              last_name='Bengtsson',
+            )
+        user.set_password('secret')
+        user.save()
+        assert self.client.login(username=user.username, password='secret')
+        return user
 
     def _create_hr_manager(self, username='jill', email='jill@mozilla.com'):
         user = User.objects.create(
@@ -1758,3 +1759,100 @@ class ViewsTest(TestCase, ViewsTestMixin):
 
         result = function()
         eq_(result['taken'], '16 days')
+
+    def test_people_in_calendar(self):
+
+        def make_manager(user, manager):
+            profile = user.get_profile()
+            profile.manager_user = manager
+            profile.save()
+
+        mike = User.objects.create(username='mike')
+        laura = User.objects.create(username='laura')
+        peter = User.objects.create(username='peter')
+        lars = User.objects.create(username='lars')
+        brandon = User.objects.create(username='brandon')
+        chofman = User.objects.create(username='chofman')
+        axel = User.objects.create(username='axel')
+        stas = User.objects.create(username='stas')
+
+        make_manager(laura, mike)
+        make_manager(peter, laura)
+        make_manager(lars, laura)
+        make_manager(brandon, laura)
+        make_manager(axel, chofman)
+        make_manager(stas, chofman)
+
+        # make everyone have an entry
+        _all = mike, laura, peter, lars, brandon, chofman, axel, stas
+        today = datetime.date(2011, 11, 23)  # a Wednesday
+        for user in _all:
+            entry = Entry.objects.create(
+              user=user,
+              start=today,
+              end=today,
+              total_hours=settings.WORK_DAY
+            )
+            Hours.objects.create(
+              entry=entry,
+              date=today,
+              hours=settings.WORK_DAY
+            )
+
+        self._login(peter)
+        url = reverse('dates.calendar_events')
+        _start = today - datetime.timedelta(days=1)
+        _end = today + datetime.timedelta(days=1)
+        data = {
+          'start': time.mktime(_start.timetuple()),
+          'end': time.mktime(_end.timetuple())
+        }
+        response = self.client.get(url, data)
+        eq_(response.status_code, 200)
+        struct = json.loads(response.content)
+        names = [x['name'] for x in struct['colors']]
+        assert 'Me myself and I' in names
+        # for peter, by default, it should be manager plus "siblings"
+        ok_('laura' in names)
+        ok_('lars' in names)
+        ok_('brandon' in names)
+        ok_('chofman' not in names)
+        ok_('axel' not in names)
+        ok_('stas' not in names)
+
+        # suppose I don't want to follow brandon
+        BlacklistedUser.objects.create(
+          observer=peter,
+          observable=brandon
+        )
+        response = self.client.get(url, data)
+        eq_(response.status_code, 200)
+        struct = json.loads(response.content)
+        names = [x['name'] for x in struct['colors']]
+        assert 'Me myself and I' in names
+        # for peter, by default, it should be manager plus "siblings"
+        ok_('laura' in names)
+        ok_('lars' in names)
+        ok_('brandon' not in names)
+        ok_('chofman' not in names)
+        ok_('axel' not in names)
+        ok_('stas' not in names)
+
+        # But I explicitely now want to follow axel
+        FollowingUser.objects.create(
+          follower=peter,
+          following=axel
+        )
+
+        response = self.client.get(url, data)
+        eq_(response.status_code, 200)
+        struct = json.loads(response.content)
+        names = [x['name'] for x in struct['colors']]
+        assert 'Me myself and I' in names
+        # for peter, by default, it should be manager plus "siblings"
+        ok_('laura' in names)
+        ok_('lars' in names)
+        ok_('brandon' not in names)
+        ok_('chofman' not in names)
+        ok_('axel' in names)
+        ok_('stas' not in names)

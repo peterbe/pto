@@ -51,7 +51,7 @@ from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django.shortcuts import render
 import vobject
-from models import Entry, Hours
+from models import Entry, Hours, BlacklistedUser, FollowingUser
 from users.models import UserProfile
 from users.utils import ldap_lookup
 from .utils import parse_datetime, DatetimeParseError
@@ -297,13 +297,16 @@ def calendar_events(request):
     colors_fullnames = []
     colors[request.user.pk] = None
     colors_fullnames.append((request.user.pk, 'Me myself and I', '#3366CC'))
-    for minion in get_minions(request.user, max_depth=2):
-        user_ids.append(minion.pk)
-        colors[minion.pk] = _colors.pop()
+    for user_ in get_observed_users(request.user, max_depth=2):
+        user_ids.append(user_.pk)
+        colors[user_.pk] = _colors.pop()
+        full_name = user_.get_full_name()
+        if not full_name:
+            full_name = user_.username
         colors_fullnames.append((
-          minion.pk,
-          minion.get_full_name(),
-          colors[minion.pk]
+          user_.pk,
+          full_name,
+          colors[user_.pk]
         ))
 
     visible_user_ids = set()
@@ -340,6 +343,57 @@ def get_minions(user, depth=1, max_depth=2):
                                        max_depth=max_depth))
     return minions
 
+def get_siblings(user):
+    profile = user.get_profile()
+    if not profile.manager_user:
+        return []
+    users = []
+    for profile in (UserProfile.objects
+                    .filter(manager_user=profile.manager_user)
+                    .exclude(pk=user.pk)
+                    .select_related('user')):
+        users.append(profile.user)
+    return users
+
+
+def get_followed_users(user):
+    users = []
+    for each in (FollowingUser.objects
+                 .filter(follower=user)
+                 .select_related('following')):
+        users.append(each.following)
+    return users
+
+
+def get_observed_users(this_user, depth=1, max_depth=2):
+    users = []
+
+    def is_blacklisted(user):
+        return (BlacklistedUser.objects
+                .filter(observer=this_user, observable=user)
+                .exists())
+
+    for user in get_minions(this_user, depth=depth, max_depth=max_depth):
+        if user not in users:
+            if not is_blacklisted(user):
+                users.append(user)
+
+    for user in get_siblings(this_user):
+        if user not in users:
+            if not is_blacklisted(user):
+                users.append(user)
+
+    profile = this_user.get_profile()
+    manager = profile.manager_user
+    if manager and manager not in users:
+        if not is_blacklisted(manager):
+            users.append(manager)
+
+    for user in get_followed_users(this_user):
+        if user not in users:
+            users.append(user)
+
+    return users
 
 @transaction.commit_on_success
 @login_required
