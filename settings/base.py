@@ -3,9 +3,7 @@
 from funfactory.settings_base import *
 
 import os
-import socket
 
-from django.utils.functional import lazy
 
 # Make file paths relative to settings.
 #ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))

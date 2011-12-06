@@ -1,12 +1,10 @@
-from base import *
-
 # Is this a development instance? Set this to True on development/master
 # instances and False on stage/prod.
 DEV = True
 
-#INSTALLED_APPS = list(INSTALLED_APPS) + ['debug_toolbar']
-#INSTALLED_APPS = tuple(INSTALLED_APPS)
-#MIDDLEWARE_CLASSES = list(MIDDLEWARE_CLASSES) + ['debug_toolbar.middleware.DebugToolbarMiddleware']
+#from . import base
+#INSTALLED_APPS = base.INSTALLED_APPS + ('debug_toolbar',)
+#MIDDLEWARE_CLASSES = base.MIDDLEWARE_CLASSES + ('debug_toolbar.middleware.DebugToolbarMiddleware',)
 #MIDDLEWARE_CLASSES = tuple(MIDDLEWARE_CLASSES)
 #INTERNAL_IPS = ('127.0.0.1',)
 
@@ -30,8 +28,7 @@ DATABASES = {
     },
 }
 
-DEBUG = TEMPLATE_DEBUG = True
+DEBUG = TEMPLATE_DEBUG = DEBUG_PROPAGATE_EXCEPTIONS = True
 TEMPLATE_STRING_IF_INVALID = '!{ %s }'
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-DEBUG_PROPAGATE_EXCEPTIONS = True
 PWD_ALGORITHM = 'sha521'
