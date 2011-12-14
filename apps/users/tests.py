@@ -16,18 +16,212 @@ import ldap
 from users.auth.backends import MozillaLDAPBackend
 from users.utils.ldap_mock import MockLDAP
 from users.models import UserProfile
-
+from users.utils import ldap_lookup
 
 RaiseInvalidCredentials = object()
 
 
-class UsersTest(TestCase):
+class LDAPLookupTests(TestCase):
 
     def setUp(self):
-        super(UsersTest, self).setUp()
-        # A must when code in this app relies on cache
-        settings.CACHE_BACKEND = 'locmem:///'
+        super(LDAPLookupTests, self).setUp()
+        ldap.open = Mock('ldap.open')
+        ldap.open.mock_returns = Mock('ldap_connection')
+        ldap.set_option = Mock(return_value=None)
+        assert 'LocMemCache' in settings.CACHES['default']['BACKEND']
 
+    def tearDown(self):
+        super(LDAPLookupTests, self).tearDown()
+        from django.core.cache import cache
+        cache.clear()
+
+    def test_fetch_user_details(self):
+        func = ldap_lookup.fetch_user_details
+        fake_user = [
+          ('mail=mortal@mozilla.com,o=com,dc=mozilla',
+           {'cn': ['Peter Bengtsson'],
+            'givenName': ['Pet\xc3\xa3r'], # utf-8 encoded
+            'mail': ['test@example.com'],
+            'sn': ['Bengtss\xc2\xa2n'],
+            'uid': ['pbengtsson']
+            })
+        ]
+
+        _key = 'mail=mortal@mozilla.com'
+        _key = ldap_lookup.account_wrap_search_filter(_key)
+        ldap.initialize = Mock(return_value=MockLDAP({
+          _key: fake_user,
+          }
+        ))
+
+        details = func('xxx')
+        ok_(not details)
+
+        details = func('mortal@mozilla.com')
+        assert details
+
+        eq_(details['givenName'], u'Pet\xe3r')
+
+        different_fake_user = [
+          ('mail=mortal,o=com,dc=mozilla',
+           {'cn': ['Peter Bengtsson'],
+            'givenName': ['Different'], # utf-8 encoded
+            'mail': ['test@example.com'],
+            'sn': ['Bengtss\xc2\xa2n'],
+            'uid': ['pbengtsson']
+            })
+        ]
+
+        ldap.initialize = Mock(return_value=MockLDAP({
+          _key: different_fake_user,
+          }
+        ))
+
+        details = func('mortal@mozilla.com')
+        eq_(details['givenName'], u'Pet\xe3r')
+
+        details = func('mortal@mozilla.com', force_refresh=True)
+        eq_(details['givenName'], u'Different')
+
+    def test_search_users_uid_search(self):
+        func = ldap_lookup.search_users
+        fake_user = [
+          ('mail=mortal@mozilla.com,o=com,dc=mozilla',
+           {'cn': ['Peter Bengtsson'],
+            'givenName': ['Pet\xc3\xa3r'], # utf-8 encoded
+            'mail': ['test@example.com'],
+            'sn': ['Bengtss\xc2\xa2n'],
+            'uid': ['pbengtsson']
+            })
+        ]
+
+        key = 'mail=mortal@mozilla.com'
+        _wrapper = ldap_lookup.account_wrap_search_filter
+        ldap.initialize = Mock(return_value=MockLDAP({
+          _wrapper(key): fake_user,
+          }
+        ))
+
+        # search by uid
+        result = func(':pbengtsson', 1)
+        ok_(not result)
+
+        ldap.initialize = Mock(return_value=MockLDAP({
+          _wrapper(key): fake_user,
+          _wrapper('uid=pbengtsson'): fake_user,
+          }
+        ))
+
+        result = func(':pbengtsson', 1)
+        ok_(result)
+        eq_(result[0]['uid'], 'pbengtsson')
+
+        ldap.initialize = Mock(return_value=MockLDAP({
+          _wrapper(key): fake_user,
+          _wrapper('uid=pbeng*'): fake_user,
+          }
+        ))
+
+        result = func(':pbeng', 1, autocomplete=True)
+        ok_(result)
+        eq_(result[0]['uid'], 'pbengtsson')
+
+    def test_search_users_canonical_search(self):
+        func = ldap_lookup.search_users
+        fake_user = [
+          ('mail=mortal@mozilla.com,o=com,dc=mozilla',
+           {'cn': ['Peter Bengtsson'],
+            'givenName': ['Pet\xc3\xa3r'], # utf-8 encoded
+            'mail': ['test@example.com'],
+            'sn': ['Bengtss\xc2\xa2n'],
+            'uid': ['pbengtsson']
+            })
+        ]
+
+        key = 'mail=mortal@mozilla.com'
+        _wrapper = ldap_lookup.account_wrap_search_filter
+        ldap.initialize = Mock(return_value=MockLDAP({
+          _wrapper(key): fake_user,
+          }
+        ))
+
+        # search by uid
+        result = func('Peter bengtsson', 1)
+        ok_(not result)
+
+        ldap.initialize = Mock(return_value=MockLDAP({
+          _wrapper(key): fake_user,
+          _wrapper('cn=*PETER BENGTSSON*'): fake_user,
+          }
+        ))
+
+        result = func('PETER BENGTSSON', 1)
+        ok_(result)
+        eq_(result[0]['cn'], 'Peter Bengtsson')
+
+        ldap.initialize = Mock(return_value=MockLDAP({
+          _wrapper(key): fake_user,
+          _wrapper('(|(mail=PETER BENGT*)(givenName=PETER BENGT*)(sn=PETER BENGT*)(cn=PETER BENGT*))'): fake_user,
+          }
+        ))
+
+        result = func('PETER BENGT', 1, autocomplete=True)
+        ok_(result)
+        eq_(result[0]['cn'], 'Peter Bengtsson')
+
+    def test_fetch_user_details_lists_expanded(self):
+        func = ldap_lookup.fetch_user_details
+        fake_user = [
+          ('mail=mortal@mozilla.com,o=com,dc=mozilla',
+           {'cn': ['Peter Bengtsson'],
+            'givenName': ['Pet\xc3\xa3r', 'Two'], # utf-8 encoded
+            'mail': ['test@example.com'],
+            'sn': [],
+            'uid': ['pbengtsson']
+            })
+        ]
+
+        key = 'mail=mortal@mozilla.com'
+        _wrapper = ldap_lookup.account_wrap_search_filter
+        ldap.initialize = Mock(return_value=MockLDAP({
+          _wrapper(key): fake_user,
+          }
+        ))
+
+        # search by uid
+        result = func('mortal@mozilla.com')
+        assert result
+        eq_(result['givenName'], [u'Pet\xe3r', u'Two'])
+        ok_(isinstance(result['givenName'][0], unicode))
+        ok_(isinstance(result['givenName'][1], unicode))
+        eq_(result['sn'], u'')
+
+    def test_search_users_invalid_email(self):
+        func = ldap_lookup.search_users
+        fake_user = [
+          ('mail=mortal@mozilla.com,o=com,dc=mozilla',
+           {'cn': ['Peter Bengtsson'],
+            'givenName': ['Pet\xc3\xa3r'], # utf-8 encoded
+            'mail': ['test@example.com'],
+            'sn': ['Bengtss\xc2\xa2n'],
+            'uid': ['pbengtsson']
+            })
+        ]
+
+        key = 'mail=mortal@mozilla.com'
+        _wrapper = ldap_lookup.account_wrap_search_filter
+        ldap.initialize = Mock(return_value=MockLDAP({
+          _wrapper(key): fake_user,
+          }
+        ))
+        result = func('mortal@m@..ozilla.com', 10)
+        ok_(not result)
+
+
+class UsersTests(TestCase):
+
+    def setUp(self):
+        super(UsersTests, self).setUp()
         ldap.open = Mock('ldap.open')
         ldap.open.mock_returns = Mock('ldap_connection')
         ldap.set_option = Mock(return_value=None)
@@ -337,56 +531,6 @@ class UsersTest(TestCase):
         eq_(input['spellcheck'], 'false')
         eq_(input['autocapitalize'], 'off')
         eq_(input['type'], 'email')
-
-    def test_ldap_search(self):
-        results = [
-          ('mail=peter@mozilla.com,o=com,dc=mozilla',
-           {'cn': ['Peter Bengtsson'],
-            'givenName': ['Pet\xc3\xa3r'], # utf-8 encoded
-            'mail': ['peterbe@mozilla.com'],
-            'sn': ['Bengtss\xc2\xa2n'],
-            'uid': ['pbengtsson']
-            })
-        ]
-
-        ldap.initialize = Mock(return_value=MockLDAP({
-          '(|(mail=peter*)(givenName=peter*)(sn=peter*))': results
-        }))
-
-        url = reverse('users.ldap_search')
-        response = self.client.get(url, {'term': '  i  '})
-        eq_(response.status_code, 403)
-
-        mortal = User.objects.create(
-          username='mortal',
-          first_name='Mortal',
-          last_name='Joe'
-        )
-        mortal.set_password('secret')
-        mortal.save()
-        assert self.client.login(username='mortal', password='secret')
-
-        response = self.client.get(url, {'term': '  i  '})
-        eq_(response.status_code, 200)
-        ok_(response['content-type'].startswith('application/json'))
-
-
-        response = self.client.get(url, {'term': 'peter'})
-        eq_(response.status_code, 200)
-        ok_(response['content-type'].startswith('application/json'))
-        struct = json.loads(response.content)
-        ok_(isinstance(struct, list))
-        first_item = struct[0]
-
-        label = '%s %s <%s>' % (u'Pet\xe3r',
-                                u'Bengtss\xa2n',
-                                'peterbe@mozilla.com')
-        value = label
-        eq_(first_item, {
-          'id': 'pbengtsson',
-          'label': label,
-          'value': value,
-        })
 
     def test_editing_user_profile(self):
         url = reverse('users.profile')

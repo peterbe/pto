@@ -40,7 +40,7 @@ class UserProfile(models.Model):
     notes = models.TextField(blank=True)
     hr_manager = models.BooleanField(default=False)
 
-    def __repr__(self):
+    def __repr__(self):  # pragma: no cover
         return "<UserProfile: %s>" % self.user
 
 

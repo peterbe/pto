@@ -9,6 +9,12 @@ from django.core.exceptions import ValidationError
 from django_auth_ldap.config import LDAPSearch
 
 
+def account_wrap_search_filter(search_filter):
+    if not (search_filter.startswith('(') and search_filter.endswith(')')):
+        search_filter = '(%s)' % search_filter
+    return '(&(objectClass=inetOrgPerson)(mail=*)%s)' % (search_filter,)
+
+
 def _valid_email(value):
     try:
         validate_email(value)
@@ -17,18 +23,15 @@ def _valid_email(value):
         return False
 
 def fetch_user_details(email, force_refresh=False):
-    cache_key = 'ldap_user_details_%s' % hash(email)
+    cache_key = 'ldap_peeps_%s' % hash(email)
     if not force_refresh:
         result = cache.get(cache_key)
         if result is not None:
-            #print "LDAP cache hit"
             return result
-    #print "LDAP cache miss"
 
     results = search_users(email, 1)
     if results:
         result = results[0]
-        #print result
         _expand_result(result)
         cache.set(cache_key, result, 60 * 60)
     else:
@@ -56,8 +59,7 @@ def search_users(query, limit, autocomplete=False):
                 # e.g. 'Peter b' or 'laura toms'
                 searches['cn'] = query
         for key, value in searches.items():
-            if not value:
-                continue
+            assert value
             filter_elems.append(filter_format('(%s=%s*)',
                                               (key, value)))
         search_filter = ''.join(filter_elems)
@@ -70,7 +72,9 @@ def search_users(query, limit, autocomplete=False):
             search_filter = filter_format("(uid=%s)", (query[1:], ))
         else:
             search_filter = filter_format("(cn=*%s*)", (query, ))
-    attrs = ['cn', 'sn', 'mail', 'givenName', 'uid']
+    attrs = ['cn', 'sn', 'mail', 'givenName', 'uid', 'objectClass']
+    search_filter = account_wrap_search_filter(search_filter)
+
     rs = connection.search_s("dc=mozilla", ldap.SCOPE_SUBTREE,
                             search_filter,
                             attrs)

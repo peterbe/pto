@@ -15,7 +15,14 @@
 
 <dl>
 {% for user in right_now_users %}
-  <dt>{{ full_name_form(user) }}</dt>
+  <dt>
+    {% if user == request.user %}
+    <strong>You are!</strong>
+    {% else %}
+    {{ full_name_form(user) }}
+    {% endif %}
+    
+  </dt>
   {% for days_left, entry in right_nows[user] %}
     <dd><a href="{{ entry_to_list_url(entry) }}"
            title="{{ entry.details }}"

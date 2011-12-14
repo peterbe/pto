@@ -3,7 +3,7 @@ from django.contrib.admin.sites import AlreadyRegistered
 from models import UserProfile
 
 
-class UserProfileAdmin(admin.ModelAdmin):
+class UserProfileAdmin(admin.ModelAdmin):  # pragma: no cover
     list_display = ('user_display', 'hr_manager', 'city', 'country',
                     'manager_user_display')
     list_filter = ('hr_manager',)

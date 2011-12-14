@@ -18,6 +18,7 @@
 # the Initial Developer. All Rights Reserved.
 #
 # Contributor(s):
+#    Peter Bengtsson, <peterbe@mozilla.com>
 #
 # Alternatively, the contents of this file may be used under the terms of
 # either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -38,4 +39,8 @@ import views
 
 urlpatterns = patterns('',
     url(r'^cities/$', views.cities, name='autocomplete.cities'),
+    url(r'^users/$', views.users, name='autocomplete.users'),
+    url(r'^users/knownonly/$', views.users,
+      {'known_only': True},
+      name='autocomplete.users_known_only'),
 )

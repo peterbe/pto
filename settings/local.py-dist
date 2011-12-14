@@ -28,7 +28,27 @@ DATABASES = {
     },
 }
 
+#CACHES = {
+#    'default': {
+#        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+#        'LOCATION': 'unique-snowflake'
+#    }
+#}
+
+
 DEBUG = TEMPLATE_DEBUG = DEBUG_PROPAGATE_EXCEPTIONS = True
 TEMPLATE_STRING_IF_INVALID = '!{ %s }'
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 PWD_ALGORITHM = 'sha521'
+
+
+AUTH_LDAP_BIND_PASSWORD = Must be entered
+
+# If connecting via VPN from outside the Mozilla firewall
+#AUTH_LDAP_START_TLS = False
+
+# For extra LDAP debugging if need be
+#import ldap
+#AUTH_LDAP_GLOBAL_OPTIONS = {
+#  ldap.OPT_DEBUG_LEVEL: 4095
+#}

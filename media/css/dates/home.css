@@ -18,6 +18,9 @@
   padding:2px;
   border-radius: 3px;
 }
+#calendar-legend a {
+  padding-left:10px;
+}
 
 
 .extra-info {

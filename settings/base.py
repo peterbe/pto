@@ -178,11 +178,14 @@ MINIFY_BUNDLES = {
         ),
         'dates.list': (
             'css/libs/datatable/css/demo_table.css',
-        )
+        ),
+        'dates.following': (
+            'css/dates/following.css',
+        ),
     },
     'js': {
         'global': (
-            'js/libs/jquery-1.6.4.min.js',
+            'js/libs/jquery-1.7.1.min.js',
         ),
         'mobile': (
             'js/libs/jquery-1.6.4.min.js',  # jquery mobile 1.0rc3 requires jquery 1.6.4
@@ -213,6 +216,9 @@ MINIFY_BUNDLES = {
         'dates.list': (
             'js/libs/jquery.dataTables.js',
             'js/dates/list.js',
+        ),
+        'dates.following': (
+            'js/dates/following.js',
         ),
         'users.profile': (
             'js/users/profile.js',
@@ -314,6 +320,8 @@ CACHES = {
         'KEY_PREFIX': 'pto',
     }
 }
+
+SESSION_COOKIE_SECURE = True
 
 ## Tests
 TEST_RUNNER = 'test_utils.runner.RadicalTestSuiteRunner'

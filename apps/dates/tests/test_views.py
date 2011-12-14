@@ -51,6 +51,7 @@ from nose.tools import eq_, ok_
 from mock import Mock
 from users.models import UserProfile
 import ldap
+from users.utils import ldap_lookup
 from users.utils.ldap_mock import MockLDAP
 
 
@@ -1856,3 +1857,170 @@ class ViewsTest(TestCase, ViewsTestMixin):
         ok_('chofman' not in names)
         ok_('axel' in names)
         ok_('stas' not in names)
+
+    def test_manage_following(self):
+        def make_manager(user, manager):
+            profile = user.get_profile()
+            profile.manager_user = manager
+            profile.save()
+
+        todd = User.objects.create(username='todd')
+        mike = User.objects.create(username='mike')
+        ben = User.objects.create(username='ben')
+        laura = User.objects.create(username='laura')
+        peter = User.objects.create(username='peter')
+        lars = User.objects.create(username='lars')
+        chofman = User.objects.create(username='chofman')
+        axel = User.objects.create(username='axel')
+        stas = User.objects.create(username='stas')
+
+        make_manager(mike, todd)
+        make_manager(ben, todd)
+        make_manager(laura, mike)
+        make_manager(peter, laura)
+        make_manager(lars, laura)
+        make_manager(axel, chofman)
+        make_manager(stas, chofman)
+
+        url = reverse('dates.following')
+        response = self.client.get(url)
+        eq_(response.status_code, 302)
+
+        assert self._login(mike)
+
+        response = self.client.get(url)
+        eq_(response.status_code, 200)
+        html = response.content.split('id="observed"')[1].split('</table>')[0]
+        ok_('todd' in html)
+        ok_('your manager' in html)
+        ok_('ben' in html)
+        ok_('teammate' in html)
+        ok_('laura' in html)
+        ok_('direct manager of' in html)
+        ok_('lars' in html)
+        ok_('indirect manager of' in html)
+        ok_('peter' in html)
+        ok_('indirect manager of' in html)
+
+        # fire off an AJAX post to unfollow 'peter'
+        unfollow_url = reverse('dates.save_unfollowing')
+        response = self.client.post(unfollow_url, {'remove': 'xxx'})
+        eq_(response.status_code, 400)
+
+        response = self.client.post(unfollow_url, {'remove': str(peter.pk)})
+        eq_(response.status_code, 200)
+        struct = json.loads(response.content)
+        eq_(struct['id'], peter.pk)
+        eq_(struct['name'], peter.username)
+
+        # add someone outside the default circles
+        follow_url = reverse('dates.save_following')
+        response = self.client.post(follow_url)
+        eq_(response.status_code, 400)
+
+        axel.first_name = 'Axel'
+        axel.email = 'axel@mozilla.com'
+        axel.save()
+
+        response = self.client.post(follow_url, {
+          'search': 'Axel Hecht <axel@mx...ozilla.com>',
+        })
+        eq_(response.status_code, 400)
+
+        response = self.client.post(follow_url, {
+          'search': 'Axel Hecht <axel@muzille.com>',
+        })
+        eq_(response.status_code, 400)
+
+        response = self.client.post(follow_url, {
+          'search': 'Axel Hecht <axel@mozilla.com>',
+        })
+        eq_(response.status_code, 200)
+        struct = json.loads(response.content)
+        eq_(struct['reason'], 'curious')
+        eq_(struct['id'], axel.pk)
+        eq_(struct['name'], axel.first_name)
+        assert FollowingUser.objects.get(follower=mike, following=axel)
+
+        response = self.client.post(unfollow_url, {'remove': axel.pk})
+        eq_(response.status_code, 200)
+        struct = json.loads(response.content)
+        eq_(struct, {})
+        assert not (FollowingUser.objects
+                    .filter(follower=mike, following=axel)
+                    .exists())
+
+        response = self.client.post(follow_url, {
+          'search': str(stas.pk * 999),
+        })
+        eq_(response.status_code, 400)
+
+        response = self.client.post(follow_url, {
+          'search': str(stas.pk),
+        })
+        eq_(response.status_code, 400)
+
+        stas.email = 'Stanislav@mozilla.com'
+        stas.save()
+        response = self.client.post(follow_url, {
+          'search': str(stas.pk),
+        })
+        eq_(response.status_code, 200)
+        struct = json.loads(response.content)
+        eq_(struct['reason'], 'curious')
+        eq_(struct['id'], stas.pk)
+        eq_(struct['name'], stas.username)
+
+        chofman.first_name = 'Chris'
+        chofman.last_name = 'Hofman'
+        chofman.email = 'chofman@mozilla.com'
+        chofman.save()
+
+        ldap.open = Mock('ldap.open')
+        ldap.open.mock_returns = Mock('ldap_connection')
+        ldap.set_option = Mock(return_value=None)
+        fake_user = [
+          ('mail=mortal@mozilla.com,o=com,dc=mozilla',
+           {'cn': ['Chris Hofman'],
+            'givenName': ['Chris'],
+            'mail': [chofman.email],
+            'sn': ['Hofman'],
+            'uid': ['chofman']
+            }),
+          ('mail=mortal@mozilla.com,o=com,dc=mozilla',
+           {'cn': ['Unheard Of'],
+            'givenName': ['Unheard'],
+            'mail': ['unheard@of.com'],
+            'sn': ['Of'],
+            'uid': ['xxx']
+            })
+        ]
+
+        _key = '(|(mail=chris ho*)(givenName=chris ho*)(sn=chris ho*)(cn=chris ho*))'
+        _key = ldap_lookup.account_wrap_search_filter(_key)
+        ldap.initialize = Mock(return_value=MockLDAP({
+          _key: fake_user,
+          }
+        ))
+
+
+        response = self.client.post(follow_url, {
+          'search': 'chris ho',
+        })
+        eq_(response.status_code, 200)
+        struct = json.loads(response.content)
+        eq_(struct['reason'], 'curious')
+        eq_(struct['id'], chofman.pk)
+        eq_(struct['name'], 'Chris Hofman')
+
+
+        response = self.client.get(url)
+        eq_(response.status_code, 200)
+        html = response.content.split('id="observed"')[1].split('</table>')[0]
+        ok_('Chris Hofman' in html)
+        ok_('curious' in html)
+        ok_('peter' not in html)
+
+        html = response.content.split('id="not-observed"')[1].split('</table>')[0]
+        ok_('peter' in html)
+        ok_('Axel' not in html)  # curious people unfollowed aren't blacklisted

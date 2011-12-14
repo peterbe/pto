@@ -1,0 +1,15 @@
+#observed {
+    float:left; 
+    width:50%;
+}
+#content form {
+    margin-bottom: 20px;
+}
+td { font-weight:bold; }
+td.reason, td a { font-weight:normal; }
+a.restore, a.remove { margin-left:30px; }
+
+.goback { 
+    clear:left; 
+    margin-top:40px;
+}

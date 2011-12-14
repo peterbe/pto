@@ -18,6 +18,9 @@ class MockLDAP:  # pragma: no cover
             return self.search_result[search]
 
         if filter:
+            #print "FILTER", repr(filter)
+            #print "KEYS"
+            #print self.search_result.keys()
             try:
                 return self.search_result[filter]
             except KeyError:
@@ -25,12 +28,9 @@ class MockLDAP:  # pragma: no cover
         return []
 
     def simple_bind_s(self, dn, password):
-        #print "Input", (dn, password)
         try:
             o = self._simple_bind_s(dn, password)
-            #print "Output", None, ":)"
         except:
-            #print "Output EXCEPTION  :("
             raise
 
     def _simple_bind_s(self, dn, password):

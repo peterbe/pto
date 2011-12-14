@@ -8,8 +8,8 @@ $(function() {
         callback(response.events);
         var c = 0;
         $.each(response.colors, function() { c++; });
-
-        if (c > 1) {
+        L(response.colors);
+        if (c > 0) {
           var container = $('#calendar-legend');
           if (container.size()) {
             $('span', container).remove();
@@ -26,6 +26,10 @@ $(function() {
                   .css('color', '#fff')
                     .appendTo(container);
           });
+          $('<a href="/following/">')
+            .addClass('following-link')
+            .html('Manage people you follow &rarr;')
+              .appendTo(container);
           container.insertAfter('#calendar table.fc-header');
         } else if ($('#calendar-legend span').size()) {
           $('#calendar-legend').remove();

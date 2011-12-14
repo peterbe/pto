@@ -33,6 +33,7 @@
 #
 # ***** END LICENSE BLOCK *****
 
+import re
 import datetime
 from urllib import urlencode
 from collections import defaultdict
@@ -50,9 +51,10 @@ from django.core.mail import get_connection, EmailMessage
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django.shortcuts import render
+from django.views.decorators.http import require_POST
 import vobject
 from models import Entry, Hours, BlacklistedUser, FollowingUser
-from users.models import UserProfile
+from users.models import UserProfile, User
 from users.utils import ldap_lookup
 from .utils import parse_datetime, DatetimeParseError
 from .utils.pto_left import get_hours_left
@@ -817,3 +819,139 @@ def get_entries_from_request(data):
         entries = entries.filter(user__id__in=_users)
 
     return entries
+
+
+@login_required
+def following(request):
+    data = {}
+    observed = []
+    _followed = get_followed_users(request.user)
+    _minions_1 = get_minions(request.user, depth=1, max_depth=1)
+    _minions_2 = get_minions(request.user, depth=1, max_depth=2)
+    _manager = request.user.get_profile().manager_user
+    for user in sorted(get_observed_users(request.user, max_depth=2),
+                       lambda x, y: cmp(x.first_name.lower(), y.first_name.lower())):
+        if user in _minions_1:
+            reason = 'direct manager of'
+        elif user in _minions_2:
+            reason = 'indirect manager of'
+        elif user == _manager:
+            reason = 'your manager'
+        elif user in _followed:
+            reason = 'curious'
+        else:
+            reason = 'teammate'
+        observed.append((user, reason))
+    not_observed = (BlacklistedUser.objects
+                    .filter(observer=request.user)
+                    .order_by('observable__first_name'))
+
+    data['observed'] = observed
+    data['not_observed'] = [x.observable for x in not_observed]
+    return render(request, 'dates/following.html', data)
+
+@json_view
+@login_required
+@transaction.commit_on_success
+@require_POST
+def save_following(request):
+    search = request.POST.get('search')
+    if not search:
+        return http.HttpResponseBadRequest('Missing search')
+
+    if (-1 < search.rfind('<') < search.rfind('@') < search.rfind('>')):
+        try:
+            email = re.findall('<([\w\.\-]+@[\w\.\-]+)>', search)[0]
+            email = email.strip()
+            validate_email(email)
+        except (ValidationError, IndexError):
+            email = None
+    elif search.isdigit():
+        try:
+            email = User.objects.get(pk=search).email
+        except User.DoesNotExist:
+            email = None  # will deal with this later
+    else:
+        found = []
+        result = ldap_lookup.search_users(search, 30, autocomplete=True)
+        for each in result:
+            try:
+                found.append(User.objects.get(email__iexact=each['mail']))
+            except User.DoesNotExist:
+                pass
+        if len(found) > 1:
+            return http.HttpResponseBadRequest('More than one user found')
+        elif not found:
+            return http.HttpResponseBadRequest('No user found')
+        else:
+            email = found[0].email
+
+    # if no email is found in the search, it's an error
+    if not email:
+        return http.HttpResponseBadRequest('No email found')
+
+    try:
+        user = User.objects.get(email__iexact=email)
+    except User.DoesNotExist:
+        return http.HttpResponseBadRequest('No user by that email found')
+
+    FollowingUser.objects.get_or_create(
+      follower=request.user,
+      following=user,
+    )
+
+    # find a reason why we're following this user
+    if user in get_minions(request.user, depth=1, max_depth=1):
+        reason = 'direct manager of'
+    elif user in get_minions(request.user, depth=1, max_depth=2):
+        reason = 'indirect manager of'
+    elif user == request.user.get_profile().manager_user:
+        reason = 'your manager'
+    elif request.user.get_profile().manager_user and user in get_minions(request.user, depth=1, max_depth=1):
+        reason = 'teammate'
+    else:
+        reason = 'curious'
+
+    name = ('%s %s' % (user.first_name,
+                       user.last_name)).strip()
+    if not name:
+        name = user.username
+
+    data = {
+      'id': user.pk,
+      'name': name,
+      'reason': reason,
+    }
+
+    return data
+
+
+@json_view
+@login_required
+@transaction.commit_on_success
+@require_POST
+def save_unfollowing(request):
+    remove = request.POST.get('remove')
+    try:
+        user = User.objects.get(pk=remove)
+    except (ValueError, User.DoesNotExist):
+        return http.HttpResponseBadRequest('Invalid user ID')
+
+    for f in FollowingUser.objects.filter(follower=request.user, following=user):
+        f.delete()
+
+    data = {}
+    if user in get_observed_users(request.user, max_depth=2):
+        # if not blacklisted, this user will automatically re-appear
+        BlacklistedUser.objects.get_or_create(
+          observer=request.user,
+          observable=user
+        )
+        data['id'] = user.pk
+        name = ('%s %s' % (user.first_name,
+                           user.last_name)).strip()
+        if not name:
+            name = user.username
+        data['name'] = name
+
+    return data

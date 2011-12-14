@@ -84,29 +84,6 @@ def logout(request):
     return response
 
 
-@json_view
-def ldap_search(request):
-    if not request.user.is_authenticated():
-        return http.HttpResponseForbidden('Must be logged in')
-    query = request.GET.get('term').strip()
-    if len(query) < 2:
-        return []
-
-    results = []
-    # I chose a limit of 30 because there are about 20+ 'peter'
-    # something in mozilla
-    for each in ldap_lookup.search_users(query, 30, autocomplete=True):
-        if not each.get('givenName'):
-            logging.warn("Skipping LDAP entry %s" % each)
-            continue
-        full_name_and_email = '%s %s <%s>' % (each['givenName'],
-                                              each['sn'],
-                                              each['mail'])
-        result = {'id': each['uid'],
-                  'label': full_name_and_email,
-                  'value': full_name_and_email}
-        results.append(result)
-    return results
 
 
 @transaction.commit_on_success
@@ -129,3 +106,49 @@ def profile(request):
 
     data['form'] = form
     return render(request, 'users/profile.html', data)
+
+
+@login_required
+def debug_org_chart(request):  # pragma: no cover
+    if not settings.DEBUG:
+        return http.HttpResponseForbidden('only in debug mode')
+
+    parents = {}
+    from collections import defaultdict
+    from .models import UserProfile
+    top = []
+    childen = defaultdict(list)
+    for profile in UserProfile.objects.all():
+        user = profile.user
+        if profile.manager_user:
+            parents[user] = profile.manager_user
+            childen[profile.manager_user].append(user)
+        else:
+            top.append(user)
+
+
+    def _structure(node, indentation=0):
+        items = []
+        for child in childen[node]:
+            items.append((child, _structure(child, indentation=indentation+1)))
+        return items
+
+    all = []
+    for each in top:
+        all.append((each, _structure(each)))
+
+    html = []
+    def _render(user, sublist, indentation=0):
+        html.append("<li>" + user.username)
+        if sublist:
+            html.append("<ul>")
+            for subuser, subsublist in sublist:
+                _render(subuser, subsublist)
+            html.append("</ul>")
+        html.append("</li>")
+    for user, sublist in all:
+        html.append("<ul>")
+        _render(user, sublist)
+        html.append("</ul>")
+
+    return http.HttpResponse('\n'.join(html))

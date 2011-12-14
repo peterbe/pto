@@ -91,7 +91,7 @@ def entry_is_birthday(context, entry):
 
 @register.function
 @jinja2.contextfunction
-def full_name_form(context, user):
+def full_name_form(context, user, avoid_email=False):
     if user is None:
         return ''
     elif (isinstance(user, dict)
@@ -118,7 +118,7 @@ def full_name_form(context, user):
             email = None
             name = user
 
-    if name and email:
+    if name and email and not avoid_email:
         return '%s <%s>' % (name, email)
     elif name:
         return name

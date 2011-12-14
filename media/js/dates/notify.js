@@ -173,6 +173,6 @@ $(function() {
     StartEndDatepickers.init('id_start', 'id_end', dateFormat);
   }
 
-  AutocompleteNotify.init('id_notify', '/users/ldap-search/');
+  AutocompleteNotify.init('id_notify', '/autocomplete/users/');
   moveManagersNotified();
 });
