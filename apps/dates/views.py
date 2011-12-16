@@ -57,7 +57,6 @@ from models import Entry, Hours, BlacklistedUser, FollowingUser
 from users.models import UserProfile, User
 from users.utils import ldap_lookup
 from .utils import parse_datetime, DatetimeParseError
-from .utils.pto_left import get_hours_left
 from .utils.countrytotals import UnrecognizedCountryError, get_country_total
 import utils
 import forms
@@ -202,32 +201,6 @@ def get_upcomings(max_days=14):
         upcoming[entry.user].append((days, entry))
 
     return upcoming, users
-
-
-def get_left(profile):
-    if profile.start_date and profile.country:
-        diff = datetime.date.today() - profile.start_date
-        if diff.days >= 365:
-            hours = get_hours_left(profile)
-            days = hours / 8
-            if days == 1:
-                days = '1 day'
-            else:
-                days = '%d days' % days
-            remainder = hours % 8
-            if remainder:
-                days += ' and %d hours' % remainder
-            return {'hours': hours, 'days': days}
-        else:
-            return {'less_than_a_year': diff.days}
-    elif profile.start_date or profile.country:
-        if not profile.start_date:
-            return {'missing': ['start date']}
-        else:
-            return {'missing': ['country']}
-    else:
-        return {'missing': ['country', 'start date']}
-
 
 @json_view
 def calendar_events(request):

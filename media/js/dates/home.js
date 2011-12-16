@@ -51,8 +51,8 @@ $(function() {
       .addClass('anchor')
         .prependTo($('#content'));
 
-  $('<a href="#pto_left"></a>')
-    .html($('#pto_left h2').text() + ' &darr;')
+  $('<a href="#pto_taken"></a>')
+    .html($('#pto_taken h2').text() + ' &darr;')
       .addClass('anchor')
         .prependTo($('#content'));
 

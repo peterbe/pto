@@ -59,7 +59,3 @@ class TestUtils(TestCase):
         eq_(parse_datetime('1283140800').year, 2010)
         eq_(parse_datetime('1286744467.0').year, 2010)
         self.assertRaises(DatetimeParseError, parse_datetime, 'junk')
-
-    def test_get_hours_left(self):
-        from dates.utils.pto_left import get_hours_left
-        print "!TEST CURRENTLY INCOMPLETE test_get_hours_left()"
