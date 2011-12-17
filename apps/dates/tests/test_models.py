@@ -18,6 +18,7 @@
 # the Initial Developer. All Rights Reserved.
 #
 # Contributor(s):
+#   Peter Bengtsson <peterbe@mozilla.com>
 #
 # Alternatively, the contents of this file may be used under the terms of
 # either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -38,7 +39,8 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from dates.models import (Entry, Hours, BlacklistedUser, FollowingUser,
                           FollowingIntegrityError,
-                          BlacklistIntegityError)
+                          BlacklistIntegityError,
+                          UserKey)
 from nose.tools import eq_, ok_
 
 
@@ -127,3 +129,29 @@ class ModelsTest(TestCase):
                           observer=peter,
                           observable=peter
         )
+
+    def test_user_keys(self):
+        peter = User.objects.create(username='peter')
+        uk = UserKey.objects.create(user=peter)
+
+        ok_(uk.add_date)
+        ok_(uk.key)
+        eq_(len(uk.key), UserKey.KEY_LENGTH)
+
+        peter2 = User.objects.create(username='peter2')
+        uk2 = UserKey.objects.create(user=peter2)
+        ok_(uk.key != uk2.key)
+
+        eq_(UserKey.objects.all().count(), 2)
+
+        peter.delete()
+        eq_(UserKey.objects.all().count(), 1)
+
+    def test_user_keys_uniqueness(self):
+        peter = User.objects.create(username='peter')
+        keys = set()
+        for i in range(1000):
+            uk = UserKey.objects.create(user=peter)
+            if uk.key in keys:
+                raise AssertionError('same key reused')
+            keys.add(uk.key)

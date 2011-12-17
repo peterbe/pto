@@ -14,4 +14,6 @@ urlpatterns = patterns('',
     url(r'^following/$', views.following, name='dates.following'),
     url(r'^following/save/$', views.save_following, name='dates.save_following'),
     url(r'^following/save/unfollow/$', views.save_unfollowing, name='dates.save_unfollowing'),
+    url(r'^calendar/(?P<key>\w{10})\.ics$', views.calendar_vcal, name='dates.calendar_vcal'),
+    url(r'^reset-calendar-url$', views.reset_calendar_url, name='dates.reset_calendar_url'),
 )

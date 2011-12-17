@@ -18,6 +18,7 @@
 # the Initial Developer. All Rights Reserved.
 #
 # Contributor(s):
+#   Peter Bengtsson <peterbe@mozilla.com>
 #
 # Alternatively, the contents of this file may be used under the terms of
 # either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -46,7 +47,8 @@ from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
 from django.utils import simplejson as json
 from django.core import mail
-from dates.models import Entry, Hours, BlacklistedUser, FollowingUser
+from dates.models import (Entry, Hours, BlacklistedUser, FollowingUser,
+                          UserKey)
 from nose.tools import eq_, ok_
 from mock import Mock
 from users.models import UserProfile
@@ -69,6 +71,7 @@ def unicode_csv_reader(unicode_csv_data,
 def utf_8_encoder(unicode_csv_data, encoding):
     for line in unicode_csv_data:
         yield line.encode(encoding)
+
 
 class ViewsTestMixin(object):
     def _login(self, user=None):
@@ -139,6 +142,10 @@ class ViewsTest(TestCase, ViewsTestMixin):
             settings.AUTH_LDAP_BIND_DN: settings.AUTH_LDAP_BIND_PASSWORD,
           }))
 
+    def _make_manager(self, user, manager):
+        profile = user.get_profile()
+        profile.manager_user = manager
+        profile.save()
 
     def test_404_page(self):
         url = '/ojsfpijweofpjwf/qpijf/'
@@ -663,7 +670,6 @@ class ViewsTest(TestCase, ViewsTestMixin):
         events = struct['events']
         event = events[0]
         eq_(event['title'], '2.5 days')
-
 
         Hours.objects.all().delete()
         entry.end = datetime.date(2011, 7, 2)
@@ -1687,6 +1693,7 @@ class ViewsTest(TestCase, ViewsTestMixin):
     def test_get_taken_info(self):
         user = User.objects.create(username='bob')
         from dates.views import get_taken_info
+
         def function():
             return get_taken_info(user)
 
@@ -1763,11 +1770,6 @@ class ViewsTest(TestCase, ViewsTestMixin):
 
     def test_people_in_calendar(self):
 
-        def make_manager(user, manager):
-            profile = user.get_profile()
-            profile.manager_user = manager
-            profile.save()
-
         mike = User.objects.create(username='mike')
         laura = User.objects.create(username='laura')
         peter = User.objects.create(username='peter')
@@ -1777,12 +1779,12 @@ class ViewsTest(TestCase, ViewsTestMixin):
         axel = User.objects.create(username='axel')
         stas = User.objects.create(username='stas')
 
-        make_manager(laura, mike)
-        make_manager(peter, laura)
-        make_manager(lars, laura)
-        make_manager(brandon, laura)
-        make_manager(axel, chofman)
-        make_manager(stas, chofman)
+        self._make_manager(laura, mike)
+        self._make_manager(peter, laura)
+        self._make_manager(lars, laura)
+        self._make_manager(brandon, laura)
+        self._make_manager(axel, chofman)
+        self._make_manager(stas, chofman)
 
         # make everyone have an entry
         _all = mike, laura, peter, lars, brandon, chofman, axel, stas
@@ -1859,11 +1861,6 @@ class ViewsTest(TestCase, ViewsTestMixin):
         ok_('stas' not in names)
 
     def test_manage_following(self):
-        def make_manager(user, manager):
-            profile = user.get_profile()
-            profile.manager_user = manager
-            profile.save()
-
         todd = User.objects.create(username='todd')
         mike = User.objects.create(username='mike')
         ben = User.objects.create(username='ben')
@@ -1874,13 +1871,13 @@ class ViewsTest(TestCase, ViewsTestMixin):
         axel = User.objects.create(username='axel')
         stas = User.objects.create(username='stas')
 
-        make_manager(mike, todd)
-        make_manager(ben, todd)
-        make_manager(laura, mike)
-        make_manager(peter, laura)
-        make_manager(lars, laura)
-        make_manager(axel, chofman)
-        make_manager(stas, chofman)
+        self._make_manager(mike, todd)
+        self._make_manager(ben, todd)
+        self._make_manager(laura, mike)
+        self._make_manager(peter, laura)
+        self._make_manager(lars, laura)
+        self._make_manager(axel, chofman)
+        self._make_manager(stas, chofman)
 
         url = reverse('dates.following')
         response = self.client.get(url)
@@ -1996,13 +1993,13 @@ class ViewsTest(TestCase, ViewsTestMixin):
             })
         ]
 
-        _key = '(|(mail=chris ho*)(givenName=chris ho*)(sn=chris ho*)(cn=chris ho*))'
+        _key = ('(|(mail=chris ho*)(givenName=chris ho*)'
+                '(sn=chris ho*)(cn=chris ho*))')
         _key = ldap_lookup.account_wrap_search_filter(_key)
         ldap.initialize = Mock(return_value=MockLDAP({
           _key: fake_user,
           }
         ))
-
 
         response = self.client.post(follow_url, {
           'search': 'chris ho',
@@ -2013,7 +2010,6 @@ class ViewsTest(TestCase, ViewsTestMixin):
         eq_(struct['id'], chofman.pk)
         eq_(struct['name'], 'Chris Hofman')
 
-
         response = self.client.get(url)
         eq_(response.status_code, 200)
         html = response.content.split('id="observed"')[1].split('</table>')[0]
@@ -2021,6 +2017,130 @@ class ViewsTest(TestCase, ViewsTestMixin):
         ok_('curious' in html)
         ok_('peter' not in html)
 
-        html = response.content.split('id="not-observed"')[1].split('</table>')[0]
+        html = (response.content
+                .split('id="not-observed"')[1]
+                .split('</table>')[0])
         ok_('peter' in html)
         ok_('Axel' not in html)  # curious people unfollowed aren't blacklisted
+
+    def test_calendar_vcal(self):
+        mike = User.objects.create(username='mike')
+        uk = UserKey.objects.create(user=mike)
+        url = reverse('dates.calendar_vcal', args=[uk.key])
+        response = self.client.get(url)
+        eq_(response.status_code, 200)
+        eq_(response['Content-Type'], 'text/calendar;charset=utf-8')
+        eq_(response['Content-Disposition'],
+                     'inline; filename="%s.ics"' % (uk.key,))
+        ok_(response.content.startswith('BEGIN:VCALENDAR'))
+        ok_(response.content.strip().endswith('END:VCALENDAR'))
+
+        # add some events
+        today = datetime.date.today()
+        yesterday = today - datetime.timedelta(days=1)
+        lastweek = today - datetime.timedelta(days=7)
+        nextweek = today + datetime.timedelta(days=7)
+        Entry.objects.create(
+          user=mike,
+          start=lastweek,
+          end=lastweek,
+          total_hours=settings.WORK_DAY / 2,
+          details='Sensitive'
+        )
+
+        Entry.objects.create(
+          user=mike,
+          start=today - datetime.timedelta(days=1),
+          end=today,
+          total_hours=settings.WORK_DAY * 2,
+          details='Also sensitive'
+        )
+
+        Entry.objects.create(
+          user=mike,
+          start=nextweek,
+          end=nextweek,
+          total_hours=settings.WORK_DAY,
+          details='Super sensitive'
+        )
+
+        response = self.client.get(url)
+        eq_(response.status_code, 200)
+        eq_(response.content.count('BEGIN:VEVENT'), 2)
+        eq_(response.content.count('Log in to see the details'), 2)
+        ok_(yesterday.strftime('DTSTART;VALUE=DATE:%Y%m%d')
+            in response.content)
+        ok_(today.strftime('DTEND;VALUE=DATE:%Y%m%d')
+            in response.content)
+        ok_(nextweek.strftime('DTSTART;VALUE=DATE:%Y%m%d')
+            in response.content)
+        ok_(nextweek.strftime('DTEND;VALUE=DATE:%Y%m%d')
+            in response.content)
+        ok_(-1 < response.content.find('SUMMARY:16 hours')
+               < response.content.find('SUMMARY:8 hours'))
+        ok_('sensitive' not in response.content.lower())
+
+    def test_calendar_vcal_following(self):
+        mike = User.objects.create(username='mike')
+        axel = User.objects.create(username='axel')
+        FollowingUser.objects.create(
+          follower=mike,
+          following=axel,
+        )
+        uk = UserKey.objects.create(user=mike)
+        url = reverse('dates.calendar_vcal', args=[uk.key])
+        response = self.client.get(url)
+        eq_(response.status_code, 200)
+
+        today = datetime.date.today()
+        yesterday = today - datetime.timedelta(days=1)
+        Entry.objects.create(
+          user=axel,
+          start=yesterday,
+          end=today,
+          total_hours=settings.WORK_DAY * 2,
+          details='Sensitive'
+        )
+
+        response = self.client.get(url)
+        eq_(response.status_code, 200)
+        ok_('SUMMARY:axel - 16 hours' in response.content)
+
+        axel.first_name = 'Axel'
+        axel.last_name = 'Hecht'
+        axel.email = 'axel@localhost.com'
+        axel.save()
+
+        response = self.client.get(url)
+        eq_(response.status_code, 200)
+        ok_('SUMMARY:Axel Hecht - 16 hours' in response.content)
+
+        uk.delete()
+        response = self.client.get(url)
+        eq_(response.status_code, 200)
+        ok_('Calendar expired' in response.content)
+
+    def test_calendar_vcal_expired(self):
+        key_length = UserKey.KEY_LENGTH
+        url = reverse('dates.calendar_vcal', args=['x' * key_length])
+        response = self.client.get(url)
+        eq_(response.status_code, 200)
+        eq_(response['Content-Type'], 'text/calendar;charset=utf-8')
+        eq_(response['Content-Disposition'],
+                     'inline; filename="%s.ics"' %
+                      ('x' * key_length,))
+        ok_('Calendar expired' in response.content)
+
+    def test_reset_calendar_url(self):
+        url = reverse('dates.reset_calendar_url')
+        response = self.client.get(url)
+        eq_(response.status_code, 302)
+        ok_(settings.LOGIN_URL in response['Location'])
+
+        mike = User.objects.create(username='mike')
+        UserKey.objects.create(user=mike)
+        self._login(mike)
+
+        response = self.client.get(url)
+        eq_(response.status_code, 302)
+        ok_(not UserKey.objects.filter(user=mike).count())

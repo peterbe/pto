@@ -8,7 +8,18 @@
 {% block content %}
 
 <div id="calendar">
+
+<p><a name="calendarurl">
+
+<a href="{{ calendar_url }}"><img src="{{ media('img/calendar-icon.png') }}" alt="Calendar"></a>
+To add this to an external calendar you need this URL:
+<a href="{{ calendar_url }}">{{ calendar_url }}</a>
+<span class="reset-link">
+(<a href="{{ url('dates.reset_calendar_url') }}" class="reset-link">reset your calendar URL</a>)
+</span>
+
 </div>
+
 
 <div id="rightnow" class="extra-info">
 <h2>Who's on PTO right now?</h2>
@@ -21,7 +32,7 @@
     {% else %}
     {{ full_name_form(user) }}
     {% endif %}
-    
+
   </dt>
   {% for days_left, entry in right_nows[user] %}
     <dd><a href="{{ entry_to_list_url(entry) }}"

@@ -40,7 +40,7 @@ DEBUG = TEMPLATE_DEBUG = DEBUG_PROPAGATE_EXCEPTIONS = True
 TEMPLATE_STRING_IF_INVALID = '!{ %s }'
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 PWD_ALGORITHM = 'sha521'
-
+SESSION_COOKIE_SECURE = False  # if you run http://localhost:8000
 
 AUTH_LDAP_BIND_PASSWORD = Must be entered
 

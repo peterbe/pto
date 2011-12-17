@@ -18,6 +18,7 @@
 # the Initial Developer. All Rights Reserved.
 #
 # Contributor(s):
+#   Peter Bengtsson <peterbe@mozilla.com>
 #
 # Alternatively, the contents of this file may be used under the terms of
 # either the GNU General Public License Version 2 or later (the "GPL"), or
@@ -52,8 +53,9 @@ from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django.shortcuts import render
 from django.views.decorators.http import require_POST
+from django.contrib.sites.models import RequestSite
 import vobject
-from models import Entry, Hours, BlacklistedUser, FollowingUser
+from models import Entry, Hours, BlacklistedUser, FollowingUser, UserKey
 from users.models import UserProfile, User
 from users.utils import ldap_lookup
 from .utils import parse_datetime, DatetimeParseError
@@ -114,6 +116,12 @@ def home(request):  # aka dashboard
 
     data.update(get_taken_info(request.user))
 
+    user_key, __ = UserKey.objects.get_or_create(user=request.user)
+    base_url = '%s://%s' % (request.is_secure() and 'https' or 'http',
+                            RequestSite(request).domain)
+    data['calendar_url'] = base_url + reverse('dates.calendar_vcal',
+                                              args=(user_key.key,))
+
     return render(request, 'dates/home.html', data)
 
 
@@ -144,6 +152,7 @@ def get_taken_info(user):
     data['taken'] = _friendly_format_hours(total_hours)
 
     return data
+
 
 def _friendly_format_hours(total_hours):
     days = 1.0 * total_hours / settings.WORK_DAY
@@ -202,6 +211,51 @@ def get_upcomings(max_days=14):
 
     return upcoming, users
 
+
+def make_entry_title(entry, this_user, include_details=True):
+    if entry.user != this_user:
+        if entry.user.first_name:
+            title = '%s %s - ' % (entry.user.first_name,
+                                  entry.user.last_name)
+        else:
+            title = '%s - ' % entry.user.username
+    else:
+        title = ''
+    days = 0
+    for hour in Hours.objects.filter(entry=entry):
+        if hour.hours == 8:
+            days += 1
+        elif hour.hours == 4:
+            days += 0.5
+
+    if days > 1:
+        if int(days) == days:
+            title += '%d days' % days
+        else:
+            title += '%s days' % days
+        if Hours.objects.filter(entry=entry, birthday=True).exists():
+            title += ' (includes birthday)'
+    elif (days == 1 and entry.total_hours == 0 and
+        Hours.objects.filter(entry=entry, birthday=True)):
+        title += 'Birthday!'
+    elif days == 1 and entry.total_hours == 8:
+        title += '1 day'
+    else:
+        title += '%s hours' % entry.total_hours
+    if entry.details:
+        if days == 1:
+            max_length = 20
+        else:
+            max_length = 40
+        if include_details:
+            title += ', '
+            if len(entry.details) > max_length:
+                title += entry.details[:max_length] + '...'
+            else:
+                title += entry.details
+    return title
+
+
 @json_view
 def calendar_events(request):
     if not request.user.is_authenticated():
@@ -223,45 +277,6 @@ def calendar_events(request):
         return http.HttpResponseBadRequest('Invalid end')
 
     entries = []
-
-    def make_title(entry):
-        if entry.user != request.user:
-            if entry.user.first_name:
-                title = '%s %s - ' % (entry.user.first_name,
-                                      entry.user.last_name)
-            else:
-                title = '%s - ' % entry.user.username
-        else:
-            title = ''
-        days = 0
-        for hour in Hours.objects.filter(entry=entry):
-            if hour.hours == 8:
-                days += 1
-            elif hour.hours == 4:
-                days += 0.5
-
-        if days > 1:
-            title += '%s days' % days
-            if Hours.objects.filter(entry=entry, birthday=True).exists():
-                title += ' (includes birthday)'
-        elif (days == 1 and entry.total_hours == 0 and
-            Hours.objects.filter(entry=entry, birthday=True)):
-            title += 'Birthday!'
-        elif days == 1 and entry.total_hours == 8:
-            title += '1 day'
-        else:
-            title += '%s hours' % entry.total_hours
-        if entry.details:
-            if days == 1:
-                max_length = 20
-            else:
-                max_length = 40
-            title += ', '
-            if len(entry.details) > max_length:
-                title += entry.details[:max_length] + '...'
-            else:
-                title += entry.details
-        return title
 
     COLORS = ("#EAA228", "#c5b47f", "#579575", "#839557", "#958c12",
               "#953579", "#4b5de4", "#d8b83f", "#ff5800", "#0085cc",
@@ -294,7 +309,7 @@ def calendar_events(request):
         visible_user_ids.add(entry.user.pk)
         entries.append({
           'id': entry.pk,
-          'title': make_title(entry),
+          'title': make_entry_title(entry, request.user),
           'start': entry.start.strftime('%Y-%m-%d'),
           'end': entry.end.strftime('%Y-%m-%d'),
           'color': colors[entry.user.pk],
@@ -317,6 +332,7 @@ def get_minions(user, depth=1, max_depth=2):
                                        depth=depth + 1,
                                        max_depth=max_depth))
     return minions
+
 
 def get_siblings(user):
     profile = user.get_profile()
@@ -369,6 +385,7 @@ def get_observed_users(this_user, depth=1, max_depth=2):
             users.append(user)
 
     return users
+
 
 @transaction.commit_on_success
 @login_required
@@ -803,7 +820,8 @@ def following(request):
     _minions_2 = get_minions(request.user, depth=1, max_depth=2)
     _manager = request.user.get_profile().manager_user
     for user in sorted(get_observed_users(request.user, max_depth=2),
-                       lambda x, y: cmp(x.first_name.lower(), y.first_name.lower())):
+                       lambda x, y: cmp(x.first_name.lower(),
+                                        y.first_name.lower())):
         if user in _minions_1:
             reason = 'direct manager of'
         elif user in _minions_2:
@@ -822,6 +840,7 @@ def following(request):
     data['observed'] = observed
     data['not_observed'] = [x.observable for x in not_observed]
     return render(request, 'dates/following.html', data)
+
 
 @json_view
 @login_required
@@ -874,13 +893,16 @@ def save_following(request):
     )
 
     # find a reason why we're following this user
-    if user in get_minions(request.user, depth=1, max_depth=1):
+    _minions_1 = get_minions(request.user, depth=1, max_depth=1)
+    _minions_2 = get_minions(request.user, depth=1, max_depth=2)
+    if user in _minions_1:
         reason = 'direct manager of'
-    elif user in get_minions(request.user, depth=1, max_depth=2):
+    elif user in _minions_2:
         reason = 'indirect manager of'
     elif user == request.user.get_profile().manager_user:
         reason = 'your manager'
-    elif request.user.get_profile().manager_user and user in get_minions(request.user, depth=1, max_depth=1):
+    elif (request.user.get_profile().manager_user
+          and user in _minions_1):
         reason = 'teammate'
     else:
         reason = 'curious'
@@ -910,7 +932,8 @@ def save_unfollowing(request):
     except (ValueError, User.DoesNotExist):
         return http.HttpResponseBadRequest('Invalid user ID')
 
-    for f in FollowingUser.objects.filter(follower=request.user, following=user):
+    for f in (FollowingUser.objects
+              .filter(follower=request.user, following=user)):
         f.delete()
 
     data = {}
@@ -928,3 +951,91 @@ def save_unfollowing(request):
         data['name'] = name
 
     return data
+
+
+def calendar_vcal(request, key):
+    base_url = '%s://%s' % (request.is_secure() and 'https' or 'http',
+                            RequestSite(request).domain)
+    home_url = base_url + '/'
+    cal = vobject.iCalendar()
+    cal.add('x-wr-calname').value = 'Mozilla PTO'
+
+    try:
+        user = UserKey.objects.get(key=key).user
+    except UserKey.DoesNotExist:
+        # instead of raising a HTTP error, respond a calendar
+        # that urges the user to update the stale URL
+        event = cal.add('vevent')
+        event.add('summary').value = (
+          "Calendar expired. Visit %s#calendarurl to get the "
+          "new calendar URL" % home_url
+        )
+        today = datetime.date.today()
+        event.add('dtstart').value = today
+        event.add('dtend').value = today
+        event.add('url').value = '%s#calendarurl' % (home_url,)
+        event.add('description').value = ("The calendar you used has expired "
+        "and is no longer associated with any user")
+        return _render_vcalendar(cal, key)
+
+    # always start on the first of this month
+    today = datetime.date.today()
+    #first = datetime.date(today.year, today.month, 1)
+
+    user_ids = [user.pk]
+    for user_ in get_observed_users(user, max_depth=2):
+        user_ids.append(user_.pk)
+
+    entries = (Entry.objects
+               .filter(user__in=user_ids,
+                       total_hours__gte=0,
+                       total_hours__isnull=False,
+                       end__gte=today)
+               .select_related('user')
+               )
+
+    _list_base_url = base_url + reverse('dates.list')
+
+    def make_list_url(entry):
+        name = entry.user.get_full_name()
+        if not name:
+            name = entry.user.username
+        data = {
+          'date_from': entry.start.strftime('%d %B %Y'),
+          'date_to': entry.end.strftime('%d %B %Y'),
+          'name': name
+        }
+        return _list_base_url + '?' + urlencode(data, True)
+    for entry in entries:
+        event = cal.add('vevent')
+        event.add('summary').value = '%s PTO' % make_entry_title(entry, user,
+                                                include_details=False)
+        event.add('dtstart').value = entry.start
+        event.add('dtend').value = entry.end
+        #url = (home_url + '?cal_y=%d&cal_m=%d' %
+        #       (slot.date.year, slot.date.month))
+        event.add('url').value = make_list_url(entry)
+        #event.add('description').value = entry.details
+        event.add('description').value = "Log in to see the details"
+
+    return _render_vcalendar(cal, key)
+
+
+def _render_vcalendar(cal, key):
+    #return http.HttpResponse(cal.serialize(),
+    #                         mimetype='text/plain;charset=utf-8'
+    #                         )
+    resp = http.HttpResponse(cal.serialize(),
+                             mimetype='text/calendar;charset=utf-8'
+                             )
+    filename = '%s.ics' % (key,)
+    resp['Content-Disposition'] = 'inline; filename="%s"' % filename
+    return resp
+
+
+@login_required
+@transaction.commit_on_success
+def reset_calendar_url(request):
+    for each in UserKey.objects.filter(user=request.user):
+        each.delete()
+    return redirect(reverse('dates.home') + '#calendarurl')

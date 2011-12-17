@@ -50,7 +50,8 @@ def media(context, url, key='MEDIA_URL'):
     elif url.endswith('.css'):
         build = context['BUILD_ID_CSS']
     else:
-        build = context['BUILD_ID_IMG']
+        #build = context['BUILD_ID_IMG']
+        build = context['BUILD_ID_JS']
     return context[key] + urlparams(url, b=build)
 
 
