@@ -36,13 +36,12 @@
 
 import datetime
 from django.contrib.auth.models import User
-from django.test import TestCase
 from dates.models import (Entry, Hours, BlacklistedUser, FollowingUser,
                           FollowingIntegrityError,
                           BlacklistIntegityError,
                           UserKey)
 from nose.tools import eq_, ok_
-
+from test_utils import TestCase
 
 class ModelsTest(TestCase):
 

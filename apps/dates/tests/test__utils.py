@@ -34,7 +34,7 @@
 # ***** END LICENSE BLOCK *****
 
 import datetime
-from django.test import TestCase
+from test_utils import TestCase
 from nose.tools import eq_, ok_
 
 

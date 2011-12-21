@@ -2,14 +2,13 @@ import os
 import re
 from urlparse import urlparse
 import datetime
-from django.test import TestCase
 from django.core.urlresolvers import reverse
 from django.conf import settings
 from django.utils import simplejson as json
 from django.contrib.auth.models import User
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from nose.tools import eq_, ok_
-
+from test_utils import TestCase
 from mock import Mock
 
 import ldap

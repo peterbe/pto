@@ -41,7 +41,6 @@ from urlparse import urlparse
 from collections import defaultdict
 import datetime
 from django.test.client import RequestFactory
-from django.test import TestCase
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
@@ -50,6 +49,7 @@ from django.core import mail
 from dates.models import (Entry, Hours, BlacklistedUser, FollowingUser,
                           UserKey)
 from nose.tools import eq_, ok_
+from test_utils import TestCase
 from mock import Mock
 from users.models import UserProfile
 import ldap

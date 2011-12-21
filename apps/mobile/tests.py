@@ -37,13 +37,13 @@ import datetime
 from collections import defaultdict
 from urlparse import urlparse
 from nose.tools import eq_, ok_
-from django.test import TestCase
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.utils import simplejson as json
 from dates.tests.test_views import ViewsTestMixin
 from dates.models import Entry, Hours
+from test_utils import TestCase
 
 
 class MobileViewsTest(TestCase, ViewsTestMixin):
