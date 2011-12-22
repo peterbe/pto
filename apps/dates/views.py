@@ -643,36 +643,6 @@ def send_email_notification(entry, extra_users, is_edit=False):
       connection=connection
     )
 
-    cal = vobject.iCalendar()
-    cal.add('method').value = 'PUBLISH'  # IE/Outlook needs this
-    event = cal.add('vevent')
-    if entry.total_hours < 8:
-        hours = Hours.objects.get(entry=entry)
-        if hours.birthday:
-            length = 'birthday'
-        else:
-            length = '%s hours' % entry.total_hours
-    else:
-        days = (entry.end - entry.start).days + 1
-        if days == 1:
-            length = '1 day'
-        else:
-            length = '%d days' % days
-    if entry.user.first_name:
-        user_name = ('%s %s' %
-          (entry.user.first_name, entry.user.last_name)).strip()
-    else:
-        user_name = entry.user.username
-    summary = '%s on PTO (%s)' % (user_name, length)
-    event.add('summary').value = summary
-    event.add('dtstart').value = entry.start
-    event.add('dtend').value = entry.end
-    #url = (home_url + '?cal_y=%d&cal_m=%d' %
-    #(slot.date.year, slot.date.month))
-    #event.add('url').value = url
-    description = ''
-    event.add('description').value = description
-    message.attach('event.ics', cal.serialize(), 'text/calendar')
     success = message.send()
     return success, email_addresses
 

@@ -280,12 +280,6 @@ class ViewsTest(TestCase, ViewsTestMixin):
 
         eq_(email.cc, [peter.email])
         ok_('--\n%s' % settings.EMAIL_SIGNATURE in email.body)
-        eq_(len(email.attachments), 1)
-        filename, content, mimetype = email.attachments[0]
-        eq_(filename, 'event.ics')
-        eq_(mimetype, 'text/calendar')
-        ok_('Peter Bengtsson on PTO' in content)
-        ok_('3 days' in content)
 
     def test_overlap_dates_errors(self):
         return  # Obsolete now
@@ -924,86 +918,6 @@ class ViewsTest(TestCase, ViewsTestMixin):
 
         assert len(mail.outbox)
         email = mail.outbox[-1]
-
-        attachment = email.attachments[0]
-        filename, content, mimetype = attachment
-        eq_(filename, 'event.ics')
-        eq_(mimetype, 'text/calendar')
-        ok_('Peter Bengtsson on PTO (3 days)' in content)
-
-    def test_notify_notification_attachment_on_birthday(self):
-        url = reverse('dates.notify')
-        peter = User.objects.create(
-          username='peter',
-          email='pbengtsson@mozilla.com',
-          first_name='Peter',
-          last_name='Bengtsson',
-        )
-        peter.set_password('secret')
-        peter.save()
-
-        assert self.client.login(username='peter', password='secret')
-        monday = datetime.date(2018, 1, 1)  # I know this is a Monday
-        wednesday = monday + datetime.timedelta(days=2)
-
-        entry = Entry.objects.create(
-          start=monday,
-          end=monday,
-          user=peter,
-        )
-        data = {
-          monday.strftime('d-%Y%m%d'): '-1',
-        }
-        url = reverse('dates.hours', args=[entry.pk])
-        response = self.client.post(url, data)
-        eq_(response.status_code, 302)
-
-        hours, = Hours.objects.all()
-        assert hours.birthday
-
-        assert len(mail.outbox)
-        email = mail.outbox[-1]
-
-        attachment = email.attachments[0]
-        filename, content, mimetype = attachment
-        eq_(filename, 'event.ics')
-        eq_(mimetype, 'text/calendar')
-        ok_('Peter Bengtsson' in content)
-        ok_('birthday' in content)
-
-    def test_notify_notification_attachment_one_day(self):
-        url = reverse('dates.notify')
-        peter = User.objects.create(
-          username='peter',
-          email='pbengtsson@mozilla.com',
-        )
-        peter.set_password('secret')
-        peter.save()
-
-        assert self.client.login(username='peter', password='secret')
-        monday = datetime.date(2018, 1, 1)  # I know this is a Monday
-
-        entry = Entry.objects.create(
-          start=monday,
-          end=monday,
-          user=peter,
-        )
-        tuesday = monday + datetime.timedelta(days=1)
-        data = {
-          monday.strftime('d-%Y%m%d'): 4,
-        }
-        url = reverse('dates.hours', args=[entry.pk])
-        response = self.client.post(url, data)
-        eq_(response.status_code, 302)
-
-        assert len(mail.outbox)
-        email = mail.outbox[-1]
-
-        attachment = email.attachments[0]
-        filename, content, mimetype = attachment
-        eq_(filename, 'event.ics')
-        eq_(mimetype, 'text/calendar')
-        ok_('peter on PTO (4 hours)' in content)
 
     def test_get_minions(self):
         from dates.views import get_minions
