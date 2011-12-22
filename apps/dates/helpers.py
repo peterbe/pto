@@ -6,7 +6,6 @@ from django.conf import settings
 from django.utils.encoding import smart_str
 from django.core.urlresolvers import reverse
 
-from dates.models import Hours
 import jinja2
 from jingo import register
 
@@ -80,22 +79,6 @@ def entry_to_list_url(context, entry):
               }
     values_encoded = urllib.urlencode(values)
     return '%s?%s' % (url, values_encoded)
-
-
-@register.function
-@jinja2.contextfunction
-def entry_length(context, entry):
-    return (entry.end - entry.start).days + 1
-
-
-@register.function
-@jinja2.contextfunction
-def entry_is_birthday(context, entry):
-    if entry.total_hours == 0:
-        if (entry.end - entry.start).days == 0:
-            if Hours.objects.filter(entry=entry, birthday=True).exists():
-                return True
-    return False
 
 
 @register.function

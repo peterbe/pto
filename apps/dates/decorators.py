@@ -11,11 +11,7 @@ log = logging.getLogger('pto')
 def json_view(f):
     @functools.wraps(f)
     def wrapper(*args, **kw):
-        try:
-            response = f(*args, **kw)
-        except:
-            log.exception('JSON EXCEPTION')
-            raise
+        response = f(*args, **kw)
         if isinstance(response, http.HttpResponse):
             return response
         else:

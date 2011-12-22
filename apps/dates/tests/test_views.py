@@ -47,13 +47,11 @@ from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
 from django.utils import simplejson as json
 from django.core import mail
-from django.core.cache import cache
 from dates.models import (Entry, Hours, BlacklistedUser, FollowingUser,
                           UserKey)
 from nose.tools import eq_, ok_
 from test_utils import TestCase
 from mock import Mock
-from users.models import UserProfile
 import ldap
 from users.utils import ldap_lookup
 from users.utils.ldap_mock import MockLDAP
@@ -2165,7 +2163,7 @@ class ViewsTest(TestCase, ViewsTestMixin):
         response = self.client.get(url)
         ok_(last_username not in response.content)
 
-        response = self.client.get(url, {'all-rightnow':''})
+        response = self.client.get(url, {'all-rightnow': ''})
         ok_(last_username in response.content)
 
     def test_cancel_notify(self):

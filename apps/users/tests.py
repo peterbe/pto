@@ -1,10 +1,8 @@
-import os
 import re
 from urlparse import urlparse
 import datetime
 from django.core.urlresolvers import reverse
 from django.conf import settings
-from django.utils import simplejson as json
 from django.contrib.auth.models import User
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from nose.tools import eq_, ok_
@@ -39,7 +37,7 @@ class LDAPLookupTests(TestCase):
         fake_user = [
           ('mail=mortal@mozilla.com,o=com,dc=mozilla',
            {'cn': ['Peter Bengtsson'],
-            'givenName': ['Pet\xc3\xa3r'], # utf-8 encoded
+            'givenName': ['Pet\xc3\xa3r'],  # utf-8 encoded
             'mail': ['test@example.com'],
             'sn': ['Bengtss\xc2\xa2n'],
             'uid': ['pbengtsson']
@@ -64,7 +62,7 @@ class LDAPLookupTests(TestCase):
         different_fake_user = [
           ('mail=mortal,o=com,dc=mozilla',
            {'cn': ['Peter Bengtsson'],
-            'givenName': ['Different'], # utf-8 encoded
+            'givenName': ['Different'],  # utf-8 encoded
             'mail': ['test@example.com'],
             'sn': ['Bengtss\xc2\xa2n'],
             'uid': ['pbengtsson']
@@ -87,7 +85,7 @@ class LDAPLookupTests(TestCase):
         fake_user = [
           ('mail=mortal@mozilla.com,o=com,dc=mozilla',
            {'cn': ['Peter Bengtsson'],
-            'givenName': ['Pet\xc3\xa3r'], # utf-8 encoded
+            'givenName': ['Pet\xc3\xa3r'],  # utf-8 encoded
             'mail': ['test@example.com'],
             'sn': ['Bengtss\xc2\xa2n'],
             'uid': ['pbengtsson']
@@ -130,7 +128,7 @@ class LDAPLookupTests(TestCase):
         fake_user = [
           ('mail=mortal@mozilla.com,o=com,dc=mozilla',
            {'cn': ['Peter Bengtsson'],
-            'givenName': ['Pet\xc3\xa3r'], # utf-8 encoded
+            'givenName': ['Pet\xc3\xa3r'],  # utf-8 encoded
             'mail': ['test@example.com'],
             'sn': ['Bengtss\xc2\xa2n'],
             'uid': ['pbengtsson']
@@ -160,7 +158,8 @@ class LDAPLookupTests(TestCase):
 
         ldap.initialize = Mock(return_value=MockLDAP({
           _wrapper(key): fake_user,
-          _wrapper('(|(mail=PETER BENGT*)(givenName=PETER BENGT*)(sn=PETER BENGT*)(cn=PETER BENGT*))'): fake_user,
+          _wrapper('(|(mail=PETER BENGT*)(givenName=PETER BENGT*)(sn=PETER '
+                   'BENGT*)(cn=PETER BENGT*))'): fake_user,
           }
         ))
 
@@ -173,7 +172,7 @@ class LDAPLookupTests(TestCase):
         fake_user = [
           ('mail=mortal@mozilla.com,o=com,dc=mozilla',
            {'cn': ['Peter Bengtsson'],
-            'givenName': ['Pet\xc3\xa3r', 'Two'], # utf-8 encoded
+            'givenName': ['Pet\xc3\xa3r', 'Two'],  # utf-8 encoded
             'mail': ['test@example.com'],
             'sn': [],
             'uid': ['pbengtsson']
@@ -200,7 +199,7 @@ class LDAPLookupTests(TestCase):
         fake_user = [
           ('mail=mortal@mozilla.com,o=com,dc=mozilla',
            {'cn': ['Peter Bengtsson'],
-            'givenName': ['Pet\xc3\xa3r'], # utf-8 encoded
+            'givenName': ['Pet\xc3\xa3r'],  # utf-8 encoded
             'mail': ['test@example.com'],
             'sn': ['Bengtss\xc2\xa2n'],
             'uid': ['pbengtsson']
@@ -226,28 +225,6 @@ class UsersTests(TestCase):
         ldap.set_option = Mock(return_value=None)
 
     def test_login_with_local_django_user(self):
-        fake_user = [
-          ('mail=mortal,o=com,dc=mozilla',
-           {'cn': ['Peter Bengtsson'],
-            'givenName': ['Pet\xc3\xa3r'], # utf-8 encoded
-            'mail': ['peterbe@mozilla.com'],
-            'sn': ['Bengtss\xc2\xa2n'],
-            'uid': ['pbengtsson']
-            })
-        ]
-
-        fake_user_plus = [
-          ('mail=mortal,o=com,dc=mozilla',
-           {'cn': ['Peter Bengtsson'],
-            'givenName': ['Pet\xc3\xa3r'], # utf-8 encoded
-            'mail': ['peterbe@mozilla.com'],
-            'sn': ['Bengtss\xc2\xa2n'],
-            'uid': ['pbengtsson'],
-            'manager': ['mail=lthom@mozilla.com,dc=foo'],
-            'physicalDeliveryOfficeName': ['London:::GB'],
-            })
-        ]
-
         ldap.initialize = Mock(return_value=MockLDAP({
           '(mail=mortal@mozilla.com)': 'anything',
           },
@@ -479,9 +456,12 @@ class UsersTests(TestCase):
 
     def test_mozilla_ldap_backend_basic(self):
         back = MozillaLDAPBackend()
+
         class MockConnection:
+
             def __init__(self, mock_result):
                 self.mock_result = mock_result
+
             def search_s(self, dn, scope, filter=None, attrs=None):
                 return self.mock_result
 
@@ -492,13 +472,14 @@ class UsersTests(TestCase):
                   'sn': 'Bengtsson',
                   'mail': 'mail@peterbe.com',
                 }],)
+
             def __init__(self, attrs):
                 self.attrs = attrs
 
             def _get_connection(self):
                 return MockConnection(self.results)
 
-        ldap_user = LDAPUser({'mail':['mail@peterbe.com']})
+        ldap_user = LDAPUser({'mail': ['mail@peterbe.com']})
 
         user, created = back.get_or_create_user('peter', ldap_user)
 
@@ -550,7 +531,6 @@ class UsersTests(TestCase):
         response = self.client.get(url)
         eq_(response.status_code, 200)
 
-        today = datetime.date.today()
         data = {
                 'country': 'GB',
                 'city': 'London',

@@ -46,8 +46,6 @@ import django.contrib.auth.views
 from session_csrf import anonymous_csrf
 import forms
 from models import get_user_profile
-from dates.decorators import json_view
-from .utils import ldap_lookup
 
 
 @anonymous_csrf
@@ -55,8 +53,6 @@ def login(request):
     # mostly copied from zamboni
     logout(request)
 
-    #from monkeypatch_template_engine import jinja_for_django as jfd
-    #django.contrib.auth.views.render_to_response = jfd
     r = django.contrib.auth.views.login(request,
                          template_name='users/login.html',
                          redirect_field_name=REDIRECT_FIELD_NAME,
@@ -83,8 +79,6 @@ def logout(request):
     next = request.GET.get('next') or settings.LOGOUT_REDIRECT_URL
     response = http.HttpResponseRedirect(next)
     return response
-
-
 
 
 @transaction.commit_on_success
@@ -130,11 +124,11 @@ def debug_org_chart(request):  # pragma: no cover
         else:
             top.append(user)
 
-
     def _structure(node, indentation=0):
         items = []
         for child in childen[node]:
-            items.append((child, _structure(child, indentation=indentation+1)))
+            items.append((child,
+                          _structure(child, indentation=indentation + 1)))
         return items
 
     all = []
@@ -142,6 +136,7 @@ def debug_org_chart(request):  # pragma: no cover
         all.append((each, _structure(each)))
 
     html = []
+
     def _render(user, sublist, indentation=0):
         html.append("<li>" + user.username)
         if sublist:

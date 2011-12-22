@@ -39,7 +39,7 @@ import views
 urlpatterns = patterns('',
    url('^login/', views.login, name='users.login'),
    url('^logout/', views.logout, name='users.logout'),
-#   url('^ldap-search/', views.ldap_search, name='users.ldap_search'),
    url('^profile/', views.profile, name='users.profile'),
-   url('^debug_org_chart/', views.debug_org_chart, name='users.debug_org_chart'),
+   url('^debug_org_chart/', views.debug_org_chart,
+       name='users.debug_org_chart'),
 )

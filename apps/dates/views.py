@@ -120,7 +120,8 @@ def home(request):  # aka dashboard
     data['right_nows'] = right_nows
     data['right_now_users'] = right_now_users
     if len(right_now_users) > MAX_RIGHT_NOWS:
-        data['right_now_too_many'] = len(data['right_now_users']) - MAX_RIGHT_NOWS
+        data['right_now_too_many'] = (len(data['right_now_users'])
+                                       - MAX_RIGHT_NOWS)
         data['right_now_users'] = data['right_now_users'][:MAX_RIGHT_NOWS]
     else:
         data['right_now_too_many'] = None

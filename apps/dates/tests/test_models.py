@@ -43,6 +43,7 @@ from dates.models import (Entry, Hours, BlacklistedUser, FollowingUser,
 from nose.tools import eq_, ok_
 from test_utils import TestCase
 
+
 class ModelsTest(TestCase):
 
     def test_cascade_delete_entry(self):

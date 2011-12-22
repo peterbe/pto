@@ -1,5 +1,4 @@
 from django.contrib import admin
-from django.contrib.admin.sites import AlreadyRegistered
 from models import UserProfile
 
 
@@ -28,7 +27,4 @@ class UserProfileAdmin(admin.ModelAdmin):  # pragma: no cover
     manager_user_display.short_description = "Manager"
 
 
-try:
-    admin.site.register(UserProfile, UserProfileAdmin)
-except AlreadyRegistered:
-    pass
+admin.site.register(UserProfile, UserProfileAdmin)

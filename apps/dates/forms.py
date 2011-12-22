@@ -142,7 +142,8 @@ class HoursForm(BaseForm):
                       user=self.entry.user
                     )
                     if not Entry.objects.filter(**_search).exists():
-                        raise forms.ValidationError("First date can't be 0 hours")
+                        raise forms.ValidationError(
+                           "First date can't be 0 hours")
                 elif date == dates[-1] and not value:
                     raise forms.ValidationError("Last date can't be 0 hours")
             except (KeyError, ValueError):

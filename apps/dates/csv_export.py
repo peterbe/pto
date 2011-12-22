@@ -1,7 +1,7 @@
-import os
 import csv
 import codecs
 import cStringIO
+
 
 class UnicodeWriter:
     """
@@ -27,7 +27,3 @@ class UnicodeWriter:
         self.stream.write(data)
         # empty queue
         self.queue.truncate(0)
-
-    def writerows(self, rows):
-        for row in rows:
-            self.writerow(row)

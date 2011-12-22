@@ -33,13 +33,12 @@
 #
 # ***** END LICENSE BLOCK *****
 
-import datetime
 from django import forms
-from django.contrib.auth.models import User
 import django.contrib.auth.forms
 from .models import UserProfile
 from dates.forms import BaseModelForm
 from lib.country_aliases import ALIASES as COUNTRY_ALIASES
+
 
 class EmailInput(forms.widgets.Input):
     input_type = 'email'
@@ -51,6 +50,7 @@ class EmailInput(forms.widgets.Input):
                           autocapitalize='off',
                           spellcheck='false'))
         return super(EmailInput, self).render(name, value, attrs=attrs)
+
 
 class AuthenticationForm(django.contrib.auth.forms.AuthenticationForm):
     """override the authentication form because we use the email address as the
@@ -89,16 +89,11 @@ class ProfileForm(BaseModelForm):
                 _all_longforms.append(alias)
                 country_choices.append((country, alias))
 
-        country_choices.sort(lambda x,y: cmp(x[1], y[1]))
+        country_choices.sort(lambda x, y: cmp(x[1], y[1]))
         self.fields['country'].choices = country_choices
 
-    def clean_start_date(self):
-        value = self.cleaned_data['start_date']
-        if value > datetime.date.today():
-            raise forms.ValidationError("Can't be in future")
-        return value
-
-    def clean_country(self):
+    def clean_country(self):  # pragma: no cover
+        # this method doesn't do much since we're using a ChoiceField
         value = self.cleaned_data['country']
         if value in COUNTRY_ALIASES.values():
             pass
