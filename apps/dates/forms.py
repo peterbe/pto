@@ -115,17 +115,23 @@ class HoursForm(BaseForm):
                              hours_.hours)
             except Hours.DoesNotExist:
                 help_text = ''
+                hours_ = None
+
+            choices = []
+            choices.append((settings.WORK_DAY,
+                            'Full day (%sh)' % settings.WORK_DAY))
+            choices.append((settings.WORK_DAY / 2,
+                            'Half day (%sh)' % (settings.WORK_DAY / 2)))
+            choices.append((-1, 'Birthday'))
+            if hours_:
+                choices.append((0, '0 hrs'))
+
             self.fields[field_name] = forms.fields.ChoiceField(
-              ((settings.WORK_DAY, 'Full day (%sh)' % settings.WORK_DAY),
-               (settings.WORK_DAY / 2,
-                'Half day (%sh)' % (settings.WORK_DAY / 2)),
-               (0, '0 hrs'),
-               (-1, 'Birthday'),  # exception
-               ),
-               required=True,
-               label=date.strftime(settings.DEFAULT_DATE_FORMAT),
-               widget=forms.widgets.RadioSelect(attrs={'class': 'hours'}),
-               help_text=help_text,
+              tuple(choices),
+              required=True,
+              label=date.strftime(settings.DEFAULT_DATE_FORMAT),
+              widget=forms.widgets.RadioSelect(attrs={'class': 'hours'}),
+              help_text=help_text,
             )
 
     def clean(self):

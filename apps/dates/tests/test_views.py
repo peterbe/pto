@@ -250,6 +250,11 @@ class ViewsTest(TestCase, ViewsTestMixin):
         data['d-20180103'] = str(settings.WORK_DAY / 2)
 
         response = self.client.post(url, data)
+        eq_(response.status_code, 200)
+
+        # 0 on the tuesday wasn't an option
+        data['d-20180102'] = '-1'  # birthday
+        response = self.client.post(url, data)
         eq_(response.status_code, 302)
 
         entry = Entry.objects.get(pk=entry.pk)
@@ -456,60 +461,6 @@ class ViewsTest(TestCase, ViewsTestMixin):
         eq_(response.status_code, 200)
         response = self.client.get(url2)
         eq_(response.status_code, 200)
-
-    def test_adding_hours_with_zeros_on_start(self):
-        peter = User.objects.create(
-          username='peter',
-          email='pbengtsson@mozilla.com',
-          first_name='Peter',
-          last_name='Bengtsson',
-        )
-        peter.set_password('secret')
-        peter.save()
-        assert self.client.login(username=peter.email, password='secret')
-
-        monday = datetime.date(2011, 7, 25)
-        assert monday.strftime('%A') == 'Monday'
-        friday = monday + datetime.timedelta(days=4)
-        assert friday.strftime('%A') == 'Friday'
-        entry = Entry.objects.create(
-          user=peter,
-          start=monday,
-          end=friday,
-        )
-
-        hours_url = reverse('dates.hours', args=[entry.pk])
-        response = self.client.get(hours_url)
-        eq_(response.status_code, 200)
-
-        tuesday = monday + datetime.timedelta(days=1)
-        wednesday = monday + datetime.timedelta(days=2)
-        thursday = monday + datetime.timedelta(days=3)
-
-        def date_to_name(d):
-            return d.strftime('d-%Y%m%d')
-
-        data = {
-          date_to_name(monday): '0',
-          date_to_name(tuesday): '4',
-          date_to_name(wednesday): '8',
-          date_to_name(thursday): '4',
-          date_to_name(friday): '0',
-        }
-        response = self.client.post(hours_url, data)
-        eq_(response.status_code, 200)
-        ok_('errorlist' in response.content)
-
-        data = {
-          date_to_name(monday): '8',
-          date_to_name(tuesday): '4',
-          date_to_name(wednesday): '4',
-          date_to_name(thursday): '0',
-          date_to_name(friday): '0',
-        }
-        response = self.client.post(hours_url, data)
-        eq_(response.status_code, 200)
-        ok_('errorlist' in response.content)
 
     def test_calendar_events(self):
         url = reverse('dates.calendar_events')
@@ -2139,3 +2090,71 @@ class ViewsTest(TestCase, ViewsTestMixin):
         # do it again
         response = self.client.get(reverse('dates.home'))
         ok_('class="flash"' not in response.content)
+
+    def test_0_hours_on_top(self):
+        user = self._login()
+        today = datetime.date(2011, 11, 23)  # a Wednesday
+        entry = Entry.objects.create(
+          user=user,
+          start=today,
+          end=today + datetime.timedelta(days=2),
+        )
+        url = reverse('dates.hours', args=[entry.pk])
+        response = self.client.get(url)
+        eq_(response.content.count('value="0"'), 0)
+        eq_(response.content.count('value="8"'), 3)
+        eq_(response.content.count('value="4"'), 3)
+        eq_(response.content.count('value="-1"'), 3)
+
+        # now pretend we have had a slot already on the thursday
+        entry2 = Entry.objects.create(
+          user=user,
+          start=today + datetime.timedelta(days=1),
+          end=today + datetime.timedelta(days=1),
+          total_hours=settings.WORK_DAY,
+        )
+        Hours.objects.create(
+          entry=entry2,
+          date=today + datetime.timedelta(days=1),
+          hours=settings.WORK_DAY,
+        )
+        url = reverse('dates.hours', args=[entry.pk])
+        response = self.client.get(url)
+        eq_(response.content.count('value="0"'), 1)
+        eq_(response.content.count('value="8"'), 3)
+        eq_(response.content.count('value="4"'), 3)
+        eq_(response.content.count('value="-1"'), 3)
+
+        # let's submit that!
+        data = {}
+        data[today.strftime('d-%Y%m%d')] = '8'
+        data[(today + datetime.timedelta(days=1)).strftime('d-%Y%m%d')] = '0'
+        data[(today + datetime.timedelta(days=2)).strftime('d-%Y%m%d')] = '8'
+
+        response = self.client.post(url, data)
+        eq_(response.status_code, 302)
+
+        sum_totals = sum_hours = 0
+        for entry in Entry.objects.filter(user=user):
+            sum_totals += entry.total_hours
+            for h in Hours.objects.filter(entry=entry):
+                sum_hours += h.hours
+
+        # Why 16?
+        # first time, a single 8
+        # second time, 8 + 0 + 8
+        # that's interpreted as an edit on top, thus:
+        #   Total = 8 + 8 + -8 = 16
+        ok_(sum_totals == sum_hours == 16)
+
+        url = reverse('dates.list_json')
+        response = self.client.get(url)
+        eq_(response.status_code, 200)
+        struct = json.loads(response.content)
+        entries = struct['aaData']
+
+        hours_ = [x[4] for x in entries]
+        details = [x[-1] for x in entries]
+        eq_(sum(hours_), 16)
+        ok_('*automatic edit*' in details)
+        eq_(hours_, [16, 8, -8])

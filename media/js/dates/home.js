@@ -8,11 +8,11 @@ $(function() {
         callback(response.events);
         var c = 0;
         $.each(response.colors, function() { c++; });
-        L(response.colors);
         if (c > 0) {
           var container = $('#calendar-legend');
           if (container.size()) {
             $('span', container).remove();
+            $('a.following-link', container).remove();
           } else {
             container = $('<div id="calendar-legend">');
             $('<strong>')
