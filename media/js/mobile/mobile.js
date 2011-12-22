@@ -40,7 +40,6 @@ var Data = (function() {
              .append(format_name_email(each.name, each.email))
                .appendTo(p);
            $.each(each.descriptions, function(j, description) {
-             L(description);
              $('<dd>').text(description).appendTo(p);
            });
          });

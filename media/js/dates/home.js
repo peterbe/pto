@@ -40,9 +40,13 @@ $(function() {
     selectable: true,
     selectHelper: true,
     select: function(start, end, allDay) {
-      url = '/notify/?start=' + start.getTime() + '&end=' + end.getTime();
+      // convert timezoneoffset from minutes to milliseconds
+      var tzd = new Date().getTimezoneOffset() * 1000 * 60;
+      var start_ts = start.getTime() + tzd;
+      var end_ts = end.getTime() + tzd;
+      url = '/notify/?start=' + start_ts + '&end=' + end_ts;
       location.href = url;
-      calendar.fullCalendar('unselect');
+      //calendar.fullCalendar('unselect');
     }
   });
 
