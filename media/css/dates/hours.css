@@ -1,0 +1,43 @@
+#date_discriminator {
+	/*width: 900px;*/
+	margin: 0 0 0 180px;
+}
+#date_discriminator_panel {
+	float: left;
+	margin-left: 40px;
+}
+#date_discriminator_panel h5 {
+	font-size: 80px;
+	font-weight: bold;
+}
+.date_discriminator td {
+	padding: 3px;
+}
+.date_discriminator th {
+	vertical-align: top;
+}
+.date_discriminator .help_text {
+        font-size: 90%;
+        color:#999;
+}
+.date_discriminator .date {
+	font-size: 13px;
+	font-weight: bold;
+}
+.date_discriminator .date_disabled {
+	color: #CCC;
+}
+.date_discriminator .change {
+	font-weight: bold;
+}
+.date_discriminator .init {
+	display: none;
+}
+.date_discriminator ul li {
+  list-style-type: none;
+  display: inline;
+}
+.date_discriminator th {
+  font-weight:bold;
+  text-align:left
+}

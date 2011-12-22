@@ -1,0 +1,38 @@
+<div data-role="page" id="hours"><!-- hours page -->
+
+  <div data-role="header">
+    <h1>Hours</h1>
+    {% include "mobile/homeicon.html" %}
+  </div>
+
+  <div data-role="fieldcontain">
+  <form action="{{ url('mobile.save_hours') }}" method="post">
+
+     <input type="hidden" name="entry" id="id_entry">
+
+     <div data-role="fieldcontain" class="sample" style="display:none">
+       <fieldset data-role="controlgroup">
+    	<legend>Sample, date:</legend>
+        <!-- XXX change this to a horizontal group of radio inputs -->
+		<input type="radio" name="duration" id="duration-full_day" value="8" checked>
+		<label for="duration-full_day">Full day (8 hours)</label>
+
+		<input type="radio" name="duration" id="duration-half_day" value="4">
+		<label for="duration-half_day">Half day (4 hours)</label>
+
+		<input type="radio" name="duration" id="duration-zero" value="0">
+		<label for="duration-zero">None (0 hours)</label>
+
+		<input type="radio" name="duration" id="duration-bday" value="-1">
+		<label for="duration-bday">Birthday</label>
+      </fieldset>
+    </div>
+
+    <fieldset class="save">
+    <button type="submit" data-theme="a">Save</button>
+    </fieldset>
+
+  </form>
+  </div>
+
+</div>

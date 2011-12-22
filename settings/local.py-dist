@@ -1,0 +1,54 @@
+# Is this a development instance? Set this to True on development/master
+# instances and False on stage/prod.
+DEV = True
+
+#from . import base
+#INSTALLED_APPS = base.INSTALLED_APPS + ('debug_toolbar',)
+#MIDDLEWARE_CLASSES = base.MIDDLEWARE_CLASSES + ('debug_toolbar.middleware.DebugToolbarMiddleware',)
+#MIDDLEWARE_CLASSES = tuple(MIDDLEWARE_CLASSES)
+#INTERNAL_IPS = ('127.0.0.1',)
+
+#TIME_ZONE = 'Europe/London'
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'pto',
+        'USER': '',
+        'PASSWORD': '',
+        'HOST': '',
+        'PORT': '',
+        'OPTIONS': {
+            'init_command': 'SET storage_engine=InnoDB',
+            'charset' : 'utf8',
+            'use_unicode' : True,
+        },
+        'TEST_CHARSET': 'utf8',
+        'TEST_COLLATION': 'utf8_general_ci',
+    },
+}
+
+#CACHES = {
+#    'default': {
+#        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+#        'LOCATION': 'unique-snowflake'
+#    }
+#}
+
+
+DEBUG = TEMPLATE_DEBUG = DEBUG_PROPAGATE_EXCEPTIONS = True
+TEMPLATE_STRING_IF_INVALID = '!{ %s }'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+PWD_ALGORITHM = 'sha521'
+SESSION_COOKIE_SECURE = False  # if you run http://localhost:8000
+
+AUTH_LDAP_BIND_PASSWORD = Must be entered
+
+# If connecting via VPN from outside the Mozilla firewall
+#AUTH_LDAP_START_TLS = False
+
+# For extra LDAP debugging if need be
+#import ldap
+#AUTH_LDAP_GLOBAL_OPTIONS = {
+#  ldap.OPT_DEBUG_LEVEL: 4095
+#}

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+
+{% block extra_site_css %}
+{{ css('dates') }}
+{% endblock %}
+
+{% block extra_site_js %}
+{{ js('dates.hours') }}
+{% endblock %}
+
+
+{% block content %}
+
+<form action="." method="post">{{ csrf() }}
+<div id="date_discriminator_panel">
+  <p>Hours of PTO:</p>
+  <h5 id="date_discriminator_hours">{{ total_hours }}</h5>
+</div>
+<div id="date_discriminator">
+
+  {% if form.non_field_errors() %}
+  <div class="general-errors">
+  {{ form.non_field_errors()|safe }}
+  </div>
+  {% endif %}
+
+  <table class="date_discriminator" border="0">
+  {% for field in form.fields %}
+  <tr>
+    <th>{{ form[field].label }}:</th>
+    <td>
+      {{ form[field]|safe }}
+    </td>
+
+    <td class="help_text">
+      {% if form[field].help_text %}
+      Note: {{ form[field].help_text }}
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+  <tr>
+    <td>&nbsp;</td>
+    <td>
+    <input type="submit" value="Submit">
+    <a href="{{ url('dates.cancel_notify') }}">Cancel</a>
+    </td>
+  </tr>
+  </table>
+</div>
+</form>
+{% endblock %}

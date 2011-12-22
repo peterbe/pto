@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block extra_site_css %}
+{{ css('jquery_ui') }}
+{{ css('dates.following') }}
+{% endblock %}
+
+
+{% block extra_site_js %}
+{{ js('jquery_ui') }}
+{{ js('dates.following') }}
+{% endblock %}
+
+{% block page_title %}People you're following (or not){% endblock %}
+
+{% block content %}
+<h2>People you're following (or not)</h2>
+
+
+<form action="{{ url('dates.save_following') }}" method="post">{{ csrf() }}
+<h3>Add more people to follow:</h3>
+<input name="search" id="id_search" size="50">
+</form>
+
+<div id="observed">
+<h3>People you follow:</h3>
+<table>
+{% for user, reason in observed %}
+  <tr>
+    <td>{{ full_name_form(user, avoid_email=True) }}</td>
+    <td class="reason">{{ reason }}</td>
+    <td><a href="#" class="remove" data-id="{{ user.pk }}">remove</a></td>
+  </tr>
+{% endfor %}
+</table>
+</div>
+
+<div id="not-observed">
+<h3>People you <em>don't</em> follow:</h3>
+<table>
+{% for user in not_observed %}
+  <tr>
+    <td>{{ full_name_form(user, avoid_email=True) }}</td>
+    <td><a href="#" class="restore" data-id="{{ user.pk }}">restore</a></td>
+  </tr>
+{% endfor %}
+</table>
+</div>
+
+<div class="clearer">&nbsp;</div>
+
+<p class="goback"><a href="/">&larr; Go back to Calendar dashboard</a></p>
+
+{% endblock %}

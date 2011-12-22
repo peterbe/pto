@@ -1,0 +1,17 @@
+<div data-role="page" id="logout" data-add-back-btn="true"><!-- logout page -->
+
+  <div data-role="header">
+    <h1>Logout</h1>
+    {% include "mobile/homeicon.html" %}
+  </div>
+
+  <div data-role="content">
+    <form action="{{ url('mobile.logout') }}" method="post">
+      <fieldset>
+        <button type="submit" data-theme="a">Log out</button>
+      </fieldset>
+    </form>
+
+  </div>
+
+</div>

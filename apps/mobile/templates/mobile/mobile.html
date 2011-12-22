@@ -1,0 +1,40 @@
+{% extends "mobile/base.html" %}
+
+{% block body %}
+<div data-role="page" id="index" class="type-index"><!-- index page -->
+
+<div data-role="header">
+        <h1>{{ page_title }}</h1>
+        {% include "mobile/homeicon.html" %}
+</div>
+
+<div data-role="content">
+
+
+        <ul data-role="listview">
+                <li><a href="#notify">Notify of new PTO</a></li>
+                <li><a href="#taken">How much PTO have I taken?</a></li>
+                <li><a href="#rightnow">Who is on PTO right now?</a></li>
+                <li><a href="#settings">Settings</a></li>
+                <li><a href="#logout">Log out</a></li>
+        </ul>
+
+</div>
+
+</div>
+
+{% include "mobile/page.login.html" %}
+
+{% include "mobile/page.logout.html" %}
+
+{% include "mobile/page.rightnow.html" %}
+
+{% include "mobile/page.settings.html" %}
+
+{% include "mobile/page.taken.html" %}
+
+{% include "mobile/page.notify.html" %}
+
+{% include "mobile/page.hours.html" %}
+
+{% endblock %}

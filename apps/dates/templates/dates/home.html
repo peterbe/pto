@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block extra_site_css %}
+{{ css('dates.home') }}
+{% endblock %}
+
+
+{% block content %}
+
+{% if recently_created %}
+<div class="flash">
+<a href="/" class="close" title="click to close">x</a>
+<p>You just created: <span class="legend">{{ truncatewords(recently_created, 45) }}</span>
+{#
+   some day we might implement an undo feature which isn't trivial
+   because it would involve sending another email to say that user has
+   changed his/her mind and it's not saved which people were notified.
+   <a href="">Undo addition?</a>
+#}
+</p>
+</div>
+{% endif %}
+
+<div id="calendar">
+
+<p><a name="calendarurl">
+
+<a href="{{ calendar_url }}"><img src="{{ media('img/calendar-icon.png') }}" alt="Calendar"></a>
+To add this to an external calendar you need this URL:
+<a href="{{ calendar_url }}">{{ calendar_url }}</a>
+<span class="reset-link">
+(<a href="{{ url('dates.reset_calendar_url') }}" class="reset-link">reset your calendar URL</a>)
+</span>
+
+</div>
+
+<div id="pto_taken" class="extra-info">
+<h2>How much PTO have I taken?</h2>
+
+<p>You have taken
+<strong>{{ taken }}</strong>
+this year.
+</p>
+
+{% if country_total %}
+<p>Out of a total of <strong>{{ country_total }}</strong> in your country ({{ country }}).</p>
+{% else %}
+  {% if unrecognized_country %}
+  <p>Unfortunately not able to quickly give a number of total days for your country ({{ country }}).</p>
+  {% else %}
+  <p>You have not specified what country you are in.
+  <a href="{{ url('users.profile') }}">Check your profile settings</a>.
+  </p>
+  {% endif %}
+{% endif %}
+
+<p>See the Intranet about
+<a href="https://intranet.mozilla.org/JILL?">PTO per country</a> to find out more.
+</p>
+
+</div>
+
+
+<div id="rightnow" class="extra-info">
+<h2>Who's on PTO right now?</h2>
+
+<dl>
+{% for user in right_now_users %}
+  <dt>
+    {% if user == request.user %}
+    <strong>You are!</strong>
+    {% else %}
+    {{ full_name_form(user) }}
+    {% endif %}
+
+  </dt>
+  {% for days_left, entry in right_nows[user] %}
+    <dd><a href="{{ entry_to_list_url(entry) }}"
+           title="{{ entry.details }}"
+	   >ends in
+           {% trans count=days_left %}
+           1 day
+           {% pluralize %}
+           {{ days_left }} days
+           {% endtrans %}
+           on
+           {{ format_date(entry.end, shorter=True) }}
+           </a>
+    </dd>
+  {% endfor %}
+{% else %}
+<dd><em>no one at the moment</em></dd>
+{% endfor %}
+</dl>
+
+{% if right_now_too_many %}
+<p>And <strong>{{ right_now_too_many }} more...</strong>
+<a href="?all-rightnow#rightnow">Load them all</a>
+</p>
+{% endif %}
+</div>
+
+
+{% if mobile %}
+<p>It appears you're on a mobile device. <a href="{{ url('mobile.home') }}">Want the mobile version instead?</a>
+</p>
+{% endif %}
+<div class="clearer">&nbsp;</div>
+{% endblock %}
+
+
+{% block extra_site_js %}
+<script>
+var CALENDAR_FIRST_DAY = {{ first_day }}; // 0=Sunday, 1=Monday
+</script>
+{{ js('dates.home') }}
+{% endblock %}

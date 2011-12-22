@@ -1,0 +1,71 @@
+/*#calendar {
+    width: 90%;
+    margin: 0 auto;
+}*/
+
+#calendar {
+    width: 70%;
+    /*margin: 0 auto;*/
+    margin: 0 10px;
+    float:right;
+}
+#calendar-legend {
+  padding:5px 0;
+  font-size: 11.9px;
+}
+#calendar-legend span {
+  margin:2px;
+  padding:2px;
+  border-radius: 3px;
+}
+#calendar-legend a {
+  padding-left:10px;
+}
+
+
+.extra-info {
+    margin: 30px 0 40px 20px;
+}
+
+@media only screen and (max-width: 1200px) {
+    #calendar { width:90%; float:none; }
+    #content a.anchor { display:inline; }
+
+}
+
+/* Tablet Portrait size to standard 960 (devices and browsers) */
+@media only screen and (min-width: 768px) and (max-width: 959px) {
+    .extra-info { margin:10px; }
+    #calendar { width:98%; margin:2px; }
+}
+
+/* Mobile Portrait Size to Mobile Landscape Size (devices and browsers) */
+@media only screen and (max-width: 479px) {
+    .extra-info { margin:5px; }
+    #calendar { width:99%; margin:1px; }
+    #content a.anchor { display:none; }
+}
+
+/* Mobile Landscape Size to Tablet Portrait (devices and browsers) */
+@media only screen and (min-width: 480px) and (max-width: 767px) {
+    .extra-info { margin:10px; }
+    #calendar { width:98%; margin:2px; }
+}
+
+.anchor {
+    float:right;
+    margin-left:20px;
+}
+
+#rightnow dt {
+  margin-top:10px;
+}
+
+#rightnow dd {
+  padding-left:20px;
+  font-size:0.9em;
+}
+
+.reset-link {
+  font-size:.8em;
+}
