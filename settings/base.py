@@ -186,6 +186,7 @@ MINIFY_BUNDLES = {
     'js': {
         'global': (
             'js/libs/jquery-1.7.1.min.js',
+            'js/global.js',
         ),
         'mobile': (
             'js/libs/jquery-1.6.4.min.js',  # jquery mobile 1.0rc3 requires jquery 1.6.4

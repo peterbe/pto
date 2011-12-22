@@ -40,13 +40,14 @@ from django.shortcuts import redirect, render
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
-import django.contrib.auth.views
 from django.conf import settings
+from django.contrib import messages
+import django.contrib.auth.views
 from session_csrf import anonymous_csrf
 import forms
 from models import get_user_profile
 from dates.decorators import json_view
-from utils import ldap_lookup
+from .utils import ldap_lookup
 
 
 @anonymous_csrf
@@ -100,6 +101,9 @@ def profile(request):
             profile.country = country
             profile.save()
 
+            messages.info(request,
+              'Profile details saved'
+            )
             return redirect('/')
     else:
         form = forms.ProfileForm(instance=profile)

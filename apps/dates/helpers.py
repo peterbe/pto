@@ -43,6 +43,14 @@ def urlparams(url_, hash=None, **query):
 
 @register.function
 @jinja2.contextfunction
+def truncatewords(context, string, length):
+    if len(string) > length:
+        string = string[:length - 3] + '...'
+    return string
+
+
+@register.function
+@jinja2.contextfunction
 def media(context, url, key='MEDIA_URL'):
     """Get a MEDIA_URL link with a cache buster querystring."""
     if url.endswith('.js'):

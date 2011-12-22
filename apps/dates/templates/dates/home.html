@@ -7,6 +7,20 @@
 
 {% block content %}
 
+{% if recently_created %}
+<div class="flash">
+<a href="/" class="close" title="click to close">x</a>
+<p>You just created: <span class="legend">{{ truncatewords(recently_created, 45) }}</span>
+{#
+   some day we might implement an undo feature which isn't trivial
+   because it would involve sending another email to say that user has
+   changed his/her mind and it's not saved which people were notified.
+   <a href="">Undo addition?</a>
+#}
+</p>
+</div>
+{% endif %}
+
 <div id="calendar">
 
 <p><a name="calendarurl">

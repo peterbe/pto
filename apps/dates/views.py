@@ -54,6 +54,7 @@ from django.core.exceptions import ValidationError
 from django.shortcuts import render
 from django.views.decorators.http import require_POST
 from django.contrib.sites.models import RequestSite
+from django.core.cache import cache
 import vobject
 from models import Entry, Hours, BlacklistedUser, FollowingUser, UserKey
 from users.models import UserProfile, User
@@ -131,6 +132,12 @@ def home(request):  # aka dashboard
                             RequestSite(request).domain)
     data['calendar_url'] = base_url + reverse('dates.calendar_vcal',
                                               args=(user_key.key,))
+
+    cache_key = 'recently_created_%s' % request.user.pk
+    recently_created = cache.get(cache_key)
+    if recently_created:
+        data['recently_created'] = recently_created
+        cache.delete(cache_key)
 
     return render(request, 'dates/home.html', data)
 
@@ -452,6 +459,13 @@ def notify(request):
     return render(request, 'dates/notify.html', data)
 
 
+@transaction.commit_on_success
+@login_required
+def cancel_notify(request):
+    Entry.objects.filter(user=request.user, total_hours__isnull=True).delete()
+    return redirect(reverse('dates.home'))
+
+
 def clean_unfinished_entries(good_entry):
     # delete all entries that don't have total_hours and touch on the
     # same dates as this good one
@@ -488,9 +502,13 @@ def hours(request, pk):
             )
             assert success
 
-            messages.info(request,
-              '%s hours of PTO logged.' % total_hours
-            )
+            #messages.info(request,
+            #  '%s hours of PTO logged.' % total_hours
+            #)
+            recently_created = make_entry_title(entry, request.user)
+            cache_key = 'recently_created_%s' % request.user.pk
+            cache.set(cache_key, recently_created, 60)
+
             url = reverse('dates.emails_sent', args=[entry.pk])
             url += '?' + urlencode({'e': email_addresses}, True)
             return redirect(url)

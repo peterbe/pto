@@ -244,7 +244,7 @@ strong { font-weight:bold; }
   #pto #no-match {
     text-align: center;
     }
-    
+
 div.clearer {clear: both; line-height: 0; height: 0;}
 
 /* For Django form errors */
@@ -291,4 +291,36 @@ div.clearer {clear: both; line-height: 0; height: 0;}
     #page { width: 100% }
     section { border-radius:0; padding:0.1em; }
     .extra-info { margin:5px; }
+}
+
+
+.flash {
+  position: absolute;
+  right:20px;
+  top:50px;
+  background-color:#fff;
+  border:1px solid #ccc;
+  width:400px;
+  float:right;
+  padding:6px;
+  font-size:80%;
+  border-radius: 0.4em;
+  -moz-border-radius: 0.4em;
+  -webkit-border-radius: 0.4em;
+}
+
+.flash p, .flash a.close {
+  margin:0.5em;
+}
+
+.flash .close {
+  float: right;
+}
+
+.flash .legend {
+  border-radius: 3px;
+  background-color: #3366CC;
+  color: white;
+  margin:2px;
+  padding:2px;
 }

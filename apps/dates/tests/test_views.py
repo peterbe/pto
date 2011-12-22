@@ -47,6 +47,7 @@ from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
 from django.utils import simplejson as json
 from django.core import mail
+from django.core.cache import cache
 from dates.models import (Entry, Hours, BlacklistedUser, FollowingUser,
                           UserKey)
 from nose.tools import eq_, ok_
@@ -2166,3 +2167,63 @@ class ViewsTest(TestCase, ViewsTestMixin):
 
         response = self.client.get(url, {'all-rightnow':''})
         ok_(last_username in response.content)
+
+    def test_cancel_notify(self):
+        user = self._login()
+        today = datetime.date.today()
+        entry = Entry.objects.create(
+          user=user,
+          start=today,
+          end=today,
+          details='Stuck',
+          total_hours=settings.WORK_DAY,
+        )
+        Hours.objects.create(
+          entry=entry,
+          date=entry.start,
+          hours=entry.total_hours
+        )
+
+        Entry.objects.create(
+          user=user,
+          start=today,
+          end=today,
+          details='Incomplete',
+          total_hours=None
+        )
+
+        url = reverse('dates.cancel_notify')
+        response = self.client.get(url)
+        eq_(response.status_code, 302)
+        eq_(urlparse(response['Location']).path, reverse('dates.home'))
+
+        eq_(Entry.objects.filter(user=user).count(), 1)
+        ok_(Entry.objects.filter(user=user, details='Stuck'))
+
+    def test_recently_created_flash_message(self):
+        user = self._login()
+        today = datetime.date(2011, 11, 23)  # a Wednesday
+        entry = Entry.objects.create(
+          user=user,
+          start=today,
+          end=today,
+          details='This is a long message that ends on the word XYZ',
+        )
+        url = reverse('dates.hours', args=[entry.pk])
+        data = {}
+        data[today.strftime('d-%Y%m%d')] = settings.WORK_DAY
+        response = self.client.post(url, data)
+        eq_(response.status_code, 302)
+        assert Hours.objects.filter(entry=entry)
+        entry = Entry.objects.get(pk=entry.pk)
+        assert entry.total_hours
+
+        # visit the home page and expect there to be a flash message there
+        response = self.client.get(reverse('dates.home'))
+        ok_('class="flash"' in response.content)
+        from dates.views import make_entry_title
+        ok_(make_entry_title(entry, entry.user)[:10] in response.content)
+
+        # do it again
+        response = self.client.get(reverse('dates.home'))
+        ok_('class="flash"' not in response.content)

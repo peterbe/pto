@@ -37,6 +37,13 @@
   </header>
 
   <section id="content">
+    {% for message in messages %}
+    <div class="flash">
+      <a href="/" class="close" title="click to close">x</a>
+      <p>{{ message }}</p>
+    </div>
+    {% endfor %}
+
   {% if page_title %}<h2>{{ page_title }}</h2>{% endif %}
   {% block content %}{% endblock %}
   </section>
