@@ -141,3 +141,6 @@ class UserKey(models.Model):
     key = models.CharField(max_length=KEY_LENGTH, db_index=True,
                            default=generate_random_key)
     add_date = models.DateTimeField(default=datetime.datetime.utcnow)
+
+    def __repr__(self):
+        return '<%s: %r>' % (self.__class__.__name__, self.key)

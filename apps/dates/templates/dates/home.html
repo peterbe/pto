@@ -20,6 +20,32 @@ To add this to an external calendar you need this URL:
 
 </div>
 
+<div id="pto_taken" class="extra-info">
+<h2>How much PTO have I taken?</h2>
+
+<p>You have taken
+<strong>{{ taken }}</strong>
+this year.
+</p>
+
+{% if country_total %}
+<p>Out of a total of <strong>{{ country_total }}</strong> in your country ({{ country }}).</p>
+{% else %}
+  {% if unrecognized_country %}
+  <p>Unfortunately not able to quickly give a number of total days for your country ({{ country }}).</p>
+  {% else %}
+  <p>You have not specified what country you are in.
+  <a href="{{ url('users.profile') }}">Check your profile settings</a>.
+  </p>
+  {% endif %}
+{% endif %}
+
+<p>See the Intranet about
+<a href="https://intranet.mozilla.org/JILL?">PTO per country</a> to find out more.
+</p>
+
+</div>
+
 
 <div id="rightnow" class="extra-info">
 <h2>Who's on PTO right now?</h2>
@@ -52,33 +78,14 @@ To add this to an external calendar you need this URL:
 <dd><em>no one at the moment</em></dd>
 {% endfor %}
 </dl>
-</div>
 
-<div id="pto_taken" class="extra-info">
-<h2>How much PTO have I taken?</h2>
-
-<p>You have taken
-<strong>{{ taken }}</strong>
-this year.
+{% if right_now_too_many %}
+<p>And <strong>{{ right_now_too_many }} more...</strong>
+<a href="?all-rightnow#rightnow">Load them all</a>
 </p>
-
-{% if country_total %}
-<p>Out of a total of <strong>{{ country_total }}</strong> in your country ({{ country }}).</p>
-{% else %}
-  {% if unrecognized_country %}
-  <p>Unfortunately not able to quickly give a number of total days for your country ({{ country }}).</p>
-  {% else %}
-  <p>You have not specified what country you are in.
-  <a href="{{ url('users.profile') }}">Check your profile settings</a>.
-  </p>
-  {% endif %}
 {% endif %}
-
-<p>See the Intranet about
-<a href="https://intranet.mozilla.org/JILL?">PTO per country</a> to find out more.
-</p>
-
 </div>
+
 
 {% if mobile %}
 <p>It appears you're on a mobile device. <a href="{{ url('mobile.home') }}">Want the mobile version instead?</a>

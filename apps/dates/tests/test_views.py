@@ -37,6 +37,7 @@
 import re
 import time
 import csv
+import random
 from urlparse import urlparse
 from collections import defaultdict
 import datetime
@@ -2144,3 +2145,24 @@ class ViewsTest(TestCase, ViewsTestMixin):
         response = self.client.get(url)
         eq_(response.status_code, 302)
         ok_(not UserKey.objects.filter(user=mike).count())
+
+    def test_loading_all_on_pto(self):
+        from string import uppercase
+        today = datetime.date.today()
+        for letter in list(uppercase):
+            username = '%sUSERNAME' % letter
+            entry = Entry.objects.create(
+              user=User.objects.create(username=username),
+              start=today,
+              end=today + datetime.timedelta(days=random.randint(0, 10)),
+              total_hours=settings.WORK_DAY,
+            )
+        last_username = username
+
+        self._login()
+        url = reverse('dates.home')
+        response = self.client.get(url)
+        ok_(last_username not in response.content)
+
+        response = self.client.get(url, {'all-rightnow':''})
+        ok_(last_username in response.content)

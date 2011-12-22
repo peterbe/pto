@@ -110,9 +110,19 @@ def home(request):  # aka dashboard
         first_day = 0  # default to 0=Sunday
     data['first_day'] = first_day
 
+    if 'all-rightnow' in request.GET:
+        MAX_RIGHT_NOWS = 9999
+    else:
+        MAX_RIGHT_NOWS = 20
+
     right_nows, right_now_users = get_right_nows()
     data['right_nows'] = right_nows
     data['right_now_users'] = right_now_users
+    if len(right_now_users) > MAX_RIGHT_NOWS:
+        data['right_now_too_many'] = len(data['right_now_users']) - MAX_RIGHT_NOWS
+        data['right_now_users'] = data['right_now_users'][:MAX_RIGHT_NOWS]
+    else:
+        data['right_now_too_many'] = None
 
     data.update(get_taken_info(request.user))
 
