@@ -8,3 +8,5 @@ CACHES = {
         'LOCATION': 'unique-snowflake'
     }
 }
+
+AUTH_LDAP_BIND_PASSWORD = 'anything'
