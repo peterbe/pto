@@ -41,6 +41,6 @@ DATABASES = {
 pip install -r requirements/compiled.txt
 
 # dependencies for running the tests
-#pip install -r requirements/dev.txt
+pip install -r requirements/dev.txt
 
 FORCE_DB=true python manage.py test --noinput
