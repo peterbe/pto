@@ -10,3 +10,5 @@ CACHES = {
 }
 
 AUTH_LDAP_BIND_PASSWORD = 'anything'
+AUTH_LDAP_SERVER_URI = 'as long as its'
+AUTH_LDAP_BIND_DN = 'not blank'
