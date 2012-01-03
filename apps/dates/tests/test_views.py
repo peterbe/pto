@@ -73,7 +73,6 @@ def utf_8_encoder(unicode_csv_data, encoding):
         yield line.encode(encoding)
 
 _THIS_YEAR = datetime.date.today().year
-print _THIS_YEAR
 
 class ViewsTestMixin(object):
     def _login(self, user=None):
