@@ -72,6 +72,8 @@ def utf_8_encoder(unicode_csv_data, encoding):
     for line in unicode_csv_data:
         yield line.encode(encoding)
 
+_THIS_YEAR = datetime.date.today().year
+print _THIS_YEAR
 
 class ViewsTestMixin(object):
     def _login(self, user=None):
@@ -1582,7 +1584,8 @@ class ViewsTest(TestCase, ViewsTestMixin):
         ok_(not result.get('country_total'))
         ok_(result.get('country'), 'New Zealand')
 
-        date = datetime.date(2011, 11, 23)  # a Wednesday
+
+        date = datetime.date(_THIS_YEAR, 11, 23)
         entry = Entry.objects.create(
           user=user,
           start=date,
@@ -1590,6 +1593,7 @@ class ViewsTest(TestCase, ViewsTestMixin):
           total_hours=settings.WORK_DAY,
         )
         self._create_entry_hours(entry)
+
 
         result = function()
         eq_(result['taken'], '1 day')
