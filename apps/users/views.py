@@ -106,7 +106,6 @@ def profile(request):
     return render(request, 'users/profile.html', data)
 
 
-@login_required
 def debug_org_chart(request):  # pragma: no cover
     if not settings.DEBUG:
         return http.HttpResponseForbidden('only in debug mode')

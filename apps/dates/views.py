@@ -315,6 +315,20 @@ def calendar_events(request):
           colors[user_.pk]
         ))
 
+    _managers = {}
+    def can_see_details(user):
+        if request.user.is_superuser:
+            return True
+        if request.user.pk == user.pk:
+            return True
+        if user.pk not in _managers:
+            _profile = user.get_profile()
+            _manager = None
+            if _profile and _profile.manager_user:
+                _manager = _profile.manager_user.pk
+            _managers[user.pk] = _manager
+        return _managers[user.pk] == request.user.pk
+
     visible_user_ids = set()
     for entry in (Entry.objects
                    .filter(user__in=user_ids,
@@ -325,7 +339,8 @@ def calendar_events(request):
         visible_user_ids.add(entry.user.pk)
         entries.append({
           'id': entry.pk,
-          'title': make_entry_title(entry, request.user),
+          'title': make_entry_title(entry, request.user,
+                                  include_details=can_see_details(entry.user)),
           'start': entry.start.strftime('%Y-%m-%d'),
           'end': entry.end.strftime('%Y-%m-%d'),
           'color': colors[entry.user.pk],
@@ -746,13 +761,33 @@ def list_csv(request):
 def list_json(request):
     entries = get_entries_from_request(request.GET)
 
+    _managers = {}
+    def can_see_details(user):
+        if request.user.is_superuser:
+            return True
+        if request.user.pk == user.pk:
+            return True
+        if user.pk not in _managers:
+            _profile = user.get_profile()
+            _manager = None
+            if _profile and _profile.manager_user:
+                _manager = _profile.manager_user.pk
+            _managers[user.pk] = _manager
+        return _managers[user.pk] == request.user.pk
+
     data = []
     profiles = {}
     for entry in entries:
-        #edit_link = hours_link = '&nbsp;'
         if entry.user.pk not in profiles:
             profiles[entry.user.pk] = entry.user.get_profile()
         profile = profiles[entry.user.pk]
+        if entry.total_hours < 0:
+            details = '*automatic edit*'
+        elif can_see_details(entry.user):
+            details = entry.details
+        else:
+            details = ''
+
         row = [entry.user.email,
                entry.user.first_name,
                entry.user.last_name,
@@ -762,7 +797,7 @@ def list_json(request):
                entry.end.strftime('%Y-%m-%d'),
                profile.city,
                profile.country,
-               '*automatic edit*' if entry.total_hours < 0 else entry.details,
+               details,
                #edit_link,
                #hours_link
                ]

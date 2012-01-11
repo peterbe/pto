@@ -1055,21 +1055,21 @@ class ViewsTest(TestCase, ViewsTestMixin):
           start=monday,
           end=monday,
           total_hours=None,
-          details='E0 Details'
+          details='Peter E0 Details'
         )
         e1 = Entry.objects.create(
           user=peter,
           start=tuesday,
           end=tuesday,
           total_hours=8,
-          details='E1 Details'
+          details='Peter E1 Details'
         )
         e2 = Entry.objects.create(
           user=laura,
           start=monday,
           end=tuesday,
           total_hours=8 + 4,
-          details='E2 Details'
+          details='Laura E2 Details'
         )
 
         response = self.client.get(url)
@@ -1084,7 +1084,7 @@ class ViewsTest(TestCase, ViewsTestMixin):
         ok_(response['Content-Type'].startswith('application/json'))
         ok_(e0.details not in response.content)
         ok_(e1.details in response.content)
-        ok_(e2.details in response.content)
+        ok_(e2.details not in response.content)  # because it's hidden
         struct = json.loads(response.content)
         entries = struct['aaData']
 
@@ -1116,7 +1116,7 @@ class ViewsTest(TestCase, ViewsTestMixin):
             ok_(total_hours in (8, 12))
             ok_(start_date in (monday, tuesday))
             eq_(end_date, tuesday)
-            ok_(details in (e1.details, e2.details))
+            ok_(details == e1.details or details == '')
 
         # test profile stuff
         p = peter.get_profile()
@@ -2161,3 +2161,143 @@ class ViewsTest(TestCase, ViewsTestMixin):
         eq_(sum(hours_), 16)
         ok_('*automatic edit*' in details)
         eq_(hours_, [16, 8, -8])
+
+    def test_details_withheld(self):
+
+        todd = User.objects.create(username='todd')
+        mike = User.objects.create(username='mike')
+        ben = User.objects.create(username='ben')
+        laura = User.objects.create(username='laura')
+        peter = User.objects.create(username='peter')
+        lars = User.objects.create(username='lars')
+        chofman = User.objects.create(username='chofman')
+        axel = User.objects.create(username='axel')
+        stas = User.objects.create(username='stas')
+
+        today = datetime.date.today()
+        all_details = set()
+        for u in User.objects.all():
+            u.set_password('secret')
+            u.save()
+            entry = Entry.objects.create(
+              user=u,
+              start=today,
+              end=today,
+              total_hours=settings.WORK_DAY,
+              details="%s's details" % u.username
+            )
+            Hours.objects.create(
+              entry=entry,
+              date=today,
+              hours=settings.WORK_DAY,
+            )
+            all_details.add("%s's details" % u.username)
+
+        admin = User.objects.create(
+          username='admin',
+          is_superuser=True,
+          is_staff=True
+        )
+        admin.set_password('secret')
+        admin.save()
+
+        self._make_manager(mike, todd)
+        self._make_manager(ben, todd)
+        self._make_manager(laura, mike)
+        self._make_manager(peter, laura)
+        self._make_manager(lars, laura)
+        self._make_manager(axel, chofman)
+
+        """
+        Org chart:
+
+          * todd
+            * ben
+            * mike
+              * laura
+                * peter
+              * will
+          * chofman
+            * axel
+        """
+        ## Test the list JSON
+        url = reverse('dates.list_json')
+
+        # as mike
+        assert self.client.login(username='mike', password='secret')
+        response = self.client.get(url)
+        assert response.status_code == 200
+        struct = json.loads(response.content)
+        data = struct['aaData']
+        details = set(x[-1] for x in data if x[-1])
+        eq_(details, set(["laura's details", "mike's details"]))
+
+        # as todd
+        assert self.client.login(username='todd', password='secret')
+        response = self.client.get(url)
+        assert response.status_code == 200
+        struct = json.loads(response.content)
+        data = struct['aaData']
+        details = set(x[-1] for x in data if x[-1])
+        eq_(details, set(["todd's details", "mike's details", "ben's details"]))
+
+        # as peter
+        assert self.client.login(username='peter', password='secret')
+        response = self.client.get(url)
+        assert response.status_code == 200
+        struct = json.loads(response.content)
+        data = struct['aaData']
+        details = set(x[-1] for x in data if x[-1])
+        eq_(details, set(["peter's details"]))
+
+        # as admin
+        assert self.client.login(username='admin', password='secret')
+        response = self.client.get(url)
+        assert response.status_code == 200
+        struct = json.loads(response.content)
+        data = struct['aaData']
+        details = set(x[-1] for x in data if x[-1])
+        eq_(details, all_details)
+
+        ## Test the calendar JSON
+        url = reverse('dates.calendar_events')
+        data = {
+          'start': time.mktime(today.timetuple()),
+          'end': time.mktime((today + datetime.timedelta(days=1)).timetuple())
+        }
+
+        # as mike
+        assert self.client.login(username='mike', password='secret')
+        response = self.client.get(url, data)
+        assert response.status_code == 200
+        struct = json.loads(response.content)['events']
+        details = set([x['title'].split(',')[1].strip() for x in struct
+                       if x['title'].count(',')])
+        eq_(details, set(["laura's details", "mike's details"]))
+
+        # as todd
+        assert self.client.login(username='todd', password='secret')
+        response = self.client.get(url, data)
+        assert response.status_code == 200
+        struct = json.loads(response.content)['events']
+        details = set([x['title'].split(',')[1].strip() for x in struct
+                       if x['title'].count(',')])
+        eq_(details, set(["ben's details", "mike's details", "todd's details"]))
+
+        # as peter
+        assert self.client.login(username='peter', password='secret')
+        response = self.client.get(url, data)
+        assert response.status_code == 200
+        struct = json.loads(response.content)['events']
+        details = set([x['title'].split(',')[1].strip() for x in struct
+                       if x['title'].count(',')])
+        eq_(details, set(["peter's details"]))
+
+        # note, admin isn't following anybody and doesn't have entries
+        assert self.client.login(username='admin', password='secret')
+        response = self.client.get(url, data)
+        assert response.status_code == 200
+        struct = json.loads(response.content)['events']
+        details = set([x['title'].split(',')[1].strip() for x in struct
+                       if x['title'].count(',')])
+        eq_(details, set([]))
