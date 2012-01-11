@@ -277,30 +277,6 @@ INSTALLED_APPS += (
     'autocomplete',
 )
 
-# Tells the extract script what files to look for L10n in and what function
-# handles the extraction. The Tower library expects this.
-DOMAIN_METHODS = {
-    'messages': [
-        ('apps/**.py',
-            'tower.management.commands.extract.extract_tower_python'),
-        ('**/templates/**.html',
-            'tower.management.commands.extract.extract_tower_template'),
-    ],
-
-    ## Use this if you have localizable HTML files:
-    #'lhtml': [
-    #    ('**/templates/**.lhtml',
-    #        'tower.management.commands.extract.extract_tower_template'),
-    #],
-
-    ## Use this if you have localizable JS files:
-    #'javascript': [
-        # Make sure that this won't pull in strings from external libraries you
-        # may use.
-    #    ('media/js/**.js', 'javascript'),
-    #],
-}
-
 # Path to Java. Used for compress_assets.
 JAVA_BIN = '/usr/bin/java'
 
@@ -312,6 +288,7 @@ HMAC_KEYS = {  # for bcrypt only
 
 ## Sessioning
 SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
+SESSION_COOKIE_AGE = 60 * 60 * 24  # seconds, 1 day
 
 ## Memcache
 CACHES = {
