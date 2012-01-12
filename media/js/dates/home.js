@@ -8,32 +8,33 @@ $(function() {
         callback(response.events);
         var c = 0;
         $.each(response.colors, function() { c++; });
-        if (c > 0) {
-          var container = $('#calendar-legend');
-          if (container.size()) {
-            $('span', container).remove();
-            $('a.following-link', container).remove();
-          } else {
-            container = $('<div id="calendar-legend">');
-            $('<strong>')
-              .text('Legend:')
-                .appendTo(container);
-          }
-          $.each(response.colors, function(i, each) {
-            $('<span>')
-              .text(each.name)
-                .css('background-color', each.color)
-                  .css('color', '#fff')
-                    .appendTo(container);
-          });
+        var container = $('#calendar-legend');
+        if (container.size()) {
+          // reset all
+          $('span', container).remove();
+          $('strong', container).hide();
+        } else {
+          // set up container
+          container = $('<div id="calendar-legend">');
+          $('<strong>')
+            .text('Legend:')
+              .appendTo(container);
           $('<a href="/following/">')
             .addClass('following-link')
-            .html('Manage people you follow &rarr;')
-              .appendTo(container);
+              .html('Manage people you follow &rarr;')
+                .appendTo(container);
           container.insertAfter('#calendar table.fc-header');
-        } else if ($('#calendar-legend span').size()) {
-          $('#calendar-legend').remove();
         }
+        if (c > 0) {
+          $('strong', container).show();
+        }
+        $.each(response.colors, function(i, each) {
+          $('<span>')
+            .text(each.name)
+              .css('background-color', each.color)
+                .css('color', '#fff')
+                  .insertBefore($('a.following-link', container));
+        });
       });
     },
     firstDay: CALENDAR_FIRST_DAY,

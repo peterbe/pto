@@ -297,15 +297,15 @@ def calendar_events(request):
     COLORS = ("#EAA228", "#c5b47f", "#579575", "#839557", "#958c12",
               "#953579", "#4b5de4", "#d8b83f", "#ff5800", "#0085cc",
               "#c747a3", "#cddf54", "#FBD178", "#26B4E3", "#bd70c7")
-    _colors = list(COLORS)
     user_ids = [request.user.pk]
     colors = {}
     colors_fullnames = []
     colors[request.user.pk] = None
     colors_fullnames.append((request.user.pk, 'Me myself and I', '#3366CC'))
-    for user_ in get_observed_users(request.user, max_depth=2):
+    for i, user_ in enumerate(get_observed_users(request.user, max_depth=2)):
         user_ids.append(user_.pk)
-        colors[user_.pk] = _colors.pop()
+
+        colors[user_.pk] = COLORS[i]
         full_name = user_.get_full_name()
         if not full_name:
             full_name = user_.username
@@ -314,6 +314,7 @@ def calendar_events(request):
           full_name,
           colors[user_.pk]
         ))
+
 
     _managers = {}
     def can_see_details(user):
