@@ -16,7 +16,7 @@ from collections import defaultdict
 
 def check(filename):
     content = open(filename).read()
-    if 'MPL 1.1' not in content:
+    if 'MPL/2.0/' not in content:
         if content.strip():
             if len(content.splitlines()) > 1:
                 return True

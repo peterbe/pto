@@ -12,6 +12,9 @@ Options:
   file=__file__
 )
 
+raise SystemExit("This script is considered obsolete and dangerous. Because of the change of license preamble this script might need a good batch of refactoring")
+
+
 START = '***** BEGIN LICENSE BLOCK *****'
 FINISH = '***** END LICENSE BLOCK *****'
 import re
@@ -60,16 +63,11 @@ def fix(filename):
 
     preamble = wrap(extension)
     _fixed = False
-    if START in content:
+    if START in content:  # old form
         regex = re.compile('%s(.*?)%s'% (re.escape(START),
                                          re.escape(FINISH)), re.DOTALL)
-        existing = regex.findall(content)[0]
-        new = regex.findall(preamble)[0]
-        if new == existing:
-            return
-        else:
-            content = content.replace(existing, new)
-            _fixed = True
+        content = regex.sub(preamble, content)
+        _fixed = True
 
     if not _fixed:
         content = "%s\n\n%s" % (preamble, content)
