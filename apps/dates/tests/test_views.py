@@ -1573,14 +1573,14 @@ class ViewsTest(TestCase, ViewsTestMixin):
         profile.save()
         result = function()
         ok_(not result.get('unrecognized_country'))
-        ok_(result.get('country_total'))
+        ok_(result.get('country_totals'))
         ok_(result.get('country'), 'US')
 
         profile.country = 'New Zealand'
         profile.save()
         result = function()
         ok_(result.get('unrecognized_country'))
-        ok_(not result.get('country_total'))
+        ok_(not result.get('country_totals'))
         ok_(result.get('country'), 'New Zealand')
 
 

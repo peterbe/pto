@@ -42,8 +42,16 @@ To add this to an external calendar you need this URL:
 this year.
 </p>
 
-{% if country_total %}
-<p>Out of a total of <strong>{{ country_total }}</strong> in your country ({{ country }}).</p>
+{% if country_totals %}
+  <p>Out of a total of
+    <strong>{{ country_totals.holidays }} days</strong>
+    {% if country_totals.sickdays %}
+    and <strong>{{ country_totals.sickdays }} sick days</strong>
+    {% endif %}
+
+    in your country ({{ country }}).
+  </p>
+
 {% else %}
   {% if unrecognized_country %}
   <p>Unfortunately not able to quickly give a number of total days for your country ({{ country }}).</p>

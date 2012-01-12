@@ -58,7 +58,7 @@ from models import Entry, Hours, BlacklistedUser, FollowingUser, UserKey
 from users.models import UserProfile, User
 from users.utils import ldap_lookup
 from .utils import parse_datetime, DatetimeParseError
-from .utils.countrytotals import UnrecognizedCountryError, get_country_total
+from .utils.countrytotals import UnrecognizedCountryError, get_country_totals
 import utils
 import forms
 from .decorators import json_view
@@ -148,7 +148,7 @@ def get_taken_info(user):
     if profile.country:
         data['country'] = profile.country
         try:
-            data['country_total'] = get_country_total(profile.country)
+            data['country_totals'] = get_country_totals(profile.country)
         except UnrecognizedCountryError:
             data['unrecognized_country'] = True
 

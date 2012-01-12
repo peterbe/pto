@@ -93,6 +93,8 @@ def profile(request):
             country = form.cleaned_data['country']
             profile.city = city
             profile.country = country
+            if city and country:
+                profile.office = '%s:::%s' % (city, country)
             profile.save()
 
             messages.info(request,
@@ -100,7 +102,10 @@ def profile(request):
             )
             return redirect('/')
     else:
-        form = forms.ProfileForm(instance=profile)
+        # 'country' is a custom field in the ProfileForm class
+        # so send that separately
+        form = forms.ProfileForm(instance=profile,
+                                 initial={'country': profile.country})
 
     data['form'] = form
     return render(request, 'users/profile.html', data)

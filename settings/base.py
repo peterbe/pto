@@ -338,6 +338,14 @@ EMAIL_BLACKLIST = (
   'all-mv@mozilla.com',
 )
 
+TOTALS = {
+  # COUNTRY: (HOLIDAYS, SICKDAYS)
+  'US': {'holidays': 21, 'sickdays': 0},
+  'GB': {'holidays': 18, 'sickdays': 6},
+  # Jill?!?!?!
+}
+
+
 try:
     ## LDAP
     import ldap
