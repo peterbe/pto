@@ -441,6 +441,7 @@ class MobileViewsTest(TestCase, ViewsTestMixin):
         response = self.client.get(url)
         eq_(response['Content-Type'], 'text/cache-manifest')
         lines = response.content.splitlines()
+
         eq_(lines[0], 'CACHE MANIFEST')
         buckets = defaultdict(list)
         for line in lines[1:]:

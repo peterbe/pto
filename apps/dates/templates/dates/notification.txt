@@ -1,9 +1,9 @@
-{% comment %}
+{#
 <!-- This Source Code Form is subject to the terms of the Mozilla Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this file,
    - You can obtain one at http://mozilla.org/MPL/2.0/.
  -->
-{% endcomment %}
+#}
 
 {{ user.first_name }} {{ user.last_name }} has submitted {{ entry.total_hours }} hours of PTO starting {{ start_date }}{% if not entry.details %}.{% else %} with the details:
 {{ entry.details }}{% endif %}
