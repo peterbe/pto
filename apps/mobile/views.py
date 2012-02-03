@@ -21,7 +21,8 @@ MOBILE_DATE_FORMAT = '%Y-%m-%d'
 def home(request):
     data = {}
     data['page_title'] = 'Mozilla PTO'
-    data['use_manifest'] = True#not settings.DEBUG
+    # not fully developed so disabled for now
+    data['use_manifest'] = False#True#not settings.DEBUG
 
     response = render(request, 'mobile/mobile.html', data)
     # if you have loaded this page, forget the no-mobile cookie

@@ -24,14 +24,21 @@ var Data = (function() {
   return {
      rightnow: function() {
 
+       var container = $('#rightnow');
+
        function format_name_email(name, email) {
          return $('<a>')
            .attr('href', 'mailto:' + email)
              .text(name);
        }
 
+       $('.loading:hidden', container).show();
+       $('.now:visible', container).hide();
+       $('.upcoming:visible', container).hide();
+
        $.getJSON('/mobile/rightnow.json', function(response) {
          if (response.error) return _grr(response.error);
+         $('.loading:visible', container).hide();
 
          $('dt,dd', '#rightnow .now').remove();
          var p = $('#rightnow .now'), html;
@@ -49,6 +56,7 @@ var Data = (function() {
                .addClass('none')
                  .appendTo(p);
          }
+         $('.now:hidden', container).show();
 
          $('dt,dd', '#rightnow .upcoming').remove();
          p = $('#rightnow .upcoming');
@@ -66,14 +74,20 @@ var Data = (function() {
                .addClass('none')
                  .appendTo(p);
          }
+         $('.upcoming:hidden', container).show();
 
        });
 
      },  // end rightnow
 
     taken: function() {
+       var container = $('#taken');
+       $('.loading:hidden', container).show();
+
        $.getJSON('/mobile/taken.json', function(response) {
          if (response.error) return _grr(response.error);
+
+         $('.loading:visible', container).hide();
 
          //var p = $('#taken p.info');
          var html;
@@ -82,7 +96,11 @@ var Data = (function() {
            html += '<strong>' + response.taken + '</strong> ';
            html += 'this year.';
          }
-         $('<p>').html(html).appendTo($('#taken .content'));
+         $('.content p.info', container).remove();
+         $('<p>')
+           .addClass('info')
+           .html(html)
+             .appendTo($('.content', container));
 
          if (response.country_total) {
            html = 'Out of a total of <strong>' + response.country_total;
@@ -94,16 +112,20 @@ var Data = (function() {
            html = 'You have not specified what country you are in. ';
            html += '<a href="#settings">Update your profile settings</a>.';
          }
-         $('<p>').html(html).appendTo($('#taken .content'));
+         $('<p>')
+           .addClass('info')
+           .html(html)
+             .appendTo($('.content', container));
 
        });
     },  // end taken
 
     settings: function() {
+      var container = $('#settings');
       $.getJSON('/mobile/settings.json', function(response) {
         var html = "You're currently logged in as ";
         html += '<strong>' + html_escape(response.full_name) + '</strong>.';
-        $('#settings p.info').html(html);
+        $('p.info', container).html(html);
         if (response.country) {
           $('#id_country').val(response.country);
         }

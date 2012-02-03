@@ -6,10 +6,15 @@
 #}
 
 <!doctype html>
-<html{% if use_manifest %} manifest="{{ url('mobile.appcache') }}"{% endif %}>
+<html {% if use_manifest %}manifest="{{ url('mobile.appcache') }}"{% endif %}>
 <head>
         <meta charset="utf-8">
+        <meta name="HandheldFriendly" content="True">
+        <meta name="MobileOptimized" content="320">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="apple-touch-icon-precomposed" href="{{ media('img/mobile/apple-touch-icon.png') }}">
+	<link rel="shortcut icon" href="{{ media('img/mobile/apple-touch-icon.png') }}">
+
         <title>{% block page_title %}Mozilla PTO{% endblock %}</title>
         {{ css('libs/jquery_mobile') }}
         {{ css('mobile') }}

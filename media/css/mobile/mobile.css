@@ -18,3 +18,5 @@
 }
 
 form .error { color:red; }
+
+.loading { font-style: italic; }
