@@ -186,7 +186,11 @@ table.tablesorter thead tr .headerSortDown, table.tablesorter thead tr .headerSo
 <script>
 var DATE_MIN = new Date({{ first_date.year }}, {{ first_date.month }}-1, {{ first_date.day }});
 var DATE_MAX = new Date({{ last_date.year }}, {{ last_date.month }}-1, {{ last_date.day }});
+{% if first_filed_date %}
 var FILED_MIN = new Date({{ first_filed_date.year }}, {{ first_filed_date.month }}-1, {{ first_filed_date.day }});
+{% else %}
+var FILED_MIN = new Date({{ today.year }}, {{ today.month }}-1, {{ today.day }});
+{% endif %}
 var FILED_MAX = new Date({{ today.year }}, {{ today.month }}-1, {{ today.day }});
 var DATA_URL = '{{ url('dates.list_json') }}';
 </script>

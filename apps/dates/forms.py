@@ -5,6 +5,7 @@
 import re
 from django.conf import settings
 from django.utils import formats
+from django.contrib.auth.models import User
 from django.core.validators import validate_email
 from django import forms
 from models import Hours, Entry
@@ -190,3 +191,17 @@ class ListFilterForm(BaseForm):
                      .order_by('country')):
             country = each['country']
             self.fields['country'].choices.append((country, country))
+
+
+class DuplicateReportFilterForm(BaseForm):
+    user = forms.CharField(required=False)
+    since = forms.DateField(required=False)
+
+    def clean_user(self):
+        value = self.cleaned_data['user']
+        if value:
+            try:
+                return User.objects.get(pk=value)
+            except User.DoesNotExist:
+                raise forms.ValidationError("User can't be found")
+        return value

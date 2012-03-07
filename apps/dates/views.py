@@ -23,6 +23,7 @@ from django.shortcuts import render
 from django.views.decorators.http import require_POST
 from django.contrib.sites.models import RequestSite
 from django.core.cache import cache
+from django.db.models import Min, Count
 import vobject
 from models import Entry, Hours, BlacklistedUser, FollowingUser, UserKey
 from users.models import UserProfile, User
@@ -285,8 +286,8 @@ def calendar_events(request):
           colors[user_.pk]
         ))
 
-
     _managers = {}
+
     def can_see_details(user):
         if request.user.is_superuser:
             return True
@@ -733,6 +734,7 @@ def list_json(request):
     entries = get_entries_from_request(request.GET)
 
     _managers = {}
+
     def can_see_details(user):
         if request.user.is_superuser:
             return True
@@ -1042,3 +1044,65 @@ def reset_calendar_url(request):
     for each in UserKey.objects.filter(user=request.user):
         each.delete()
     return redirect(reverse('dates.home') + '#calendarurl')
+
+
+@login_required
+def duplicate_report(request):
+    data = {
+      'filter_errors': None,
+    }
+
+    if request.method == 'POST':
+        raise NotImplementedError
+    else:
+        form = forms.DuplicateReportFilterForm(date_format='%d %B %Y',
+                                               data=request.GET)
+        user = request.user
+        filter_ = dict(user=user)
+
+        if form.is_valid():
+            if form.cleaned_data['user']:
+                user = form.cleaned_data['user']
+                if user != request.user:
+                    if not (request.user.is_superuser
+                            or request.user.is_staff):
+                        if user != request.user:
+                            return http.HttpResponse(
+                                                 "Only available for admins")
+                filter_['user'] = user
+
+            if form.cleaned_data['since']:
+                filter_['start__gte'] = form.cleaned_data['since']
+                data['since'] = form.cleaned_data['since']
+        else:
+            data['filter_errors'] = form.errors
+
+        data['first_date'] = (Entry.objects
+                              .filter(user=user)
+                              .aggregate(Min('start'))
+                              ['start__min'])
+
+        start_dates = (Entry.objects
+                       .filter(**filter_)
+                       .values("start")
+                       .annotate(Count("start"))
+                       .order_by('-start__count'))
+        groups = []
+        for each in start_dates:
+            if each['start__count'] <= 1:
+                break
+            entries = Entry.objects.filter(user=user, start=each['start'])
+            details = [x.details for x in entries]
+            note = "Probably not a mistake"
+            if len(set(details)) == 1:
+                note = ("Probably a duplicate! "
+                        "The details are the same for each entry")
+            else:
+                note = "Possibly not a duplicate since the details different"
+            groups.append((entries, note))
+        data['groups'] = groups
+
+        if 'since' not in data:
+            data['since'] = data['first_date']
+
+    return render(request, 'dates/duplicate-report.html', data)

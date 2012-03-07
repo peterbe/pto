@@ -1,0 +1,97 @@
+{#
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.
+ -->
+#}
+
+{% extends "base.html" %}
+
+{% block extra_site_css %}
+{{ css('jquery_ui') }}
+<style>
+table.group { width: 100%; margin-bottom: 30px; border-top: 1px solid #ccc; }
+table.group thead td { font-weight:bold; }
+table.group td { vertical-align: top; }
+table.group th.details, table.group td.details {width:40%; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<form action=".">
+  <div style="float:right"><label for="id_year">Since:</label>
+       <input name="since" value="{{ since.strftime('%d %B %Y') }}" >
+       <input type="submit" value="Go">
+  </div>
+</form>
+
+<h2>Suspicious duplicates since {{ since.strftime('%d %B %Y') }}</h2>
+
+{% if filter_errors %}
+  <h3>Filter error:</h3>
+  {{ filter_errors }}
+{% else %}
+<h3>About this report</h3>
+<p>In the old PTO application it was <strong>possible to accidentally submit the same PTO twice</strong>.
+Either from accidentally double-clicking the submit button or from simply forgetting something
+had already been submitted.<br>
+Since this might now contribute to <strong>your total number of days being wrong</strong>, it might be a good idea
+to process those duplicates and have them removed by an administrator.
+</p>
+{% endif %}
+
+{% if not groups %}
+<p style="color:green;font-weight:bold">No suspect duplicates found since {{ first_date.strftime('%d %B %Y') }}</p>
+{% endif %}
+
+{% for group, note in groups %}
+<h2>Instance #{{ loop.index }}</h2>
+<table class="group">
+  <thead>
+    <tr>
+      <td>ID</td>
+      <td>Start date</td>
+      <td>End date</td>
+      <td>Hours</td>
+      <td class="details">Details</td>
+    </tr>
+  </thead>
+  <tbody>
+  {% for entry in group %}
+    <tr>
+      <td>{{ entry.pk }}</td>
+      <td>{{ entry.start }}</td>
+      <td>{{ entry.end }}</td>
+      <td>{{ entry.total_hours }}</td>
+      <td class="details">{{ entry.details }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+<p><strong>NOTE:</strong>
+  {{ note }}
+</p>
+{% endfor %}
+
+
+{% endblock %}
+
+
+{% block extra_site_js %}
+{{ js('jquery_ui') }}
+<script>
+var MIN_DATE = new Date({{ first_date.year }}, {{ first_date.month }}-1, {{ first_date.day }});
+$(function() {
+  $('input[name="since"]').datepicker({
+    dateFormat: 'd MM yy',
+    changeMonth: true,
+    changeYear: true,
+    minDate: MIN_DATE,
+    maxDate: new Date(),
+    showAnim: 'fadeIn',
+    showButtonPanel: true
+  });
+});
+</script>
+{% endblock %}

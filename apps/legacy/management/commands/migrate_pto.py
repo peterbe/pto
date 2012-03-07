@@ -21,7 +21,7 @@ class Command(NoArgsCommand):
     option_list = NoArgsCommand.option_list + (
                         make_option('--dryrun', default=False, action='store_true',
                                    help="Dry run, no database writes (Optional)"),
-                        make_option('--all', action='store',
+                        make_option('--all', action='store_true',
                                    help="All or nothing, rollback on any errors (Optional)"),
                         make_option('--encoding', action='store',
                                     help="Optional. If omitted will be utf8"),
@@ -29,9 +29,8 @@ class Command(NoArgsCommand):
 
 
     def handle_noargs(self, **options):
-        transaction_method = 'none'
         #transaction_method = options.get('all') and 'commit' or transaction_method
-        transaction_method = options.get('dryrun') and 'rollback' or transaction_method
+        transaction_method = options.get('dryrun') and 'rollback' or 'commit'
         max_count = options.get('all') and Pto.objects.all().count() or 1000
 
         _users = {}
@@ -54,9 +53,16 @@ class Command(NoArgsCommand):
         if max_count < Pto.objects.all().count():
             print "Capped to the first", max_count, "objects"
 
+        transaction.enter_transaction_management()
+        transaction.managed(True)
+
         count = 0
+
+        #print Pto.objects.filter(person='pbengtsson@mozilla.com')
+        ## debuggin:
+    # update pto set person='pbengtsson@mozilla.com' where person='733f46e953063052@mozilla.com';
         for pto in Pto.objects.all().order_by('id')[:max_count]:
-            #print pto.id
+        #for pto in Pto.objects.filter(person='pbengtsson@mozilla.com').order_by('id')[:max_count]:
             user = get_user(pto.person)
             #print 'person', repr(pto.person), repr(user)
             added = self._timestamp_to_date(pto.added)
@@ -107,13 +113,12 @@ class Command(NoArgsCommand):
             #print 'end', repr(pto.end), end
             #print ""
 
-        if not transaction_method == 'none':
-            if transaction_method == 'rollback':
-                print "rollbacked, no changed applied"
-                transaction.rollback()
-            else:
-                transaction.commit()
-                print "Migrated", count, "PTO entries"
+        print "Migrated", count, "PTO entries"
+        if transaction_method == 'rollback':
+            print "rollbacked, no changed applied"
+            transaction.rollback()
+        else:
+            transaction.commit()
 
     def _create_hours(self, total, start, end):
         r = {}
@@ -145,7 +150,7 @@ class Command(NoArgsCommand):
                 r[d] += 4
                 total -= 4
                 i += 1
-            print r
+            #print r
             #raise NotImplementedError
 
         return r
@@ -163,5 +168,5 @@ class Command(NoArgsCommand):
         print "Person:", pto.person,
         print "Added:", self._timestamp_to_date(pto.added)
         print "Hours:", pto.hours
-        print "Start:", self._timestamp_to_date(pto.start)
-        print "End:", self._timestamp_to_date(pto.end)
+        print "Start:", pto.start, '(%s)' % self._timestamp_to_date(pto.start)
+        print "End:", pto.end, '(%s)' % self._timestamp_to_date(pto.end)
