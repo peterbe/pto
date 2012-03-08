@@ -14,6 +14,8 @@ from django.contrib.auth import login as auth_login, logout as auth_logout
 from dates.models import Entry, Hours
 from dates.decorators import json_view
 from dates.utils import get_weekday_dates
+from users.forms import ProfileForm
+
 
 MOBILE_DATE_FORMAT = '%Y-%m-%d'
 
@@ -217,7 +219,7 @@ def settings_json(request):
 def save_settings(request):
     if not request.user.is_authenticated():  # XXX improve this
         return {'error': 'Not logged in'}
-    from users.forms import ProfileForm
+
     profile = request.user.get_profile()
     form = ProfileForm(instance=profile, data=request.POST)
     if form.is_valid():

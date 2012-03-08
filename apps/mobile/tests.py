@@ -420,6 +420,38 @@ class MobileViewsTest(TestCase, ViewsTestMixin):
         eq_(profile.country, 'GB')
         eq_(profile.city, 'London')
 
+    def test_save_settings_security_hack(self):
+        bob = User.objects.create(username='bob')
+        bob_profile = bob.get_profile()
+        bob_profile.city = 'Mountain View'
+        bob_profile.country = 'United States'
+        bob_profile.save()
+
+        url = reverse('mobile.save_settings')
+        self._login()
+        peter = User.objects.get(username='peter')
+        profile = peter.get_profile()
+        # The ProfileForm is a ModelForm and used like this:
+        #    if form.is_valid():
+        #        form.save()
+        # Even though we only want to save country and city
+        # we can try to fool the modelform to save other things too
+        data = {
+          'city': 'London',
+          'country': 'GB',
+          'notes': 'Hack Attack!',
+        }
+        response = self.client.post(url, data)
+        eq_(response.status_code, 200)
+        struct = json.loads(response.content)
+        ok_(struct['ok'])
+
+        from users.models import UserProfile
+        profile = UserProfile.objects.get(user__username='peter')
+        eq_(profile.country, 'GB')
+        eq_(profile.city, 'London')
+        eq_(profile.notes, '')
+
     def test_exit_mobile(self):
         self._login()
         # if you end up on the mobile pages and want out,
