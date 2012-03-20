@@ -235,7 +235,9 @@ MIDDLEWARE_CLASSES.append('mobility.middleware.DetectMobileMiddleware')
 MIDDLEWARE_CLASSES.append('mobility.middleware.XMobileMiddleware')
 MIDDLEWARE_CLASSES = tuple(MIDDLEWARE_CLASSES)
 
-ROOT_URLCONF = 'pto.urls'  # XXX need to change to "new-style" funfactory project some time soon
+# XXX need to change to "new-style" funfactory project some time soon
+root_package = os.path.basename(ROOT)
+ROOT_URLCONF = '%s.urls' % root_package
 
 INSTALLED_APPS += (
     # Local apps
