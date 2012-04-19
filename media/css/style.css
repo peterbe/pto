@@ -67,8 +67,6 @@ section {
   background-color: white;
   padding: 1em;
   border-radius: 0.5em;
-  -moz-border-radius: 0.5em;
-  -webkit-border-radius: 0.5em;
   margin-top: 1em;
   min-height: 300px;
   }
@@ -91,8 +89,6 @@ span.ui-timepickr {
   background-color: #FCFDFD;
   border: 1px solid #A6C9E2;
   border-radius: 5px;
-  -moz-border-radius: 5px;
-  -webkit-border-radius: 5px;
   }
 
 button#filter {
@@ -119,10 +115,6 @@ button#filter {
   padding: 0.5em 0 0.5em 0;
   border-top-left-radius: 0.5em;
   border-top-right-radius: 0.5em;
-  -moz-border-radius-topleft: 0.5em;
-  -moz-border-radius-topright: 0.5em;
-  -webkit-border-top-left-radius: 0.5em;
-  -webkit-border-top-right-radius: 0.5em;
   cursor: default;
   }
 
@@ -132,7 +124,7 @@ button#filter {
     }
 
     #views li.view {
-      -moz-user-select: none;
+      /*-moz-user-select: none;*/
       float: right;
       border-right: 1px solid black;
       margin-top: 3px;
@@ -173,7 +165,7 @@ button#filter {
   background-color: #BDDCE6;
   color: #000;
   padding: 0.5em 0.5em 0 1em;
-  -moz-user-select: none;
+  /*-moz-user-select: none;*/
   cursor: default;
   }
 
@@ -190,10 +182,6 @@ button#filter {
       background-color: white;
       border-top-left-radius: 0.4em;
       border-top-right-radius: 0.4em;
-      -moz-border-radius-topleft: 0.4em;
-      -moz-border-radius-topright: 0.4em;
-      -webkit-border-top-left-radius: 0.4em;
-      -webkit-border-top-right-radius: 0.4em;
       }
 
 td {
@@ -305,8 +293,6 @@ div.clearer {clear: both; line-height: 0; height: 0;}
   padding:6px;
   font-size:80%;
   border-radius: 0.4em;
-  -moz-border-radius: 0.4em;
-  -webkit-border-radius: 0.4em;
 }
 
 .flash p, .flash a.close {

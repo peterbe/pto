@@ -4,6 +4,9 @@ from django.conf.urls.defaults import patterns, include
 from django.contrib import admin
 admin.autodiscover()
 
+from funfactory.monkeypatches import patch
+patch()
+
 handler500 = 'dates.views.handler500'
 
 urlpatterns = patterns('',
@@ -25,15 +28,3 @@ if settings.DEBUG:
         (r'^%s/(?P<path>.*)$' % media_url, 'django.views.static.serve',
          {'document_root': settings.MEDIA_ROOT}),
     )
-
-## Monkey patches
-
-# Monkey-patch django forms to avoid having to use Jinja2's |safe everywhere.
-import safe_django_forms
-safe_django_forms.monkeypatch()
-
-# Monkey-patch Django's csrf_protect decorator to use session-based CSRF
-# tokens:
-if 'session_csrf' in settings.INSTALLED_APPS:
-    import session_csrf
-    session_csrf.monkeypatch()

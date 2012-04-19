@@ -145,8 +145,8 @@ TEMPLATE_DIRS = (
 
 JINGO_EXCLUDE_APPS = (
     # XXX need to figure out which of these is the right setting
-    'django.contrib.admin',
-    'admin',
+#    'django.contrib.admin',
+#    'admin',
 )
 
 # Bundles is a dictionary of two dictionaries, css and js, which list css files
@@ -157,10 +157,10 @@ MINIFY_BUNDLES = {
             'css/style.css',
         ),
         'jquery_ui': (
-            'css/libs/jquery_ui/redmond/jquery-ui-1.8.14.datepicker.autocomplete.css',
+            'css/libs/jquery_ui/redmond/jquery-ui-1.8.19.datepicker.autocomplete.css',
         ),
         'libs/jquery_mobile': (
-            'css/libs/jquery.mobile-1.0.1.min.css',
+            'css/libs/jquery.mobile-1.1.0.min.css',
         ),
         'mobile': (
             'css/mobile/mobile.css',
@@ -185,14 +185,14 @@ MINIFY_BUNDLES = {
     },
     'js': {
         'global': (
-            'js/libs/jquery-1.7.1.min.js',
+            'js/libs/jquery-1.7.2.min.js',
             'js/global.js',
         ),
         'mobile': (
-            'js/libs/jquery-1.6.4.min.js',  # jquery mobile 1.0rc3 requires jquery 1.6.4
+            'js/libs/jquery-1.7.2.min.js',
             'js/libs/date.js',
             'js/mobile/mobile.js',
-            'js/libs/jquery.mobile-1.0.1.min.js',
+            'js/libs/jquery.mobile-1.1.0.min.js',
         ),
         'dates.home': (
             'js/libs/fullcalendar.min.js',
@@ -208,7 +208,7 @@ MINIFY_BUNDLES = {
             'js/dates/emails_sent.js',
         ),
         'jquery_ui': (
-            'js/libs/jquery-ui-1.8.14.datepicker.autocomplete.min.js',
+            'js/libs/jquery-ui-1.8.19.datepicker.autocomplete.min.js',
         ),
         'dates.notify': (
             'js/dates/notify.js',

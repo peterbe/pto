@@ -1,6 +1,6 @@
 # Is this a development instance? Set this to True on development/master
 # instances and False on stage/prod.
-DEV = True
+#DEV = False
 
 #from . import base
 #INSTALLED_APPS = base.INSTALLED_APPS + ('debug_toolbar',)
@@ -35,12 +35,12 @@ DATABASES = {
 #    }
 #}
 
-
-DEBUG = TEMPLATE_DEBUG = DEBUG_PROPAGATE_EXCEPTIONS = True
-TEMPLATE_STRING_IF_INVALID = '!{ %s }'
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-PWD_ALGORITHM = 'sha521'
-SESSION_COOKIE_SECURE = False  # if you run http://localhost:8000
+## Good things for development
+#DEBUG = TEMPLATE_DEBUG = DEBUG_PROPAGATE_EXCEPTIONS = True
+#TEMPLATE_STRING_IF_INVALID = '!{ %s }'
+#EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+#PWD_ALGORITHM = 'sha521'
+#SESSION_COOKIE_SECURE = False  # if you run http://localhost:8000
 
 AUTH_LDAP_BIND_PASSWORD = Must be entered
 

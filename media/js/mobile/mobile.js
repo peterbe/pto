@@ -102,9 +102,10 @@ var Data = (function() {
            .html(html)
              .appendTo($('.content', container));
 
-         if (response.country_total) {
-           html = 'Out of a total of <strong>' + response.country_total;
-           html += '</strong> if your country (' + response.country + ')';
+         if (response.country_totals) {
+           html = 'Out of a total of <strong>' + response.country_totals.holidays;
+           html += ' holiday</strong> and <strong>' + response.country_totals.sickdays;
+           html += ' sick days</strong> in your country (' + response.country + ')';
          } else if (response.unrecognized_country) {
            html = 'Unfortunately not able to quickly give a number of total ';
            html += 'days for your country (' + response.country + ')';
