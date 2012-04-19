@@ -85,23 +85,20 @@ def home(request):  # aka dashboard
     else:
         MAX_RIGHT_NOWS = 20
 
-    right_nows, right_now_users = get_right_nows()
-    data['right_nows'] = right_nows
-    data['right_now_users'] = right_now_users
-    if len(right_now_users) > MAX_RIGHT_NOWS:
-        data['right_now_too_many'] = (len(data['right_now_users'])
-                                       - MAX_RIGHT_NOWS)
-        data['right_now_users'] = data['right_now_users'][:MAX_RIGHT_NOWS]
-    else:
-        data['right_now_too_many'] = None
+    ## Commented out whilst we decide whether to keep it at all
+    #right_nows, right_now_users = get_right_nows()
+    #data['right_nows'] = right_nows
+    #data['right_now_users'] = right_now_users
+    #if len(right_now_users) > MAX_RIGHT_NOWS:
+    #    data['right_now_too_many'] = (len(data['right_now_users'])
+    #                                   - MAX_RIGHT_NOWS)
+    #    data['right_now_users'] = data['right_now_users'][:MAX_RIGHT_NOWS]
+    #else:
+    #    data['right_now_too_many'] = None
 
     data.update(get_taken_info(request.user))
 
-    user_key, __ = UserKey.objects.get_or_create(user=request.user)
-    base_url = '%s://%s' % (request.is_secure() and 'https' or 'http',
-                            RequestSite(request).domain)
-    data['calendar_url'] = base_url + reverse('dates.calendar_vcal',
-                                              args=(user_key.key,))
+    data['calendar_url'] = _get_user_calendar_url(request)
 
     cache_key = 'recently_created_%s' % request.user.pk
     recently_created = cache.get(cache_key)
@@ -110,6 +107,12 @@ def home(request):  # aka dashboard
         cache.delete(cache_key)
 
     return render(request, 'dates/home.html', data)
+
+def _get_user_calendar_url(request):
+    user_key, __ = UserKey.objects.get_or_create(user=request.user)
+    base_url = '%s://%s' % (request.is_secure() and 'https' or 'http',
+                            RequestSite(request).domain)
+    return base_url + reverse('dates.calendar_vcal', args=(user_key.key,))
 
 
 def get_taken_info(user):
@@ -1045,6 +1048,12 @@ def reset_calendar_url(request):
         each.delete()
     return redirect(reverse('dates.home') + '#calendarurl')
 
+
+@login_required
+def about_calendar_url(request):
+    data = {}
+    data['calendar_url'] = _get_user_calendar_url(request)
+    return render(request, 'dates/about-calendar-url.html', data)
 
 @login_required
 def duplicate_report(request):

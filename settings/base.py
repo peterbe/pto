@@ -182,6 +182,9 @@ MINIFY_BUNDLES = {
         'dates.following': (
             'css/dates/following.css',
         ),
+        'dates.about-calendar-url': (
+            'css/dates/about-calendar-url.css',
+        ),
     },
     'js': {
         'global': (

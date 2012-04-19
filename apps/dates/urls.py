@@ -21,5 +21,6 @@ urlpatterns = patterns('',
     url(r'^following/save/unfollow/$', views.save_unfollowing, name='dates.save_unfollowing'),
     url(r'^(?P<key>\w{10})/ptocalendar\.ics$', views.calendar_vcal, name='dates.calendar_vcal'),
     url(r'^reset-calendar-url$', views.reset_calendar_url, name='dates.reset_calendar_url'),
+    url(r'^about-calendar-url$', views.about_calendar_url, name='dates.about_calendar_url'),
     url(r'^duplicate-report/$', views.duplicate_report, name='dates.duplicate_report'),
 )

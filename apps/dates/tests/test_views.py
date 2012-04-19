@@ -1293,81 +1293,82 @@ class ViewsTest(TestCase, ViewsTestMixin):
         ok_('<option value="GB">' in _options)
         ok_('<option value="US">' in _options)
 
-    def test_dashboard_on_pto_right_now(self):
-        """On the dashboard we can expect to see who is on PTO right now.
-        Expect that past and future entries don't appear.
-        It should also say how many days they have left.
-        """
-
-        User.objects.create_user(
-          'jill', 'jill@mozilla.com', password='secret'
-        )
-        assert self.client.login(username='jill', password='secret')
-        response = self.client.get('/')
-        eq_(response.status_code, 200)
-
-        bobby = User.objects.create_user(
-          'bobby', 'bobby@mozilla.com',
-        )
-        freddy = User.objects.create_user(
-          'freddy', 'freddy@mozilla.com',
-        )
-        dicky = User.objects.create_user(
-          'dicky', 'dicky@mozilla.com',
-        )
-        harry = User.objects.create_user(
-          'harry', 'harry@mozilla.com',
-        )
-
-        ok_('bobby' not in response.content)
-        ok_('freddy' not in response.content)
-        ok_('dicky' not in response.content)
-        ok_('harry' not in response.content)
-
-        today = datetime.date.today()
-
-        Entry.objects.create(
-          user=bobby,
-          total_hours=16,
-          start=today - datetime.timedelta(days=2),
-          end=today - datetime.timedelta(days=1),
-        )
-        response = self.client.get('/')
-        ok_('bobby' not in response.content)
-
-        Entry.objects.create(
-          user=freddy,
-          total_hours=16,
-          start=today - datetime.timedelta(days=1),
-          end=today,
-        )
-        response = self.client.get('/')
-        ok_('freddy' in response.content)
-
-        Entry.objects.create(
-          user=dicky,
-          total_hours=4,
-          start=today,
-          end=today,
-        )
-        response = self.client.get('/')
-        ok_('dicky' in response.content)
-
-        entry = Entry.objects.create(
-          user=harry,
-          total_hours=16,
-          start=today + datetime.timedelta(days=1),
-          end=today + datetime.timedelta(days=2),
-        )
-        response = self.client.get('/')
-        ok_('harry' not in response.content)
-
-        entry.start -= datetime.timedelta(days=1)
-        entry.end -= datetime.timedelta(days=1)
-        entry.save()
-        response = self.client.get('/')
-        ok_('harry' in response.content)
-
+# Commented out till we decide what to do with the "On PTO right now feature"
+#    def test_dashboard_on_pto_right_now(self):
+#        """On the dashboard we can expect to see who is on PTO right now.
+#        Expect that past and future entries don't appear.
+#        It should also say how many days they have left.
+#        """
+#
+#        User.objects.create_user(
+#          'jill', 'jill@mozilla.com', password='secret'
+#        )
+#        assert self.client.login(username='jill', password='secret')
+#        response = self.client.get('/')
+#        eq_(response.status_code, 200)
+#
+#        bobby = User.objects.create_user(
+#          'bobby', 'bobby@mozilla.com',
+#        )
+#        freddy = User.objects.create_user(
+#          'freddy', 'freddy@mozilla.com',
+#        )
+#        dicky = User.objects.create_user(
+#          'dicky', 'dicky@mozilla.com',
+#        )
+#        harry = User.objects.create_user(
+#          'harry', 'harry@mozilla.com',
+#        )
+#
+#        ok_('bobby' not in response.content)
+#        ok_('freddy' not in response.content)
+#        ok_('dicky' not in response.content)
+#        ok_('harry' not in response.content)
+#
+#        today = datetime.date.today()
+#
+#        Entry.objects.create(
+#          user=bobby,
+#          total_hours=16,
+#          start=today - datetime.timedelta(days=2),
+#          end=today - datetime.timedelta(days=1),
+#        )
+#        response = self.client.get('/')
+#        ok_('bobby' not in response.content)
+#
+#        Entry.objects.create(
+#          user=freddy,
+#          total_hours=16,
+#          start=today - datetime.timedelta(days=1),
+#          end=today,
+#        )
+#        response = self.client.get('/')
+#        ok_('freddy' in response.content)
+#
+#        Entry.objects.create(
+#          user=dicky,
+#          total_hours=4,
+#          start=today,
+#          end=today,
+#        )
+#        response = self.client.get('/')
+#        ok_('dicky' in response.content)
+#
+#        entry = Entry.objects.create(
+#          user=harry,
+#          total_hours=16,
+#          start=today + datetime.timedelta(days=1),
+#          end=today + datetime.timedelta(days=2),
+#        )
+#        response = self.client.get('/')
+#        ok_('harry' not in response.content)
+#
+#        entry.start -= datetime.timedelta(days=1)
+#        entry.end -= datetime.timedelta(days=1)
+#        entry.save()
+#        response = self.client.get('/')
+#        ok_('harry' in response.content)
+#
     def test_list_csv_link(self):
         self._login()
         # if you visit the default list, expect to find a link to the csv list
@@ -1981,26 +1982,27 @@ class ViewsTest(TestCase, ViewsTestMixin):
         eq_(response.status_code, 302)
         ok_(not UserKey.objects.filter(user=mike).count())
 
-    def test_loading_all_on_pto(self):
-        from string import uppercase
-        today = datetime.date.today()
-        for letter in list(uppercase):
-            username = '%sUSERNAME' % letter
-            entry = Entry.objects.create(
-              user=User.objects.create(username=username),
-              start=today,
-              end=today + datetime.timedelta(days=random.randint(0, 10)),
-              total_hours=settings.WORK_DAY,
-            )
-        last_username = username
-
-        self._login()
-        url = reverse('dates.home')
-        response = self.client.get(url)
-        ok_(last_username not in response.content)
-
-        response = self.client.get(url, {'all-rightnow': ''})
-        ok_(last_username in response.content)
+# Commented out till we decide what to do with the "On PTO right now feature"
+#    def test_loading_all_on_pto(self):
+#        from string import uppercase
+#        today = datetime.date.today()
+#        for letter in list(uppercase):
+#            username = '%sUSERNAME' % letter
+#            entry = Entry.objects.create(
+#              user=User.objects.create(username=username),
+#              start=today,
+#              end=today + datetime.timedelta(days=random.randint(0, 10)),
+#              total_hours=settings.WORK_DAY,
+#            )
+#        last_username = username
+#
+#        self._login()
+#        url = reverse('dates.home')
+#        response = self.client.get(url)
+#        ok_(last_username not in response.content)
+#
+#        response = self.client.get(url, {'all-rightnow': ''})
+#        ok_(last_username in response.content)
 
     def test_cancel_notify(self):
         user = self._login()

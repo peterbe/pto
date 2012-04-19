@@ -1,15 +1,20 @@
 #observed {
-    float:left; 
+    float:left;
     width:50%;
 }
 #content form {
     margin-bottom: 20px;
 }
-td { font-weight:bold; }
-td.reason, td a { font-weight:normal; }
-a.restore, a.remove { margin-left:30px; }
+td { font-weight: bold; }
+td.reason, td a { font-weight: normal; }
+a.restore, a.remove { margin-left: 30px; }
 
-.goback { 
-    clear:left; 
+.goback {
+    clear:left;
     margin-top:40px;
+}
+
+.tip-note {
+    font-size: .8em;
+    color: #666;
 }
