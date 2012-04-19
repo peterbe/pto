@@ -26,6 +26,9 @@ $(function() {
   if ($('#fireworks-template').size()) {
     soundManager.onready(function() {
       fire();
+      setTimeout(function() {
+        keep_going = false;
+      }, 60 * 1000);
       var f = $('<form action="#" method="post">')
         .css('margin-top','150px')
           .css('float','right')

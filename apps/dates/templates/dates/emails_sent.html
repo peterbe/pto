@@ -9,6 +9,10 @@
 
 {% block extra_site_css %}
 {{ css('dates.emails_sent') }}
+<style>
+/* https://bugzilla.mozilla.org/show_bug.cgi?id=745790 */
+body { overflow: hidden; }
+</style>
 {% endblock %}
 
 {% block extra_site_js %}
