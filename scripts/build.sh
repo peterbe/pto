@@ -32,6 +32,7 @@ DATABASES = {
         'TEST_COLLATION': 'utf8_general_ci',
     },
 }
+SECRET_KEY = 'somethingaslongasitsnotblank'
 " > pto/settings/local.py
 
 ## install dependencies
