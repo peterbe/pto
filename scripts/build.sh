@@ -32,7 +32,7 @@ DATABASES = {
         'TEST_COLLATION': 'utf8_general_ci',
     },
 }
-" > settings/local.py
+" > pto/settings/local.py
 
 ## install dependencies
 # prod.txt is covered by vendor-local
