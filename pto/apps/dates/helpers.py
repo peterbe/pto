@@ -4,6 +4,7 @@
 
 import urllib
 import urlparse
+import textwrap
 
 from django.contrib.auth.models import User
 from django.conf import settings
@@ -131,3 +132,10 @@ def format_date(context, date, format=None, shorter=False):
         format = format.replace('%B', '%b')
         format = format.replace('%A', '%a')
     return date.strftime(format)
+
+
+@register.function
+def line_indent(text, indent=' ' * 4):
+    return '\n'.join(textwrap.wrap(text,
+                                   initial_indent=indent,
+                                   subsequent_indent=indent))

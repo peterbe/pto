@@ -200,7 +200,7 @@ WORK_DAY = 8  # hours
 
 EMAIL_SUBJECT = 'PTO notification from %(first_name)s %(last_name)s'
 EMAIL_SUBJECT_EDIT = 'PTO update from %(first_name)s %(last_name)s'
-EMAIL_SIGNATURE = "The Mozilla PTO cruncher"
+EMAIL_SIGNATURE = "The Mozilla PTO"
 FALLBACK_TO_ADDRESS = 'jvandeven@mozilla.com'
 
 # People you're not allowed to notify additionally

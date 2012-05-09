@@ -517,14 +517,18 @@ def hours(request, pk):
     if entry.total_hours:
         data['total_hours'] = entry.total_hours
     else:
-        total_hours = 0
+        total_days = 0
         for date in utils.get_weekday_dates(entry.start, entry.end):
             try:
                 hours_ = Hours.objects.get(entry=entry, date=date)
-                total_hours += hours_.hours
+                print hours_.hours
+                if hours_.hours == settings.WORK_DAY:
+                    total_days += 1
+                elif hours_.hours:
+                    total_days += .5
             except Hours.DoesNotExist:
-                total_hours += settings.WORK_DAY
-        data['total_hours'] = total_hours
+                total_days += 1
+        data['total_days'] = total_days
 
     notify = request.session.get('notify_extra', [])
     data['notify'] = notify
@@ -700,7 +704,7 @@ def list_csv(request):
       'ADDED',
       'START',
       'END',
-      'HOURS',
+      'DAYS',
       'DETAILS',
       'CITY',
       'COUNTRY',
@@ -720,7 +724,7 @@ def list_csv(request):
           entry.add_date.strftime('%Y-%m-%d'),
           entry.start.strftime('%Y-%m-%d'),
           entry.end.strftime('%Y-%m-%d'),
-          str(entry.total_hours),
+          str(entry.total_days),
           entry.details,
           profile.city,
           profile.country,
@@ -768,7 +772,7 @@ def list_json(request):
                entry.user.first_name,
                entry.user.last_name,
                entry.add_date.strftime('%Y-%m-%d'),
-               entry.total_hours,
+               entry.total_days,
                entry.start.strftime('%Y-%m-%d'),
                entry.end.strftime('%Y-%m-%d'),
                profile.city,

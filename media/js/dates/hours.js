@@ -13,7 +13,11 @@ var Hours = (function() {
                alert("You can only have 1 birthday buster!");
              }
            } else if (hours > 0) {
-             total += hours;
+             if (hours == 8) {
+               total += 1;
+             } else if (hours) {
+               total += 0.5;
+             }
            }
          });
          counter.text('' + total);

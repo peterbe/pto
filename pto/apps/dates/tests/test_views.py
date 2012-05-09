@@ -197,7 +197,8 @@ class ViewsTest(TestCase, ViewsTestMixin):
         eq_(response.status_code, 200)
 
         # expect an estimate of the total number of hours
-        ok_(str(3 * settings.WORK_DAY) in response.content)
+        # xxx This is an ugly test!
+        ok_('<h5 id="date_discriminator_hours">3</h5>' in response.content)
 
         # you can expect to see every date laid out
         ok_(monday.strftime(settings.DEFAULT_DATE_FORMAT)
@@ -256,7 +257,7 @@ class ViewsTest(TestCase, ViewsTestMixin):
         ok_(entry.details in email.body)
         ok_(entry.start.strftime(settings.DEFAULT_DATE_FORMAT)
             in email.body)
-        ok_('submitted 12 hours of PTO' in email.body)
+        ok_('submitted 1.5 days of PTO' in email.body)
 
         eq_(email.cc, [peter.email])
         ok_('--\n%s' % settings.EMAIL_SIGNATURE in email.body)
@@ -1001,7 +1002,7 @@ class ViewsTest(TestCase, ViewsTestMixin):
         entries = struct['aaData']
         eq_(len(entries), 3)
         totals = [x[4] for x in entries]
-        eq_(sum(totals), 8 + 4 - 8)
+        eq_(sum(totals), 1 + 0.5 - 1)
 
     def test_list_json(self):
         url = reverse('dates.list_json')
@@ -1071,7 +1072,7 @@ class ViewsTest(TestCase, ViewsTestMixin):
             first_name = entry[1]
             last_name = entry[2]
             add_date = parse_date(entry[3])
-            total_hours = entry[4]
+            total_days = entry[4]
             start_date = parse_date(entry[5])
             end_date = parse_date(entry[6])
             city = entry[7]
@@ -1087,7 +1088,7 @@ class ViewsTest(TestCase, ViewsTestMixin):
             eq_(first_name, user.first_name)
             eq_(last_name, user.last_name)
             eq_(add_date, datetime.datetime.utcnow().date())
-            ok_(total_hours in (8, 12))
+            ok_(total_days in (1, 1.5))
             ok_(start_date in (monday, tuesday))
             eq_(end_date, tuesday)
             ok_(details == e1.details or details == '')
@@ -1490,7 +1491,7 @@ class ViewsTest(TestCase, ViewsTestMixin):
         eq_(row[4], fmt(entry2.add_date))
         eq_(row[5], fmt(entry2.start))
         eq_(row[6], fmt(entry2.end))
-        eq_(row[7], str(entry2.total_hours))
+        eq_(row[7], str(entry2.total_days))
         eq_(row[8], entry2.details)
         eq_(row[9], profile.city)
         eq_(row[10], profile.country)
@@ -2132,11 +2133,11 @@ class ViewsTest(TestCase, ViewsTestMixin):
         struct = json.loads(response.content)
         entries = struct['aaData']
 
-        hours_ = [x[4] for x in entries]
+        days = [x[4] for x in entries]
         details = [x[-1] for x in entries]
-        eq_(sum(hours_), 16)
+        eq_(sum(days), 2)
         ok_('*automatic edit*' in details)
-        eq_(hours_, [16, 8, -8])
+        eq_(days, [2, 1, -1])
 
     def test_details_withheld(self):
 

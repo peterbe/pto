@@ -5,8 +5,8 @@
  -->
 #}
 
-{{ user.first_name }} {{ user.last_name }} has submitted {{ entry.total_hours }} hours of PTO starting {{ start_date }}{% if not entry.details %}.{% else %} with the details:
-{{ entry.details }}{% endif %}
+{{ user.first_name }} {{ user.last_name }} has submitted {{ entry.total_days }} days of PTO starting {{ start_date }}{% if not entry.details %}.{% else %} with the details:
+{{ line_indent(entry.details) }}{% endif %}
 
 --
 {{ settings.EMAIL_SIGNATURE }}

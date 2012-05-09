@@ -8,6 +8,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.dispatch import receiver
 from django.db.models.signals import post_save, pre_save
+from django.conf import settings
 
 
 class FollowingIntegrityError(ValueError):
@@ -33,6 +34,13 @@ class Entry(models.Model):
         return '<Entry: %s, %s - %s>' % (self.user,
                                          self.start,
                                          self.end)
+
+    @property
+    def total_days(self):
+        days = self.total_hours / settings.WORK_DAY
+        if self.total_hours % settings.WORK_DAY:
+            days += 0.5
+        return days
 
 
 class Hours(models.Model):

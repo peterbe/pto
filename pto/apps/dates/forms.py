@@ -124,12 +124,12 @@ class HoursForm(BaseForm):
 
             choices = []
             choices.append((settings.WORK_DAY,
-                            'Full day (%sh)' % settings.WORK_DAY))
+                            'Full day'))
             choices.append((settings.WORK_DAY / 2,
-                            'Half day (%sh)' % (settings.WORK_DAY / 2)))
+                            'Half day'))
             choices.append((-1, 'Birthday'))
             if hours_:
-                choices.append((0, '0 hrs'))
+                choices.append((0, 'Cancel (0 hours)'))
 
             self.fields[field_name] = forms.fields.ChoiceField(
               tuple(choices),
