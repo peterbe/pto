@@ -7,6 +7,7 @@
 #}
 
 {% block extra_site_css %}
+{{ css('jquery_ui') }}
 {{ css('dates.home') }}
 {% endblock %}
 
@@ -30,6 +31,11 @@
 <div id="calendar">
 
 <p><a name="calendarurl"></a>
+
+<div id="dialog-edit" title="Want to edit this?">
+<p>You can't edit the event but you can
+<a href="">Add a new one on top?</a></p>
+</div>
 
 <a href="{{ calendar_url }}"><img src="{{ media('img/calendar-icon.png') }}" alt="Calendar"></a>
 To add this to an external calendar (e.g. iCal or Outlook) you need this URL:
@@ -141,5 +147,6 @@ this year.
 <script>
 var CALENDAR_FIRST_DAY = {{ first_day }}; // 0=Sunday, 1=Monday
 </script>
+{{ js('jquery_ui') }}
 {{ js('dates.home') }}
 {% endblock %}

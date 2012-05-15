@@ -48,6 +48,12 @@ $(function() {
       url = '/notify/?start=' + start_ts + '&end=' + end_ts;
       location.href = url;
       //calendar.fullCalendar('unselect');
+    },
+    eventClick: function(event) {
+      if (!event.mine) return;
+      $('#dialog-edit a')
+        .attr('href', '/notify/?start=' + event.start.getTime() + '&end=' + event.end.getTime());
+      $('#dialog-edit').dialog('open');
     }
   });
 
@@ -62,5 +68,10 @@ $(function() {
     .html($('#pto_taken h2').text() + ' &darr;')
       .addClass('anchor')
         .prependTo($('#content'));
+
+  $('#dialog-edit').dialog({
+     autoOpen: false
+  });
+
 
 });

@@ -73,3 +73,8 @@
 .small-link {
   font-size:.8em;
 }
+
+#dialog-edit a {
+  font-weight: bold;
+  text-decoration: underline;
+}

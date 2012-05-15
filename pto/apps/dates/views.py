@@ -319,6 +319,7 @@ def calendar_events(request):
           'start': entry.start.strftime('%Y-%m-%d'),
           'end': entry.end.strftime('%Y-%m-%d'),
           'color': colors[entry.user.pk],
+          'mine': entry.user.pk == request.user.pk,
         })
 
     colors = [dict(name=x, color=y) for (pk, x, y) in colors_fullnames

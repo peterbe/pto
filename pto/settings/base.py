@@ -17,7 +17,7 @@ MINIFY_BUNDLES = {
             'css/style.css',
         ),
         'jquery_ui': (
-            'css/libs/jquery_ui/redmond/jquery-ui-1.8.19.datepicker.autocomplete.css',
+            'css/libs/jquery_ui/redmond/jquery-ui-1.8.20.datepicker.autocomplete.dialog.css',
         ),
         'libs/jquery_mobile': (
             'css/libs/jquery.mobile-1.1.0.min.css',
@@ -71,7 +71,7 @@ MINIFY_BUNDLES = {
             'js/dates/emails_sent.js',
         ),
         'jquery_ui': (
-            'js/libs/jquery-ui-1.8.19.datepicker.autocomplete.min.js',
+            'js/libs/jquery-ui-1.8.20.datepicker.autocomplete.dialog.min.js',
         ),
         'dates.notify': (
             'js/dates/notify.js',
