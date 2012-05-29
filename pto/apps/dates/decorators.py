@@ -4,12 +4,8 @@
 
 import functools
 import json
-import logging
 
 from django import http
-
-
-log = logging.getLogger('pto')
 
 
 def json_view(f):

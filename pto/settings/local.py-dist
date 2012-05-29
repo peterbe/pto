@@ -2,7 +2,7 @@
 # instances and False on stage/prod.
 #DEV = False
 
-#from . import base
+from . import base
 #INSTALLED_APPS = base.INSTALLED_APPS + ('debug_toolbar',)
 #MIDDLEWARE_CLASSES = base.MIDDLEWARE_CLASSES + ('debug_toolbar.middleware.DebugToolbarMiddleware',)
 #MIDDLEWARE_CLASSES = tuple(MIDDLEWARE_CLASSES)
@@ -34,6 +34,12 @@ DATABASES = {
 #        'LOCATION': 'unique-snowflake'
 #    }
 #}
+
+HMAC_KEYS = {
+    #'2012-06-06': 'some secret',
+}
+from django_sha2 import get_password_hashers
+PASSWORD_HASHERS = get_password_hashers(base.BASE_PASSWORD_HASHERS, HMAC_KEYS)
 
 ## Good things for development
 #DEBUG = TEMPLATE_DEBUG = DEBUG_PROPAGATE_EXCEPTIONS = True
