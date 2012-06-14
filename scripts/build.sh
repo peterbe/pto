@@ -33,6 +33,20 @@ DATABASES = {
     },
 }
 SECRET_KEY = 'somethingaslongasitsnotblank'
+
+HMAC_KEYS = {
+    #'2012-06-06': 'some secret',
+}
+from django_sha2 import get_password_hashers
+hashers = (#'django_sha2.hashers.BcryptHMACCombinedPasswordVerifier',
+ #'django_sha2.hashers.SHA512PasswordHasher',
+ #'django_sha2.hashers.SHA256PasswordHasher',
+ 'django.contrib.auth.hashers.SHA1PasswordHasher',
+ 'django.contrib.auth.hashers.MD5PasswordHasher',
+ 'django.contrib.auth.hashers.UnsaltedMD5PasswordHasher'
+)
+PASSWORD_HASHERS = get_password_hashers(hashers, HMAC_KEYS)
+
 " > pto/settings/local.py
 
 ## install dependencies

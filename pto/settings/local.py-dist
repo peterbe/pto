@@ -36,7 +36,7 @@ DATABASES = {
 #}
 
 HMAC_KEYS = {
-    #'2012-06-06': 'some secret',
+    '2012-06-14': 'some secrety',
 }
 from django_sha2 import get_password_hashers
 PASSWORD_HASHERS = get_password_hashers(base.BASE_PASSWORD_HASHERS, HMAC_KEYS)
