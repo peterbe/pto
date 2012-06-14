@@ -35,7 +35,7 @@ DATABASES = {
 SECRET_KEY = 'somethingaslongasitsnotblank'
 
 HMAC_KEYS = {
-    #'2012-06-06': 'some secret',
+    '2012-06-06': 'anything',
 }
 from django_sha2 import get_password_hashers
 hashers = (#'django_sha2.hashers.BcryptHMACCombinedPasswordVerifier',
