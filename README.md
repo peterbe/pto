@@ -9,6 +9,14 @@ Install
 to be continued...
 
 
+Running tests
+=============
+
+With coverage:
+
+    ./manage.py test --with-coverage --cover-html --cover-package=pto
+ 
+ 
 
 License
 -------

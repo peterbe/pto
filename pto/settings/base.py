@@ -2,15 +2,6 @@
 # repo. If you need to override a setting locally, use settings_local.py
 
 from funfactory.settings_base import *
-import funfactory.settings_base
-print funfactory.settings_base.__file__
-
-# Name of the top-level module where you put all your apps.
-# If you did not install Playdoh with the funfactory installer script
-# you may need to edit this value. See the docs about installing from a
-# clone.
-PROJECT_MODULE = 'pto'
-
 
 ## Internationalization.
 
@@ -35,8 +26,7 @@ USE_L10N = True
 SECRET_KEY = ''  # override this in local.py
 
 TEMPLATE_CONTEXT_PROCESSORS += (
-    'apps.dates.context_processors.global_settings',
-    'jingo_minify.helpers.build_ids',
+    'pto.apps.dates.context_processors.global_settings',
 )
 
 
@@ -53,10 +43,7 @@ MIDDLEWARE_CLASSES.append('mobility.middleware.DetectMobileMiddleware')
 MIDDLEWARE_CLASSES.append('mobility.middleware.XMobileMiddleware')
 MIDDLEWARE_CLASSES = tuple(MIDDLEWARE_CLASSES)
 
-ROOT_URLCONF = '%s.urls' % PROJECT_MODULE
-
-assert 'compressor' in INSTALLED_APPS
-assert 'jingo_minify' not in INSTALLED_APPS
+ROOT_URLCONF = 'pto.urls'
 
 INSTALLED_APPS += (
     'mobility',
@@ -67,17 +54,14 @@ INSTALLED_APPS += (
     # 'django.contrib.admindocs',
 
     # apps/
-    'base',
-    'apps.dates',
-    'apps.users',
-    'apps.legacy',
-    'apps.mobile',
-    'apps.autocomplete',
+    'pto.base',
+    'pto.apps.dates',
+    'pto.apps.users',
+    'pto.apps.legacy',
+    'pto.apps.mobile',
+    'pto.apps.autocomplete',
 )
 
-
-# Path to Java. Used for compress_assets.
-JAVA_BIN = '/usr/bin/java'
 
 ## Auth
 PWD_ALGORITHM = 'bcrypt'  # fast but insecure alternative 'sha512'
@@ -149,8 +133,8 @@ try:
     import ldap
 
     AUTHENTICATION_BACKENDS = (
-       'apps.users.email_auth_backend.EmailOrUsernameModelBackend',
-       'apps.users.auth.backends.MozillaLDAPBackend',
+       'pto.apps.users.email_auth_backend.EmailOrUsernameModelBackend',
+       'pto.apps.users.auth.backends.MozillaLDAPBackend',
        'django.contrib.auth.backends.ModelBackend',
     )
 
@@ -179,6 +163,6 @@ try:
 
 except ImportError:
     AUTHENTICATION_BACKENDS = (
-       'users.email_auth_backend.EmailOrUsernameModelBackend',
+       'pto.apps.users.email_auth_backend.EmailOrUsernameModelBackend',
        'django.contrib.auth.backends.ModelBackend',
     )

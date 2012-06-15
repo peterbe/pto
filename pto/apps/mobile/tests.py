@@ -10,8 +10,8 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.utils import simplejson as json
-from apps.dates.tests.test_views import ViewsTestMixin
-from apps.dates.models import Entry, Hours
+from pto.apps.dates.tests.test_views import ViewsTestMixin
+from pto.apps.dates.models import Entry, Hours
 from test_utils import TestCase
 
 
@@ -177,7 +177,7 @@ class MobileViewsTest(TestCase, ViewsTestMixin):
 
         response = self.client.get(url)
         struct = json.loads(response.content)
-        from apps.dates.views import get_taken_info
+        from pto.apps.dates.views import get_taken_info
         eq_(struct, get_taken_info(user))
 
     def test_notify(self):
@@ -415,7 +415,7 @@ class MobileViewsTest(TestCase, ViewsTestMixin):
         struct = json.loads(response.content)
         ok_(struct['ok'])
 
-        from apps.users.models import UserProfile
+        from pto.apps.users.models import UserProfile
         profile = UserProfile.objects.get(user__username='peter')
         eq_(profile.country, 'GB')
         eq_(profile.city, 'London')
@@ -446,7 +446,7 @@ class MobileViewsTest(TestCase, ViewsTestMixin):
         struct = json.loads(response.content)
         ok_(struct['ok'])
 
-        from apps.users.models import UserProfile
+        from pto.apps.users.models import UserProfile
         profile = UserProfile.objects.get(user__username='peter')
         eq_(profile.country, 'GB')
         eq_(profile.city, 'London')

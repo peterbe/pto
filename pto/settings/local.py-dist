@@ -10,6 +10,8 @@ from . import base
 
 #TIME_ZONE = 'Europe/London'
 
+SECRET_KEY = Enter a new random secret key
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',

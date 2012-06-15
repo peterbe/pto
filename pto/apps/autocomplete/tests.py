@@ -7,7 +7,7 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
 from django.utils import simplejson as json
-from apps.users.utils.ldap_mock import MockLDAP
+from pto.apps.users.utils.ldap_mock import MockLDAP
 from mock import Mock
 from nose.tools import eq_, ok_
 from test_utils import TestCase

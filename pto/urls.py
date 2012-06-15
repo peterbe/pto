@@ -8,13 +8,13 @@ admin.autodiscover()
 from funfactory.monkeypatches import patch
 patch()
 
-handler500 = 'apps.dates.views.handler500'
+handler500 = 'pto.apps.dates.views.handler500'
 
 urlpatterns = patterns('',
-    (r'^users/', include('apps.users.urls')),
-    (r'^mobile/', include('apps.mobile.urls')),
-    (r'^autocomplete/', include('apps.autocomplete.urls')),
-    (r'', include('apps.dates.urls')),
+    (r'^users/', include('pto.apps.users.urls')),
+    (r'^mobile/', include('pto.apps.mobile.urls')),
+    (r'^autocomplete/', include('pto.apps.autocomplete.urls')),
+    (r'', include('pto.apps.dates.urls')),
 
     # Uncomment the admin/doc line below to enable admin documentation:
     # (r'^admin/doc/', include('django.contrib.admindocs.urls')),

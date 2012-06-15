@@ -4,7 +4,7 @@
 
 import datetime
 from django.contrib.auth.models import User
-from apps.dates.models import (
+from pto.apps.dates.models import (
   Entry,
   Hours,
   BlacklistedUser,

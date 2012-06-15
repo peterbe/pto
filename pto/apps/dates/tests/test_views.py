@@ -15,7 +15,7 @@ from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
 from django.utils import simplejson as json
 from django.core import mail
-from apps.dates.models import (
+from pto.apps.dates.models import (
   Entry,
   Hours,
   BlacklistedUser,
@@ -26,8 +26,8 @@ from nose.tools import eq_, ok_
 from test_utils import TestCase
 from mock import Mock
 import ldap
-from apps.users.utils import ldap_lookup
-from apps.users.utils.ldap_mock import MockLDAP
+from pto.apps.users.utils import ldap_lookup
+from pto.apps.users.utils.ldap_mock import MockLDAP
 
 
 def unicode_csv_reader(unicode_csv_data,
@@ -847,7 +847,7 @@ class ViewsTest(TestCase, ViewsTestMixin):
         email = mail.outbox[-1]
 
     def test_get_minions(self):
-        from apps.dates.views import get_minions
+        from pto.apps.dates.views import get_minions
         gary = User.objects.create_user(
           'gary', 'gary@mozilla.com'
         )
@@ -1534,7 +1534,7 @@ class ViewsTest(TestCase, ViewsTestMixin):
 
     def test_get_taken_info(self):
         user = User.objects.create(username='bob')
-        from apps.dates.views import get_taken_info
+        from pto.apps.dates.views import get_taken_info
 
         def function():
             return get_taken_info(user)
@@ -2064,7 +2064,7 @@ class ViewsTest(TestCase, ViewsTestMixin):
         # visit the home page and expect there to be a flash message there
         response = self.client.get(reverse('dates.home'))
         ok_('class="flash"' in response.content)
-        from apps.dates.views import make_entry_title
+        from pto.apps.dates.views import make_entry_title
         ok_(make_entry_title(entry, entry.user)[:10] in response.content)
 
         # do it again

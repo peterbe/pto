@@ -9,7 +9,7 @@ from django.contrib.auth.models import User
 from django.core.validators import validate_email
 from django import forms
 from .models import Hours, Entry
-from apps.users.models import UserProfile
+from pto.apps.users.models import UserProfile
 import utils
 
 

@@ -24,5 +24,4 @@ except ImportError:
 manage.setup_environ(__file__, more_pythonic=True)
 
 if __name__ == "__main__":
-    sys.path.append(os.path.abspath('pto'))
     manage.main()
