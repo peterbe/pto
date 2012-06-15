@@ -80,7 +80,7 @@ except ImportError:
 
 #  Original author: Evan Martin of Danga Interactive
 __author__    = "Sean Reifschneider <jafo-memcached@tummy.com>"
-__version__ = "1.47"
+__version__ = "1.48"
 __copyright__ = "Copyright (C) 2003 Danga Interactive"
 #  http://en.wikipedia.org/wiki/Python_Software_Foundation_License
 __license__   = "Python Software Foundation License"
@@ -91,8 +91,14 @@ SERVER_MAX_KEY_LENGTH = 250
 #  after importing this module.
 SERVER_MAX_VALUE_LENGTH = 1024*1024
 
+
 class _Error(Exception):
     pass
+
+
+class _ConnectionDeadError(Exception):
+    pass
+
 
 try:
     # Only exists in Python 2.4+
@@ -101,6 +107,10 @@ except ImportError:
     # TODO:  add the pure-python local implementation
     class local(object):
         pass
+
+
+_DEAD_RETRY = 30  # number of seconds before retrying a dead server.
+_SOCKET_TIMEOUT = 3  #  number of seconds before sockets timeout.
 
 
 class Client(local):
@@ -147,8 +157,11 @@ class Client(local):
 
     def __init__(self, servers, debug=0, pickleProtocol=0,
                  pickler=pickle.Pickler, unpickler=pickle.Unpickler,
-                 pload=None, pid=None, server_max_key_length=SERVER_MAX_KEY_LENGTH,
-                 server_max_value_length=SERVER_MAX_VALUE_LENGTH):
+                 pload=None, pid=None,
+                 server_max_key_length=SERVER_MAX_KEY_LENGTH,
+                 server_max_value_length=SERVER_MAX_VALUE_LENGTH,
+                 dead_retry=_DEAD_RETRY, socket_timeout=_SOCKET_TIMEOUT,
+                 cache_cas = False):
         """
         Create a new Client object with the given list of servers.
 
@@ -162,12 +175,27 @@ class Client(local):
         Useful for cPickle since subclassing isn't allowed.
         @param pid: optional persistent_id function to call on pickle storing.
         Useful for cPickle since subclassing isn't allowed.
+        @param dead_retry: number of seconds before retrying a blacklisted
+        server. Default to 30 s.
+        @param socket_timeout: timeout in seconds for all calls to a server. Defaults
+        to 3 seconds.
+        @param cache_cas: (default False) If true, cas operations will be
+        cached.  WARNING: This cache is not expired internally, if you have
+        a long-running process you will need to expire it manually via
+        "client.reset_cas(), or the cache can grow unlimited.
+        @param server_max_key_length: (default SERVER_MAX_KEY_LENGTH)
+        Data that is larger than this will not be sent to the server.
+        @param server_max_value_length: (default SERVER_MAX_VALUE_LENGTH)
+        Data that is larger than this will not be sent to the server.
         """
         local.__init__(self)
         self.debug = debug
+        self.dead_retry = dead_retry
+        self.socket_timeout = socket_timeout
         self.set_servers(servers)
         self.stats = {}
-        self.cas_ids = {}
+        self.cache_cas = cache_cas
+        self.reset_cas()
 
         # Allow users to modify pickling/unpickling behavior
         self.pickleProtocol = pickleProtocol
@@ -186,6 +214,16 @@ class Client(local):
         except TypeError:
             self.picklerIsKeyword = False
 
+    def reset_cas(self):
+        """
+        Reset the cas cache.  This is only used if the Client() object
+        was created with "cache_cas=True".  If used, this cache does not
+        expire internally, so it can grow unbounded if you do not clear it
+        yourself.
+        """
+        self.cas_ids = {}
+
+
     def set_servers(self, servers):
         """
         Set the pool of servers used by this client.
@@ -196,7 +234,9 @@ class Client(local):
             2. Tuples of the form C{("host:port", weight)}, where C{weight} is
             an integer weight value.
         """
-        self.servers = [_Host(s, self.debug) for s in servers]
+        self.servers = [_Host(s, self.debug, dead_retry=self.dead_retry,
+                              socket_timeout=self.socket_timeout)
+                        for s in servers]
         self._init_buckets()
 
     def get_stats(self, stat_args = None):
@@ -375,7 +415,7 @@ class Client(local):
 
         @return: Nonzero on success.
         @param time: number of seconds any subsequent set / update commands
-        should fail. Defaults to 0 for no delay.
+        should fail. Defaults to None for no delay.
         @rtype: int
         '''
         self.check_key(key)
@@ -383,7 +423,7 @@ class Client(local):
         if not server:
             return 0
         self._statlog('delete')
-        if time != None:
+        if time != None and time != 0:
             cmd = "delete %s %d" % (key, time)
         else:
             cmd = "delete %s" % key
@@ -724,7 +764,7 @@ class Client(local):
 
         #  silently do not store if value length exceeds maximum
         if self.server_max_value_length != 0 and \
-           len(val) >= self.server_max_value_length: return(0)
+           len(val) > self.server_max_value_length: return(0)
 
         return (flags, len(val), val)
 
@@ -734,28 +774,40 @@ class Client(local):
         if not server:
             return 0
 
-        self._statlog(cmd)
+        def _unsafe_set():
+            self._statlog(cmd)
 
-        store_info = self._val_to_store_info(val, min_compress_len)
-        if not store_info: return(0)
+            store_info = self._val_to_store_info(val, min_compress_len)
+            if not store_info: return(0)
 
-        if cmd == 'cas':
-            if key not in self.cas_ids:
-                return self._set('set', key, val, time, min_compress_len)
-            fullcmd = "%s %s %d %d %d %d\r\n%s" % (
-                    cmd, key, store_info[0], time, store_info[1],
-                    self.cas_ids[key], store_info[2])
-        else:
-            fullcmd = "%s %s %d %d %d\r\n%s" % (
-                    cmd, key, store_info[0], time, store_info[1], store_info[2])
+            if cmd == 'cas':
+                if key not in self.cas_ids:
+                    return self._set('set', key, val, time, min_compress_len)
+                fullcmd = "%s %s %d %d %d %d\r\n%s" % (
+                        cmd, key, store_info[0], time, store_info[1],
+                        self.cas_ids[key], store_info[2])
+            else:
+                fullcmd = "%s %s %d %d %d\r\n%s" % (
+                        cmd, key, store_info[0], time, store_info[1], store_info[2])
+
+            try:
+                server.send_cmd(fullcmd)
+                return(server.expect("STORED") == "STORED")
+            except socket.error, msg:
+                if isinstance(msg, tuple): msg = msg[1]
+                server.mark_dead(msg)
+            return 0
 
         try:
-            server.send_cmd(fullcmd)
-            return(server.expect("STORED") == "STORED")
-        except socket.error, msg:
-            if isinstance(msg, tuple): msg = msg[1]
-            server.mark_dead(msg)
-        return 0
+            return _unsafe_set()
+        except _ConnectionDeadError:
+            # retry once
+            try:
+                server._get_socket()
+                return _unsafe_set()
+            except (_ConnectionDeadError, socket.error), msg:
+                server.mark_dead(msg)
+            return 0
 
     def _get(self, cmd, key):
         self.check_key(key)
@@ -763,27 +815,44 @@ class Client(local):
         if not server:
             return None
 
-        self._statlog(cmd)
+        def _unsafe_get():
+            self._statlog(cmd)
+
+            try:
+                server.send_cmd("%s %s" % (cmd, key))
+                rkey = flags = rlen = cas_id = None
+
+                if cmd == 'gets':
+                    rkey, flags, rlen, cas_id, = self._expect_cas_value(server)
+                    if rkey and self.cache_cas:
+                        self.cas_ids[rkey] = cas_id
+                else:
+                    rkey, flags, rlen, = self._expectvalue(server)
+
+                if not rkey:
+                    return None
+                try:
+                    value = self._recv_value(server, flags, rlen)
+                finally:
+                    server.expect("END")
+            except (_Error, socket.error), msg:
+                if isinstance(msg, tuple): msg = msg[1]
+                server.mark_dead(msg)
+                return None
+
+            return value
 
         try:
-            server.send_cmd("%s %s" % (cmd, key))
-            rkey = flags = rlen = cas_id = None
-            if cmd == 'gets':
-                rkey, flags, rlen, cas_id, = self._expect_cas_value(server)
-                if rkey:
-                    self.cas_ids[rkey] = cas_id
-            else:
-                rkey, flags, rlen, = self._expectvalue(server)
-
-            if not rkey:
+            return _unsafe_get()
+        except _ConnectionDeadError:
+            # retry once
+            try:
+                if server.connect():
+                    return _unsafe_get()
                 return None
-            value = self._recv_value(server, flags, rlen)
-            server.expect("END")
-        except (_Error, socket.error), msg:
-            if isinstance(msg, tuple): msg = msg[1]
-            server.mark_dead(msg)
+            except (_ConnectionDeadError, socket.error), msg:
+                server.mark_dead(msg)
             return None
-        return value
 
     def get(self, key):
         '''Retrieves a key from the memcache.
@@ -922,7 +991,7 @@ class Client(local):
                 val = unpickler.load()
             except Exception, e:
                 self.debuglog('Pickle error: %s\n' % e)
-                val = None
+                return None
         else:
             self.debuglog("unknown flags on get: %x\n" % flags)
 
@@ -959,10 +1028,11 @@ class Client(local):
 
 
 class _Host(object):
-    _DEAD_RETRY = 30  # number of seconds before retrying a dead server.
-    _SOCKET_TIMEOUT = 3  #  number of seconds before sockets timeout.
 
-    def __init__(self, host, debug=0):
+    def __init__(self, host, debug=0, dead_retry=_DEAD_RETRY,
+                 socket_timeout=_SOCKET_TIMEOUT):
+        self.dead_retry = dead_retry
+        self.socket_timeout = socket_timeout
         self.debug = debug
         if isinstance(host, tuple):
             host, self.weight = host
@@ -1010,7 +1080,7 @@ class _Host(object):
 
     def mark_dead(self, reason):
         self.debuglog("MemCache: %s: %s.  Marking dead." % (self, reason))
-        self.deaduntil = time.time() + _Host._DEAD_RETRY
+        self.deaduntil = time.time() + self.dead_retry
         self.close_socket()
 
     def _get_socket(self):
@@ -1019,7 +1089,7 @@ class _Host(object):
         if self.socket:
             return self.socket
         s = socket.socket(self.family, socket.SOCK_STREAM)
-        if hasattr(s, 'settimeout'): s.settimeout(self._SOCKET_TIMEOUT)
+        if hasattr(s, 'settimeout'): s.settimeout(self.socket_timeout)
         try:
             s.connect(self.address)
         except socket.timeout, msg:
@@ -1054,10 +1124,10 @@ class _Host(object):
                 break
             data = recv(4096)
             if not data:
-                self.mark_dead('Connection closed while reading from %s'
-                        % repr(self))
-                self.buffer = ''
-                return ''
+                # connection close, let's kill it and raise
+                self.close_socket()
+                raise _ConnectionDeadError()
+
             buf += data
         self.buffer = buf[index+2:]
         return buf[:index]
@@ -1117,6 +1187,7 @@ if __name__ == "__main__":
                 return "%s (%s)" % (val, type(val))
             return "%s" % val
         def test_setget(key, val):
+            global failures
             print "Testing set/get {'%s': %s} ..." % (to_s(key), to_s(val)),
             mc.set(key, val)
             newval = mc.get(key)
@@ -1153,6 +1224,19 @@ if __name__ == "__main__":
                 print "FAIL"; failures = failures + 1
         print "Testing get_multi ...",
         print mc.get_multi(["a_string", "an_integer"])
+
+        #  removed from the protocol
+        #if test_setget("timed_delete", 'foo'):
+        #    print "Testing timed delete ...",
+        #    if mc.delete("timed_delete", 1):
+        #        print "OK"
+        #    else:
+        #        print "FAIL"; failures = failures + 1
+        #    print "Checking results of timed delete ..."
+        #    if mc.get("timed_delete") == None:
+        #        print "OK"
+        #    else:
+        #        print "FAIL"; failures = failures + 1
 
         print "Testing get(unknown value) ...",
         print to_s(mc.get("unknown_value"))
@@ -1195,7 +1279,13 @@ if __name__ == "__main__":
 
         print "Testing using insanely long key...",
         try:
-            x = mc.set('a'*SERVER_MAX_KEY_LENGTH + 'aaaa', 1)
+            x = mc.set('a'*SERVER_MAX_KEY_LENGTH, 1)
+        except Client.MemcachedKeyLengthError, msg:
+            print "FAIL"; failures = failures + 1
+        else:
+            print "OK"
+        try:
+            x = mc.set('a'*SERVER_MAX_KEY_LENGTH + 'a', 1)
         except Client.MemcachedKeyLengthError, msg:
             print "OK"
         else:

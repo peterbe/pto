@@ -46,6 +46,7 @@ hashers = (#'django_sha2.hashers.BcryptHMACCombinedPasswordVerifier',
  'django.contrib.auth.hashers.UnsaltedMD5PasswordHasher'
 )
 PASSWORD_HASHERS = get_password_hashers(hashers, HMAC_KEYS)
+AUTH_LDAP_BIND_PASSWORD = 'Anything'
 
 " > pto/settings/local.py
 
