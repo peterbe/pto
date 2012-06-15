@@ -10,7 +10,7 @@ from . import base
 
 #TIME_ZONE = 'Europe/London'
 
-SECRET_KEY = Enter a new random secret key
+SECRET_KEY = '' # Enter a new random secret key
 
 DATABASES = {
     'default': {
@@ -50,8 +50,8 @@ PASSWORD_HASHERS = get_password_hashers(base.BASE_PASSWORD_HASHERS, HMAC_KEYS)
 #PWD_ALGORITHM = 'sha521'
 #SESSION_COOKIE_SECURE = False  # if you run http://localhost:8000
 
-AUTH_LDAP_BIND_PASSWORD = Must be entered
-AUTH_LDAP_BIND_DN = Must be entered
+AUTH_LDAP_BIND_PASSWORD = 'Must be entered'
+AUTH_LDAP_BIND_DN = 'Must be entered'
 
 # If connecting via VPN from outside the Mozilla firewall
 #AUTH_LDAP_START_TLS = False
