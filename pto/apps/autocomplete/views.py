@@ -4,9 +4,9 @@
 
 import logging
 from django import http
-from apps.dates.decorators import json_view
-from apps.users.models import UserProfile, User
-from apps.users.utils import ldap_lookup
+from pto.apps.dates.decorators import json_view
+from pto.apps.users.models import UserProfile, User
+from pto.apps.users.utils import ldap_lookup
 
 
 @json_view

@@ -11,10 +11,10 @@ from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 from django.shortcuts import redirect, get_object_or_404, render
 from django.contrib.auth import login as auth_login, logout as auth_logout
-from apps.dates.models import Entry, Hours
-from apps.dates.decorators import json_view
-from apps.dates.utils import get_weekday_dates
-from apps.users.forms import ProfileForm
+from pto.apps.dates.models import Entry, Hours
+from pto.apps.dates.decorators import json_view
+from pto.apps.dates.utils import get_weekday_dates
+from pto.apps.users.forms import ProfileForm
 
 
 MOBILE_DATE_FORMAT = '%Y-%m-%d'
@@ -40,8 +40,8 @@ def appcache(request):
 def right_now(request):
     if not request.user.is_authenticated():  # XXX improve this
         return {'error': 'Not logged in'}
-    from apps.dates.views import get_right_nows, get_upcomings
-    from apps.dates.helpers import format_date
+    from pto.apps.dates.views import get_right_nows, get_upcomings
+    from pto.apps.dates.helpers import format_date
     right_nows, right_now_users = get_right_nows()
     upcomings, upcoming_users = get_upcomings(14)
 
@@ -94,7 +94,7 @@ def right_now(request):
 def taken(request):
     if not request.user.is_authenticated():  # XXX improve this
         return {'error': 'Not logged in'}
-    from apps.dates.views import get_taken_info
+    from pto.apps.dates.views import get_taken_info
     return get_taken_info(request.user)
 
 
@@ -105,8 +105,8 @@ def taken(request):
 def notify(request):
     if not request.user.is_authenticated():  # XXX improve this
         return {'error': 'Not logged in'}
-    from apps.dates.forms import AddForm
-    from apps.dates.views import clean_unfinished_entries
+    from pto.apps.dates.forms import AddForm
+    from pto.apps.dates.views import clean_unfinished_entries
     form = AddForm(request.user, data=request.POST)
     if form.is_valid():
         start = form.cleaned_data['start']
@@ -143,8 +143,8 @@ def save_hours(request):
     if entry.user != request.user:
         return http.HttpResponseForbidden("Not your entry")
 
-    from apps.dates.forms import HoursForm
-    from apps.dates.views import save_entry_hours, send_email_notification
+    from pto.apps.dates.forms import HoursForm
+    from pto.apps.dates.views import save_entry_hours, send_email_notification
     form = HoursForm(entry, data=request.POST)
     if form.is_valid():
         total_hours, is_edit = save_entry_hours(entry, form)
@@ -199,7 +199,7 @@ def settings_json(request):
       'username': request.user.username,
       'email': request.user.email,
     }
-    from apps.dates.helpers import full_name_form
+    from pto.apps.dates.helpers import full_name_form
     data['full_name'] = full_name_form(None, request.user)
     profile = request.user.get_profile()
     if profile.start_date:
@@ -244,7 +244,7 @@ def login(request):
     if request.method == 'GET':
         return {'logged_in': request.user.is_authenticated()}
 
-    from apps.users.forms import AuthenticationForm
+    from pto.apps.users.forms import AuthenticationForm
     form = AuthenticationForm(data=request.POST)
     if form.is_valid():
         auth_login(request, form.get_user())

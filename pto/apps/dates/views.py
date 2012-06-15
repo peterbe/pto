@@ -26,8 +26,8 @@ from django.core.cache import cache
 from django.db.models import Min, Count
 import vobject
 from .models import Entry, Hours, BlacklistedUser, FollowingUser, UserKey
-from apps.users.models import UserProfile, User
-from apps.users.utils import ldap_lookup
+from pto.apps.users.models import UserProfile, User
+from pto.apps.users.utils import ldap_lookup
 from .utils import parse_datetime, DatetimeParseError
 from .utils.countrytotals import UnrecognizedCountryError, get_country_totals
 import utils

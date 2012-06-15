@@ -14,10 +14,10 @@ from test_utils import TestCase
 from mock import Mock
 
 import ldap
-from apps.users.auth.backends import MozillaLDAPBackend
-from apps.users.utils.ldap_mock import MockLDAP
-from apps.users.models import UserProfile
-from apps.users.utils import ldap_lookup
+from pto.apps.users.auth.backends import MozillaLDAPBackend
+from pto.apps.users.utils.ldap_mock import MockLDAP
+from pto.apps.users.models import UserProfile
+from pto.apps.users.utils import ldap_lookup
 
 RaiseInvalidCredentials = object()
 

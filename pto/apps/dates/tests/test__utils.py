@@ -10,7 +10,7 @@ from nose.tools import eq_, ok_
 class TestUtils(TestCase):
 
     def test_get_weekday_dates(self):
-        from apps.dates.utils import get_weekday_dates
+        from pto.apps.dates.utils import get_weekday_dates
         d1 = datetime.date(2018, 1, 1)  # a Monday
         d2 = datetime.date(2018, 1, 9)  # next Tuesday
         dates = list(get_weekday_dates(d1, d2))
@@ -23,7 +23,7 @@ class TestUtils(TestCase):
         eq_(dates[6].strftime('%A'), 'Tuesday')
 
     def test_parse_datetime(self):
-        from apps.dates.utils import parse_datetime, DatetimeParseError
+        from pto.apps.dates.utils import parse_datetime, DatetimeParseError
         eq_(parse_datetime('1285041600000').year, 2010)
         eq_(parse_datetime('1283140800').year, 2010)
         eq_(parse_datetime('1286744467.0').year, 2010)
