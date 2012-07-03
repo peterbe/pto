@@ -9,9 +9,9 @@ from django.utils import simplejson as json
 from django.core.management.base import NoArgsCommand
 from django.contrib.auth.models import User
 from django.db import transaction
-from legacy.models import Pto
-from dates.models import Entry, Hours
-from dates.utils import parse_datetime, get_weekday_dates
+from pto.apps.legacy.models import Pto
+from pto.apps.dates.models import Entry, Hours
+from pto.apps.dates.utils import parse_datetime, get_weekday_dates
 
 class Command(NoArgsCommand):
     help = """
