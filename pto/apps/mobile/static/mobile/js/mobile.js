@@ -102,6 +102,8 @@ var Data = (function() {
            .html(html)
              .appendTo($('.content', container));
 
+         /*
+          * Commented out. See note in pto/apps/dates/templates/dates/home.html
          if (response.country_totals) {
            html = 'Out of a total of <strong>' + response.country_totals.holidays;
            html += ' holiday</strong> and <strong>' + response.country_totals.sickdays;
@@ -117,6 +119,7 @@ var Data = (function() {
            .addClass('info')
            .html(html)
              .appendTo($('.content', container));
+          */
 
        });
     },  // end taken
