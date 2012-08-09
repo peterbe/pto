@@ -154,6 +154,7 @@ def save_hours(request):
         success, email_addresses = send_email_notification(
           entry,
           '',  # extra users to send to
+          request,
           is_edit=is_edit,
         )
         return {'ok': True}

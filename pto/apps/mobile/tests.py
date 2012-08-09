@@ -10,12 +10,12 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.utils import simplejson as json
-from pto.apps.dates.tests.test_views import ViewsTestMixin
+from pto.apps.dates.tests.base import ExtraTestCaseMixin
 from pto.apps.dates.models import Entry, Hours
 from test_utils import TestCase
 
 
-class MobileViewsTest(TestCase, ViewsTestMixin):
+class MobileViewsTest(TestCase, ExtraTestCaseMixin):
 
     def xx_login(self):
         peter = User.objects.create(
