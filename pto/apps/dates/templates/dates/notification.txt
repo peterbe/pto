@@ -5,8 +5,16 @@
  -->
 #}
 
-{{ user.first_name }} {{ user.last_name }} has submitted {{ entry.total_days }} days of vacation starting {{ start_date }}{% if not entry.details %}.{% else %} with the details:
+{{ user.first_name }} {{ user.last_name }} has submitted {{ entry.total_days }} {% if entry.total_days == 1 %}day{% else %}days{% endif %} of vacation starting {{ start_date }}{% if not entry.details %}.{% else %} with the details:
+
 {{ line_indent(entry.details) }}{% endif %}
+
+
+If you want to unsubscribe from email notifications either blacklist[1]
+this user or change your settings[2].
+
+[1] {{ following_url }}
+[2] {{ settings_url }}
 
 --
 {{ settings.EMAIL_SIGNATURE }}

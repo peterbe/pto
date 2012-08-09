@@ -119,10 +119,10 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
         eq_(path, settings.LOGIN_URL)
 
         peter = User.objects.create(
-          username='peter',
-          email='pbengtsson@mozilla.com',
-          first_name='Peter',
-          last_name='Bengtsson',
+            username='peter',
+            email='pbengtsson@mozilla.com',
+            first_name='Peter',
+            last_name='Bengtsson',
         )
         peter.set_password('secret')
         peter.save()
@@ -231,39 +231,39 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
         friday = monday + datetime.timedelta(days=4)
 
         peter = User.objects.create(
-          username='peter',
-          email='pbengtsson@mozilla.com',
-          first_name='Peter',
-          last_name='Bengtsson',
+            username='peter',
+            email='pbengtsson@mozilla.com',
+            first_name='Peter',
+            last_name='Bengtsson',
         )
 
         entry = Entry.objects.create(
-          user=peter,
-          start=monday,
-          end=tuesday,
-          total_hours=16,
+            user=peter,
+            start=monday,
+            end=tuesday,
+            total_hours=16,
         )
         Hours.objects.create(
-          entry=entry,
-          date=monday,
-          hours=8,
+            entry=entry,
+            date=monday,
+            hours=8,
         )
         Hours.objects.create(
-          entry=entry,
-          date=tuesday,
-          hours=8,
+            entry=entry,
+            date=tuesday,
+            hours=8,
         )
 
         entry2 = Entry.objects.create(
-          user=peter,
-          start=friday,
-          end=friday,
-          total_hours=8,
+            user=peter,
+            start=friday,
+            end=friday,
+            total_hours=8,
         )
         Hours.objects.create(
-          entry=entry2,
-          date=friday,
-          hours=8,
+            entry=entry2,
+            date=friday,
+            hours=8,
         )
 
         url = reverse('dates.notify')
@@ -275,45 +275,45 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
 
         # make it start BEFORE monday and end on the monday
         response = self.client.post(url, {
-          'start': monday - datetime.timedelta(days=3),
-          'end': monday,
-          'details': 'Going on a cruise',
+            'start': monday - datetime.timedelta(days=3),
+            'end': monday,
+            'details': 'Going on a cruise',
         })
         eq_(response.status_code, 200)
         ok_('errorlist' in response.content)
         ok_('overlaps' in response.content)
 
         response = self.client.post(url, {
-          'start': thursday,
-          'end': friday,
-          'details': 'Going on a cruise',
+            'start': thursday,
+            'end': friday,
+            'details': 'Going on a cruise',
         })
         eq_(response.status_code, 200)
         ok_('errorlist' in response.content)
         ok_('overlaps' in response.content)
 
         response = self.client.post(url, {
-          'start': tuesday,
-          'end': wednesday,
-          'details': 'Going on a cruise',
+            'start': tuesday,
+            'end': wednesday,
+            'details': 'Going on a cruise',
         })
         eq_(response.status_code, 200)
         ok_('errorlist' in response.content)
         ok_('overlaps' in response.content)
 
         response = self.client.post(url, {
-          'start': friday,
-          'end': friday,
-          'details': 'Going on a cruise',
+            'start': friday,
+            'end': friday,
+            'details': 'Going on a cruise',
         })
         eq_(response.status_code, 200)
         ok_('errorlist' in response.content)
         ok_('overlaps' in response.content)
 
         response = self.client.post(url, {
-          'start': friday,
-          'end': friday + datetime.timedelta(days=7),
-          'details': 'Going on a cruise',
+            'start': friday,
+            'end': friday + datetime.timedelta(days=7),
+            'details': 'Going on a cruise',
         })
         eq_(response.status_code, 200)
         ok_('errorlist' in response.content)
@@ -322,17 +322,17 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
         assert Entry.objects.all().count() == 2
         # add an entry with total_hours=None
         Entry.objects.create(
-          user=peter,
-          start=thursday,
-          end=thursday,
-          total_hours=None
+            user=peter,
+            start=thursday,
+            end=thursday,
+            total_hours=None
         )
         assert Entry.objects.all().count() == 3
 
         response = self.client.post(url, {
-          'start': wednesday,
-          'end': thursday,
-          'details': 'Going on a cruise',
+            'start': wednesday,
+            'end': thursday,
+            'details': 'Going on a cruise',
         })
         eq_(response.status_code, 302)
 
@@ -362,21 +362,21 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
 
     def test_forbidden_access(self):
         bob = User.objects.create(
-          username='bob',
+            username='bob',
         )
         today = datetime.date.today()
         entry = Entry.objects.create(
-          user=bob,
-          total_hours=8,
-          start=today,
-          end=today
+            user=bob,
+            total_hours=8,
+            start=today,
+            end=today
         )
 
         peter = User.objects.create(
-          username='peter',
-          email='pbengtsson@mozilla.com',
-          first_name='Peter',
-          last_name='Bengtsson',
+            username='peter',
+            email='pbengtsson@mozilla.com',
+            first_name='Peter',
+            last_name='Bengtsson',
         )
         peter.set_password('secret')
         peter.save()
@@ -403,10 +403,10 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
         eq_(response.status_code, 403)
 
         peter = User.objects.create(
-          username='peter',
-          email='pbengtsson@mozilla.com',
-          first_name='Peter',
-          last_name='Bengtsson',
+            username='peter',
+            email='pbengtsson@mozilla.com',
+            first_name='Peter',
+            last_name='Bengtsson',
         )
         peter.set_password('secret')
         peter.save()
@@ -430,24 +430,24 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
 
         # add some entries
         entry1 = Entry.objects.create(
-          user=peter,
-          start=datetime.date(2011, 7, 2),
-          end=datetime.date(2011, 7, 2),
-          total_hours=8,
+            user=peter,
+            start=datetime.date(2011, 7, 2),
+            end=datetime.date(2011, 7, 2),
+            total_hours=8,
         )
 
         entry2 = Entry.objects.create(
-          user=peter,
-          start=datetime.date(2011, 6, 30),
-          end=datetime.date(2011, 7, 1),
-          total_hours=8 * 2,
+            user=peter,
+            start=datetime.date(2011, 6, 30),
+            end=datetime.date(2011, 7, 1),
+            total_hours=8 * 2,
         )
 
         entry3 = Entry.objects.create(
-          user=peter,
-          start=datetime.date(2011, 7, 31),
-          end=datetime.date(2011, 8, 1),
-          total_hours=8 * 2,
+            user=peter,
+            start=datetime.date(2011, 7, 31),
+            end=datetime.date(2011, 8, 1),
+            total_hours=8 * 2,
         )
 
         response = self.client.get(url, data)
@@ -460,17 +460,17 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
 
         # add some that are outside the search range and should not be returned
         entry4 = Entry.objects.create(
-          user=peter,
-          start=datetime.date(2011, 6, 30),
-          end=datetime.date(2011, 6, 30),
-          total_hours=8,
+            user=peter,
+            start=datetime.date(2011, 6, 30),
+            end=datetime.date(2011, 6, 30),
+            total_hours=8,
         )
 
         entry5 = Entry.objects.create(
-          user=peter,
-          start=datetime.date(2011, 8, 1),
-          end=datetime.date(2011, 8, 1),
-          total_hours=8,
+            user=peter,
+            start=datetime.date(2011, 8, 1),
+            end=datetime.date(2011, 8, 1),
+            total_hours=8,
         )
 
         response = self.client.get(url, data)
@@ -484,10 +484,10 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
 
         # add a curve-ball that spans the whole range
         entry6 = Entry.objects.create(
-          user=peter,
-          start=datetime.date(2011, 6, 30),
-          end=datetime.date(2011, 8, 1),
-          total_hours=8 * 30,
+            user=peter,
+            start=datetime.date(2011, 6, 30),
+            end=datetime.date(2011, 8, 1),
+            total_hours=8 * 30,
         )
 
         response = self.client.get(url, data)
@@ -503,10 +503,10 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
         url = reverse('dates.calendar_events')
 
         peter = User.objects.create(
-          username='peter',
-          email='pbengtsson@mozilla.com',
-          first_name='Peter',
-          last_name='Bengtsson',
+            username='peter',
+            email='pbengtsson@mozilla.com',
+            first_name='Peter',
+            last_name='Bengtsson',
         )
         peter.set_password('secret')
         peter.save()
@@ -514,35 +514,35 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
 
         # add some entries
         entry = Entry.objects.create(
-          user=peter,
-          start=datetime.date(2011, 7, 2),
-          end=datetime.date(2011, 7, 4),
-          total_hours=8 + 4 + 8,
+            user=peter,
+            start=datetime.date(2011, 7, 2),
+            end=datetime.date(2011, 7, 4),
+            total_hours=8 + 4 + 8,
         )
 
         Hours.objects.create(
-          entry=entry,
-          date=datetime.date(2011, 7, 2),
-          hours=8
+            entry=entry,
+            date=datetime.date(2011, 7, 2),
+            hours=8
         )
 
         Hours.objects.create(
-          entry=entry,
-          date=datetime.date(2011, 7, 3),
-          hours=4
+            entry=entry,
+            date=datetime.date(2011, 7, 3),
+            hours=4
         )
 
         Hours.objects.create(
-          entry=entry,
-          date=datetime.date(2011, 7, 4),
-          hours=8
+            entry=entry,
+            date=datetime.date(2011, 7, 4),
+            hours=8
         )
 
         _start = datetime.datetime(2011, 7, 1)
         _end = datetime.datetime(2011, 8, 1) - datetime.timedelta(days=1)
         data = {
-          'start': time.mktime(_start.timetuple()),
-          'end': time.mktime(_end.timetuple())
+            'start': time.mktime(_start.timetuple()),
+            'end': time.mktime(_end.timetuple())
         }
         response = self.client.get(url, data)
         eq_(response.status_code, 200)
@@ -580,28 +580,28 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
     def test_calendar_event_title(self):
         url = reverse('dates.calendar_events')
         peter = User.objects.create(
-          username='peter',
-          email='pbengtsson@mozilla.com',
-          first_name='Peter',
-          last_name='Bengtsson',
+            username='peter',
+            email='pbengtsson@mozilla.com',
+            first_name='Peter',
+            last_name='Bengtsson',
         )
         peter.set_password('secret')
         peter.save()
         assert self.client.login(username=peter.email, password='secret')
 
         entry = Entry.objects.create(
-          user=peter,
-          start=datetime.date(2011, 7, 14),
-          end=datetime.date(2011, 7, 14),
-          total_hours=4,
-          details=''
+            user=peter,
+            start=datetime.date(2011, 7, 14),
+            end=datetime.date(2011, 7, 14),
+            total_hours=4,
+            details=''
         )
 
         _start = datetime.datetime(2011, 7, 1)
         _end = datetime.datetime(2011, 8, 1) - datetime.timedelta(days=1)
         data = {
-          'start': time.mktime(_start.timetuple()),
-          'end': time.mktime(_end.timetuple())
+            'start': time.mktime(_start.timetuple()),
+            'end': time.mktime(_end.timetuple())
         }
         response = self.client.get(url, data)
         eq_(response.status_code, 200)
@@ -630,10 +630,10 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
         eq_(events[0]['title'], '6 days')
 
         umpa = User.objects.create(
-          username='umpa',
-          email='umpa@mozilla.com',
-          first_name='Umpa',
-          last_name='Lumpa',
+            username='umpa',
+            email='umpa@mozilla.com',
+            first_name='Umpa',
+            last_name='Lumpa',
         )
         entry.user = umpa
         entry.save()
@@ -685,10 +685,10 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
         ok_(events[0]['title'].endswith('...'))
 
         Hours.objects.create(
-          entry=entry,
-          date=entry.start,
-          hours=8,
-          birthday=True
+            entry=entry,
+            date=entry.start,
+            hours=8,
+            birthday=True
         )
         response = self.client.get(url, data)
         eq_(response.status_code, 200)
@@ -701,16 +701,16 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
     def test_notify_free_input(self):
         hr_manager = self._create_hr_manager()
         hr_manager2 = self._create_hr_manager(
-          username='betty',
-          email='betty@mozilla.com',
+            username='betty',
+            email='betty@mozilla.com',
         )
 
         url = reverse('dates.notify')
         peter = User.objects.create(
-          username='peter',
-          email='pbengtsson@mozilla.com',
-          first_name='Peter',
-          last_name='Bengtsson',
+            username='peter',
+            email='pbengtsson@mozilla.com',
+            first_name='Peter',
+            last_name='Bengtsson',
         )
         peter.set_password('secret')
         peter.save()
@@ -737,20 +737,20 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
         """
         notify += ';%s' % settings.EMAIL_BLACKLIST[-1]
         response = self.client.post(url, {
-          'start': monday,
-          'end': wednesday,
-          'details': "Having fun",
-          'notify': notify.replace('\n', '\t')
+            'start': monday,
+            'end': wednesday,
+            'details': "Having fun",
+            'notify': notify.replace('\n', '\t')
         })
         eq_(response.status_code, 200)
         ok_('errorlist' in response.content)
 
         notify = notify.replace(settings.EMAIL_BLACKLIST[-1], '')
         response = self.client.post(url, {
-          'start': monday,
-          'end': wednesday,
-          'details': "Having fun",
-          'notify': notify.replace('\n', '\t')
+            'start': monday,
+            'end': wednesday,
+            'details': "Having fun",
+            'notify': notify.replace('\n', '\t')
         })
         eq_(response.status_code, 302)
         url = urlparse(response['location']).path
@@ -758,9 +758,9 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
         eq_(response.status_code, 200)
         tuesday = monday + datetime.timedelta(days=1)
         data = {
-          monday.strftime('d-%Y%m%d'): 8,
-          tuesday.strftime('d-%Y%m%d'): 8,
-          wednesday.strftime('d-%Y%m%d'): 8,
+            monday.strftime('d-%Y%m%d'): 8,
+            tuesday.strftime('d-%Y%m%d'): 8,
+            wednesday.strftime('d-%Y%m%d'): 8,
         }
         response = self.client.post(url, data)
         eq_(response.status_code, 302)
@@ -775,10 +775,10 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
     def test_notify_notification_attachment(self):
         url = reverse('dates.notify')
         peter = User.objects.create(
-          username='peter',
-          email='pbengtsson@mozilla.com',
-          first_name='Peter',
-          last_name='Bengtsson',
+            username='peter',
+            email='pbengtsson@mozilla.com',
+            first_name='Peter',
+            last_name='Bengtsson',
         )
         peter.set_password('secret')
         peter.save()
@@ -788,15 +788,15 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
         wednesday = monday + datetime.timedelta(days=2)
 
         entry = Entry.objects.create(
-          start=monday,
-          end=wednesday,
-          user=peter,
+            start=monday,
+            end=wednesday,
+            user=peter,
         )
         tuesday = monday + datetime.timedelta(days=1)
         data = {
-          monday.strftime('d-%Y%m%d'): 8,
-          tuesday.strftime('d-%Y%m%d'): 8,
-          wednesday.strftime('d-%Y%m%d'): 8,
+            monday.strftime('d-%Y%m%d'): 8,
+            tuesday.strftime('d-%Y%m%d'): 8,
+            wednesday.strftime('d-%Y%m%d'): 8,
         }
         url = reverse('dates.hours', args=[entry.pk])
         response = self.client.post(url, data)
@@ -805,28 +805,27 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
         assert len(mail.outbox)
         email = mail.outbox[-1]
 
-
     def test_enter_reversal_pto(self):
         monday = datetime.date(2011, 7, 25)
         tuesday = monday + datetime.timedelta(days=1)
 
         peter = User.objects.create(
-          username='peter',
-          email='pbengtsson@mozilla.com',
-          first_name='Peter',
-          last_name='Bengtsson',
+            username='peter',
+            email='pbengtsson@mozilla.com',
+            first_name='Peter',
+            last_name='Bengtsson',
         )
 
         entry = Entry.objects.create(
-          user=peter,
-          start=monday,
-          end=monday,
-          total_hours=8,
+            user=peter,
+            start=monday,
+            end=monday,
+            total_hours=8,
         )
         Hours.objects.create(
-          entry=entry,
-          date=monday,
-          hours=8,
+            entry=entry,
+            date=monday,
+            hours=8,
         )
 
         # Suppose you now change your mind and want it to be 4 hours on Monday
@@ -839,9 +838,9 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
         eq_(response.status_code, 200)
 
         response = self.client.post(url, {
-          'start': monday,
-          'end': monday,
-          'details': 'Going on a cruise',
+            'start': monday,
+            'end': monday,
+            'details': 'Going on a cruise',
         })
         eq_(response.status_code, 302)
 
@@ -863,7 +862,7 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
 
         assert date_key == monday.strftime('d-%Y%m%d')
         data = {
-          date_key: 4,
+            date_key: 4,
         }
 
         response = self.client.post(url, data)
@@ -900,16 +899,16 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
 
         # start with no filtering
         peter = User.objects.create(
-          username='peter',
-          email='peter@mozilla.com',
-          first_name='Peter',
-          last_name='Bengtsson',
+            username='peter',
+            email='peter@mozilla.com',
+            first_name='Peter',
+            last_name='Bengtsson',
         )
         laura = User.objects.create(
-          username='laura',
-          email='laura@mozilla.com',
-          first_name='Laura',
-          last_name='van Der Thomson',
+            username='laura',
+            email='laura@mozilla.com',
+            first_name='Laura',
+            last_name='van Der Thomson',
         )
 
         one_day = datetime.timedelta(days=1)
@@ -917,25 +916,25 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
         tuesday = monday + one_day
 
         e0 = Entry.objects.create(
-          user=peter,
-          start=monday,
-          end=monday,
-          total_hours=None,
-          details='Peter E0 Details'
+            user=peter,
+            start=monday,
+            end=monday,
+            total_hours=None,
+            details='Peter E0 Details'
         )
         e1 = Entry.objects.create(
-          user=peter,
-          start=tuesday,
-          end=tuesday,
-          total_hours=8,
-          details='Peter E1 Details'
+            user=peter,
+            start=tuesday,
+            end=tuesday,
+            total_hours=8,
+            details='Peter E1 Details'
         )
         e2 = Entry.objects.create(
-          user=laura,
-          start=monday,
-          end=tuesday,
-          total_hours=8 + 4,
-          details='Laura E2 Details'
+            user=laura,
+            start=monday,
+            end=tuesday,
+            total_hours=8 + 4,
+            details='Laura E2 Details'
         )
 
         response = self.client.get(url)
@@ -1146,10 +1145,10 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
 
         # now create some entries
         laura = User.objects.create(
-          username='laura',
-          email='laura@mozilla.com',
-          first_name='Laura',
-          last_name='van Der Thomson',
+            username='laura',
+            email='laura@mozilla.com',
+            first_name='Laura',
+            last_name='van Der Thomson',
         )
 
         p = laura.get_profile()
@@ -1161,25 +1160,25 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
         tuesday = monday + one_day
 
         Entry.objects.create(
-          user=peter,
-          start=monday,
-          end=monday,
-          total_hours=None,
-          details='E0 Details'
+              user=peter,
+              start=monday,
+              end=monday,
+              total_hours=None,
+              details='E0 Details'
         )
         Entry.objects.create(
-          user=peter,
-          start=tuesday,
-          end=tuesday,
-          total_hours=8,
-          details='E1 Details'
+              user=peter,
+              start=tuesday,
+              end=tuesday,
+              total_hours=8,
+              details='E1 Details'
         )
         Entry.objects.create(
-          user=laura,
-          start=monday,
-          end=tuesday,
-          total_hours=8 + 4,
-          details='E2 Details'
+            user=laura,
+            start=monday,
+            end=tuesday,
+            total_hours=8 + 4,
+            details='E2 Details'
         )
 
         response = self.client.get(url)
@@ -1318,38 +1317,38 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
         delta = datetime.timedelta
 
         entry1 = Entry.objects.create(
-          user=peter,
-          start=today - delta(10),
-          end=today - delta(10),
-          total_hours=8
+            user=peter,
+            start=today - delta(10),
+            end=today - delta(10),
+            total_hours=8
         )
         entry2 = Entry.objects.create(
-          user=peter,
-          start=today - delta(1),
-          end=today,
-          total_hours=16,
-          details='Sailing',
+            user=peter,
+            start=today - delta(1),
+            end=today,
+            total_hours=16,
+            details='Sailing',
         )
         entry3 = Entry.objects.create(
-          user=peter,
-          start=today,
-          end=today + delta(1),
-          total_hours=None
+            user=peter,
+            start=today,
+            end=today + delta(1),
+            total_hours=None
         )
         entry4 = Entry.objects.create(
-          user=peter,
-          start=today + delta(1),
-          end=today + delta(2),
-          total_hours=12
+            user=peter,
+            start=today + delta(1),
+            end=today + delta(2),
+            total_hours=12
         )
 
         # also create a user and entries for him
         bob = User.objects.create(username='bob')
         entryB = Entry.objects.create(
-          user=bob,
-          start=today,
-          end=today,
-          total_hours=8
+            user=bob,
+            start=today,
+            end=today,
+            total_hours=8
         )
 
         response = self.client.get(url, data)
@@ -1395,10 +1394,10 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
         wednesday = monday + datetime.timedelta(days=2)
         friday = monday + datetime.timedelta(days=4)
         entry = Entry.objects.create(
-          user=user,
-          start=monday,
-          end=friday,
-          total_hours=settings.WORK_DAY * 5
+            user=user,
+            start=monday,
+            end=friday,
+            total_hours=settings.WORK_DAY * 5
         )
         self._create_entry_hours(entry)
 
@@ -1415,7 +1414,7 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
         ok_('Already logged 8 hours on this day' in response.content)
 
         data = {
-          wednesday.strftime('d-%Y%m%d'): '0'
+            wednesday.strftime('d-%Y%m%d'): '0'
         }
         response = self.client.post(url, data)
         eq_(response.status_code, 302)
@@ -1446,15 +1445,15 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
         today = datetime.date(2011, 11, 23)  # a Wednesday
         for user in _all:
             entry = Entry.objects.create(
-              user=user,
-              start=today,
-              end=today,
-              total_hours=settings.WORK_DAY
+                user=user,
+                start=today,
+                end=today,
+                total_hours=settings.WORK_DAY
             )
             Hours.objects.create(
-              entry=entry,
-              date=today,
-              hours=settings.WORK_DAY
+                entry=entry,
+                date=today,
+                hours=settings.WORK_DAY
             )
 
         self._login(peter)
@@ -1462,8 +1461,8 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
         _start = today - datetime.timedelta(days=1)
         _end = today + datetime.timedelta(days=1)
         data = {
-          'start': time.mktime(_start.timetuple()),
-          'end': time.mktime(_end.timetuple())
+            'start': time.mktime(_start.timetuple()),
+            'end': time.mktime(_end.timetuple())
         }
         response = self.client.get(url, data)
         eq_(response.status_code, 200)
@@ -1480,8 +1479,8 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
 
         # suppose I don't want to follow brandon
         BlacklistedUser.objects.create(
-          observer=peter,
-          observable=brandon
+            observer=peter,
+            observable=brandon
         )
         response = self.client.get(url, data)
         eq_(response.status_code, 200)
@@ -1498,8 +1497,8 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
 
         # But I explicitely now want to follow axel
         FollowingUser.objects.create(
-          follower=peter,
-          following=axel
+            follower=peter,
+            following=axel
         )
 
         response = self.client.get(url, data)
@@ -1652,9 +1651,8 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
                 '(sn=chris ho*)(cn=chris ho*))')
         _key = ldap_lookup.account_wrap_search_filter(_key)
         ldap.initialize = Mock(return_value=MockLDAP({
-          _key: fake_user,
-          }
-        ))
+            _key: fake_user,
+        }))
 
         response = self.client.post(follow_url, {
           'search': 'chris ho',
@@ -1696,27 +1694,27 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
         lastweek = today - datetime.timedelta(days=7)
         nextweek = today + datetime.timedelta(days=7)
         Entry.objects.create(
-          user=mike,
-          start=lastweek,
-          end=lastweek,
-          total_hours=settings.WORK_DAY / 2,
-          details='Sensitive'
+            user=mike,
+            start=lastweek,
+            end=lastweek,
+            total_hours=settings.WORK_DAY / 2,
+            details='Sensitive'
         )
 
         Entry.objects.create(
-          user=mike,
-          start=today - datetime.timedelta(days=1),
-          end=today,
-          total_hours=settings.WORK_DAY * 2,
-          details='Also sensitive'
+            user=mike,
+            start=today - datetime.timedelta(days=1),
+            end=today,
+            total_hours=settings.WORK_DAY * 2,
+            details='Also sensitive'
         )
 
         Entry.objects.create(
-          user=mike,
-          start=nextweek,
-          end=nextweek,
-          total_hours=settings.WORK_DAY,
-          details='Super sensitive'
+            user=mike,
+            start=nextweek,
+            end=nextweek,
+            total_hours=settings.WORK_DAY,
+            details='Super sensitive'
         )
 
         response = self.client.get(url)
@@ -1739,8 +1737,8 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
         mike = User.objects.create(username='mike')
         axel = User.objects.create(username='axel')
         FollowingUser.objects.create(
-          follower=mike,
-          following=axel,
+            follower=mike,
+            following=axel,
         )
         uk = UserKey.objects.create(user=mike)
         url = reverse('dates.calendar_vcal', args=[uk.key])
@@ -1750,11 +1748,11 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
         today = datetime.date.today()
         yesterday = today - datetime.timedelta(days=1)
         Entry.objects.create(
-          user=axel,
-          start=yesterday,
-          end=today,
-          total_hours=settings.WORK_DAY * 2,
-          details='Sensitive'
+            user=axel,
+            start=yesterday,
+            end=today,
+            total_hours=settings.WORK_DAY * 2,
+            details='Sensitive'
         )
 
         response = self.client.get(url)
@@ -1826,24 +1824,24 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
         user = self._login()
         today = datetime.date.today()
         entry = Entry.objects.create(
-          user=user,
-          start=today,
-          end=today,
-          details='Stuck',
-          total_hours=settings.WORK_DAY,
+            user=user,
+            start=today,
+            end=today,
+            details='Stuck',
+            total_hours=settings.WORK_DAY,
         )
         Hours.objects.create(
-          entry=entry,
-          date=entry.start,
-          hours=entry.total_hours
+            entry=entry,
+            date=entry.start,
+            hours=entry.total_hours
         )
 
         Entry.objects.create(
-          user=user,
-          start=today,
-          end=today,
-          details='Incomplete',
-          total_hours=None
+            user=user,
+            start=today,
+            end=today,
+            details='Incomplete',
+            total_hours=None
         )
 
         url = reverse('dates.cancel_notify')
@@ -1858,10 +1856,10 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
         user = self._login()
         today = datetime.date(2011, 11, 23)  # a Wednesday
         entry = Entry.objects.create(
-          user=user,
-          start=today,
-          end=today,
-          details='This is a long message that ends on the word XYZ',
+            user=user,
+            start=today,
+            end=today,
+            details='This is a long message that ends on the word XYZ',
         )
         url = reverse('dates.hours', args=[entry.pk])
         data = {}
@@ -1886,9 +1884,9 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
         user = self._login()
         today = datetime.date(2011, 11, 23)  # a Wednesday
         entry = Entry.objects.create(
-          user=user,
-          start=today,
-          end=today + datetime.timedelta(days=2),
+            user=user,
+            start=today,
+            end=today + datetime.timedelta(days=2),
         )
         url = reverse('dates.hours', args=[entry.pk])
         response = self.client.get(url)
@@ -1899,15 +1897,15 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
 
         # now pretend we have had a slot already on the thursday
         entry2 = Entry.objects.create(
-          user=user,
-          start=today + datetime.timedelta(days=1),
-          end=today + datetime.timedelta(days=1),
-          total_hours=settings.WORK_DAY,
+            user=user,
+            start=today + datetime.timedelta(days=1),
+            end=today + datetime.timedelta(days=1),
+            total_hours=settings.WORK_DAY,
         )
         Hours.objects.create(
-          entry=entry2,
-          date=today + datetime.timedelta(days=1),
-          hours=settings.WORK_DAY,
+            entry=entry2,
+            date=today + datetime.timedelta(days=1),
+            hours=settings.WORK_DAY,
         )
         url = reverse('dates.hours', args=[entry.pk])
         response = self.client.get(url)
@@ -1968,23 +1966,23 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
             u.set_password('secret')
             u.save()
             entry = Entry.objects.create(
-              user=u,
-              start=today,
-              end=today,
-              total_hours=settings.WORK_DAY,
-              details="%s's details" % u.username
+                user=u,
+                start=today,
+                end=today,
+                total_hours=settings.WORK_DAY,
+                details="%s's details" % u.username
             )
             Hours.objects.create(
-              entry=entry,
-              date=today,
-              hours=settings.WORK_DAY,
+                entry=entry,
+                date=today,
+                hours=settings.WORK_DAY,
             )
             all_details.add("%s's details" % u.username)
 
         admin = User.objects.create(
-          username='admin',
-          is_superuser=True,
-          is_staff=True
+            username='admin',
+            is_superuser=True,
+            is_staff=True
         )
         admin.set_password('secret')
         admin.save()
@@ -2027,7 +2025,8 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
         struct = json.loads(response.content)
         data = struct['aaData']
         details = set(x[-1] for x in data if x[-1])
-        eq_(details, set(["todd's details", "mike's details", "ben's details"]))
+        eq_(details,
+            set(["todd's details", "mike's details", "ben's details"]))
 
         # as peter
         assert self.client.login(username='peter', password='secret')
@@ -2050,8 +2049,9 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
         ## Test the calendar JSON
         url = reverse('dates.calendar_events')
         data = {
-          'start': time.mktime(today.timetuple()),
-          'end': time.mktime((today + datetime.timedelta(days=1)).timetuple())
+            'start': time.mktime(today.timetuple()),
+            'end': time.mktime((today +
+                                datetime.timedelta(days=1)).timetuple())
         }
 
         # as mike
@@ -2070,7 +2070,8 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
         struct = json.loads(response.content)['events']
         details = set([x['title'].split(',')[1].strip() for x in struct
                        if x['title'].count(',')])
-        eq_(details, set(["ben's details", "mike's details", "todd's details"]))
+        eq_(details,
+            set(["ben's details", "mike's details", "todd's details"]))
 
         # as peter
         assert self.client.login(username='peter', password='secret')
@@ -2126,6 +2127,14 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
         eq_(response['count'], 4)
         eq_(response['names'], ['lars', 'mike', 'peter', 'todd'])
 
+        # peter opts out
+        peter_profile = peter.get_profile()
+        peter_profile.email_unsubscribe = True
+        peter_profile.save()
+
+        response = get(url)
+        eq_(response['count'], 3)
+        eq_(response['names'], ['lars', 'mike', 'todd'])
 
     def test_notify_with_notify_subscribers(self):
         todd = User.objects.create_user(username='todd')
@@ -2134,6 +2143,10 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
         laura = User.objects.create_user(username='laura', password='test')
         peter = User.objects.create_user(username='peter')
         lars = User.objects.create_user(username='lars')
+
+        lars_profile = lars.get_profile()
+        lars_profile.email_unsubscribe = True
+        lars_profile.save()
 
         for user in User.objects.all():
             user.email = '%s@mozilla.com' % user.username
@@ -2169,4 +2182,6 @@ class ViewsTest(TestCase, ExtraTestCaseMixin):
         assert 'Email sent to' in content
         ok_('mike@mozilla.com' in content)
         ok_('todd@mozilla.com' in content)
-        ok_('lars@mozilla.com' in content)
+        ok_('peter@mozilla.com' in content)
+        # but not lars because he has opted out
+        ok_('lars@mozilla.com' not in content)

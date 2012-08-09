@@ -35,11 +35,11 @@ import forms
 from .decorators import json_view
 from .csv_export import UnicodeWriter as CSVUnicodeWriter
 from .data import (
-  get_minions,
-  get_followed_users,
-  get_observed_users,
-  get_observing_users,
-  get_taken_info
+    get_minions,
+    get_followed_users,
+    get_observed_users,
+    get_observing_users,
+    get_taken_info
 )
 
 
@@ -87,12 +87,12 @@ def home(request):  # aka dashboard
         first_day = 0  # default to 0=Sunday
     data['first_day'] = first_day
 
-    if 'all-rightnow' in request.GET:
-        MAX_RIGHT_NOWS = 9999
-    else:
-        MAX_RIGHT_NOWS = 20
-
     ## Commented out whilst we decide whether to keep it at all
+    #if 'all-rightnow' in request.GET:
+    #    MAX_RIGHT_NOWS = 9999
+    #else:
+    #    MAX_RIGHT_NOWS = 20
+    #
     #right_nows, right_now_users = get_right_nows()
     #data['right_nows'] = right_nows
     #data['right_now_users'] = right_now_users
@@ -114,6 +114,7 @@ def home(request):  # aka dashboard
         cache.delete(cache_key)
 
     return render(request, 'dates/home.html', data)
+
 
 def _get_user_calendar_url(request):
     user_key, __ = UserKey.objects.get_or_create(user=request.user)
@@ -187,7 +188,7 @@ def make_entry_title(entry, this_user, include_details=True):
         if Hours.objects.filter(entry=entry, birthday=True).exists():
             title += ' (includes birthday)'
     elif (days == 1 and entry.total_hours == 0 and
-        Hours.objects.filter(entry=entry, birthday=True)):
+          Hours.objects.filter(entry=entry, birthday=True)):
         title += 'Birthday!'
     elif days == 1 and entry.total_hours == 8:
         title += '1 day'
@@ -245,9 +246,9 @@ def calendar_events(request):
         if not full_name:
             full_name = user_.username
         colors_fullnames.append((
-          user_.pk,
-          full_name,
-          colors[user_.pk]
+            user_.pk,
+            full_name,
+            colors[user_.pk]
         ))
 
     _managers = {}
@@ -267,20 +268,22 @@ def calendar_events(request):
 
     visible_user_ids = set()
     for entry in (Entry.objects
-                   .filter(user__in=user_ids,
-                           total_hours__gte=0,
-                           total_hours__isnull=False)
-                   .select_related('user')
-                   .exclude(Q(end__lt=start) | Q(start__gt=end))):
+                  .filter(user__in=user_ids,
+                          total_hours__gte=0,
+                          total_hours__isnull=False)
+                  .select_related('user')
+                  .exclude(Q(end__lt=start) | Q(start__gt=end))):
         visible_user_ids.add(entry.user.pk)
         entries.append({
-          'id': entry.pk,
-          'title': make_entry_title(entry, request.user,
-                                  include_details=can_see_details(entry.user)),
-          'start': entry.start.strftime('%Y-%m-%d'),
-          'end': entry.end.strftime('%Y-%m-%d'),
-          'color': colors[entry.user.pk],
-          'mine': entry.user.pk == request.user.pk,
+            'id': entry.pk,
+            'title': make_entry_title(
+                entry,
+                request.user,
+                include_details=can_see_details(entry.user)),
+            'start': entry.start.strftime('%Y-%m-%d'),
+            'end': entry.end.strftime('%Y-%m-%d'),
+            'color': colors[entry.user.pk],
+            'mine': entry.user.pk == request.user.pk,
         })
 
     colors = [dict(name=x, color=y) for (pk, x, y) in colors_fullnames
@@ -301,10 +304,10 @@ def notify(request):
             details = form.cleaned_data['details'].strip()
             notify = form.cleaned_data['notify']
             entry = Entry.objects.create(
-              user=request.user,
-              start=start,
-              end=end,
-              details=details,
+                user=request.user,
+                start=start,
+                end=end,
+                details=details,
             )
             clean_unfinished_entries(entry)
 
@@ -391,10 +394,11 @@ def hours(request, pk):
             cache_key = 'notify_subscribers-%s' % entry.pk
 
             success, email_addresses = send_email_notification(
-              entry,
-              extra_users,
-              is_edit=is_edit,
-              notify_subscribers=cache.get(cache_key)
+                entry,
+                extra_users,
+                request,
+                is_edit=is_edit,
+                notify_subscribers=cache.get(cache_key)
             )
             assert success
             cache.delete(cache_key)
@@ -456,30 +460,32 @@ def save_entry_hours(entry, form):
             hours = 0
         assert hours >= 0 and hours <= settings.WORK_DAY, hours
         try:
-            hours_ = Hours.objects.get(entry__user=entry.user,
-                                       date=date)
+            hours_ = Hours.objects.get(
+                entry__user=entry.user,
+                date=date
+            )
             if hours_.hours:
                 # this nullifies the previous entry on this date
                 reverse_entry = Entry.objects.create(
-                  user=hours_.entry.user,
-                  start=date,
-                  end=date,
-                  details=hours_.entry.details,
-                  total_hours=hours_.hours * -1,
+                    user=hours_.entry.user,
+                    start=date,
+                    end=date,
+                    details=hours_.entry.details,
+                    total_hours=hours_.hours * -1,
                 )
                 Hours.objects.create(
-                  entry=reverse_entry,
-                  hours=hours_.hours * -1,
-                  date=date,
+                    entry=reverse_entry,
+                    hours=hours_.hours * -1,
+                    date=date,
                 )
         except Hours.DoesNotExist:
             # nothing to credit
             pass
         Hours.objects.create(
-          entry=entry,
-          hours=hours,
-          date=date,
-          birthday=birthday,
+            entry=entry,
+            hours=hours,
+            date=date,
+            birthday=birthday,
         )
         total_hours += hours
 
@@ -490,12 +496,13 @@ def save_entry_hours(entry, form):
     return total_hours, is_edit
 
 
-def send_email_notification(entry, extra_users, is_edit=False,
+def send_email_notification(entry, extra_users, request,
+                            is_edit=False,
                             notify_subscribers=False):
     email_addresses = []
     for profile in (UserProfile.objects
-                     .filter(hr_manager=True,
-                             user__email__isnull=False)):
+                    .filter(hr_manager=True,
+                            user__email__isnull=False)):
         email_addresses.append(profile.user.email)
 
     profile = entry.user.get_profile()
@@ -507,11 +514,16 @@ def send_email_notification(entry, extra_users, is_edit=False,
     if extra_users:
         email_addresses.extend(extra_users)
 
+    _subscribers = []
     if notify_subscribers:
         users = get_observing_users(entry.user)
-        email_addresses.extend(
-          [x.email for x in users if x.email]
-        )
+        for user in users:
+            if not user.email:
+                continue
+            profile = user.get_profile()
+            if not profile.email_unsubscribe:
+                email_addresses.append(user.email)
+                _subscribers.append(user.email)
 
     email_addresses = list(set(email_addresses))  # get rid of dupes
     if not email_addresses:
@@ -521,29 +533,33 @@ def send_email_notification(entry, extra_users, is_edit=False,
     else:
         subject = settings.EMAIL_SUBJECT
     subject = subject % dict(
-      first_name=entry.user.first_name,
-      last_name=entry.user.last_name,
-      username=entry.user.username,
-      email=entry.user.email,
+        first_name=entry.user.first_name,
+        last_name=entry.user.last_name,
+        username=entry.user.username,
+        email=entry.user.email,
     )
 
     message = template = loader.get_template('dates/notification.txt')
+    settings_url = request.build_absolute_uri(reverse('users.profile'))
+    following_url = request.build_absolute_uri(reverse('dates.following'))
     context = {
-      'entry': entry,
-      'user': entry.user,
-      'is_edit': is_edit,
-      'settings': settings,
-      'start_date': entry.start.strftime(settings.DEFAULT_DATE_FORMAT),
+        'entry': entry,
+        'user': entry.user,
+        'is_edit': is_edit,
+        'settings': settings,
+        'settings_url': settings_url,
+        'following_url': following_url,
+        'start_date': entry.start.strftime(settings.DEFAULT_DATE_FORMAT),
     }
     body = template.render(Context(context)).strip()
     connection = get_connection()
     message = EmailMessage(
-      subject=subject,
-      body=body,
-      from_email=entry.user.email,
-      to=email_addresses,
-      cc=entry.user.email and [entry.user.email] or None,
-      connection=connection
+        subject=subject,
+        body=body,
+        from_email=entry.user.email,
+        to=email_addresses,
+        cc=entry.user.email and [entry.user.email] or None,
+        connection=connection
     )
 
     success = message.send()
@@ -609,18 +625,18 @@ def list_csv(request):
     response = http.HttpResponse(mimetype='text/csv')
     writer = CSVUnicodeWriter(response)
     writer.writerow((
-      'ID',
-      'EMAIL',
-      'FIRST NAME',
-      'LAST NAME',
-      'ADDED',
-      'START',
-      'END',
-      'DAYS',
-      'DETAILS',
-      'CITY',
-      'COUNTRY',
-      'START DATE',
+        'ID',
+        'EMAIL',
+        'FIRST NAME',
+        'LAST NAME',
+        'ADDED',
+        'START',
+        'END',
+        'DAYS',
+        'DETAILS',
+        'CITY',
+        'COUNTRY',
+        'START DATE',
     ))
 
     profiles = {}  # basic memoization
@@ -629,19 +645,19 @@ def list_csv(request):
             profiles[entry.user.pk] = entry.user.get_profile()
         profile = profiles[entry.user.pk]
         writer.writerow((
-          str(entry.pk),
-          entry.user.email,
-          entry.user.first_name,
-          entry.user.last_name,
-          entry.add_date.strftime('%Y-%m-%d'),
-          entry.start.strftime('%Y-%m-%d'),
-          entry.end.strftime('%Y-%m-%d'),
-          str(entry.total_days),
-          entry.details,
-          profile.city,
-          profile.country,
-          (profile.start_date and
-           profile.start_date.strftime('%Y-%m-%d') or ''),
+            str(entry.pk),
+            entry.user.email,
+            entry.user.first_name,
+            entry.user.last_name,
+            entry.add_date.strftime('%Y-%m-%d'),
+            entry.start.strftime('%Y-%m-%d'),
+            entry.end.strftime('%Y-%m-%d'),
+            str(entry.total_days),
+            entry.details,
+            profile.city,
+            profile.country,
+            (profile.start_date and
+             profile.start_date.strftime('%Y-%m-%d') or ''),
         ))
 
     return response
@@ -713,19 +729,21 @@ def get_entries_from_request(data):
         entries = entries.filter(start__lte=fdata.get('date_to'))
     if fdata.get('date_filed_from'):
         entries = entries.filter(
-          add_date__gte=fdata.get('date_filed_from'))
+            add_date__gte=fdata.get('date_filed_from')
+        )
     if fdata.get('date_filed_to'):
         entries = entries.filter(
-          add_date__lt=fdata.get('date_filed_to') +
-            datetime.timedelta(days=1))
+            add_date__lt=fdata.get('date_filed_to') +
+            datetime.timedelta(days=1)
+        )
     if fdata.get('name'):
         name = fdata['name'].strip()
         if valid_email(name):
             entries = entries.filter(user__email__iexact=name)
         else:
             entries = entries.filter(
-              Q(user__first_name__istartswith=name.split()[0]) |
-              Q(user__last_name__iendswith=name.split()[-1])
+                Q(user__first_name__istartswith=name.split()[0]) |
+                Q(user__last_name__iendswith=name.split()[-1])
             )
     if fdata.get('country'):
         country = fdata['country'].strip()
@@ -770,7 +788,11 @@ def following(request):
 @json_view
 def followers_json(request):
     you = request.user
-    users = get_observing_users(you)
+    users = []
+    for user in get_observing_users(you):
+        profile = user.get_profile()
+        if not profile.email_unsubscribe:
+            users.append(user)
 
     def name(user):
         if user.first_name:
@@ -831,8 +853,8 @@ def save_following(request):
         return http.HttpResponseBadRequest('No user by that email found')
 
     FollowingUser.objects.get_or_create(
-      follower=request.user,
-      following=user,
+        follower=request.user,
+        following=user,
     )
 
     # find a reason why we're following this user
@@ -856,9 +878,9 @@ def save_following(request):
         name = user.username
 
     data = {
-      'id': user.pk,
-      'name': name,
-      'reason': reason,
+        'id': user.pk,
+        'name': name,
+        'reason': reason,
     }
 
     return data
@@ -883,8 +905,8 @@ def save_unfollowing(request):
     if user in get_observed_users(request.user, max_depth=2):
         # if not blacklisted, this user will automatically re-appear
         BlacklistedUser.objects.get_or_create(
-          observer=request.user,
-          observable=user
+            observer=request.user,
+            observable=user
         )
         data['id'] = user.pk
         name = ('%s %s' % (user.first_name,
@@ -910,20 +932,21 @@ def calendar_vcal(request, key):
         # that urges the user to update the stale URL
         event = cal.add('vevent')
         event.add('summary').value = (
-          "Calendar expired. Visit %s#calendarurl to get the "
-          "new calendar URL" % home_url
+            "Calendar expired. Visit %s#calendarurl to get the "
+            "new calendar URL" % home_url
         )
         today = datetime.date.today()
         event.add('dtstart').value = today
         event.add('dtend').value = today
         event.add('url').value = '%s#calendarurl' % (home_url,)
-        event.add('description').value = ("The calendar you used has expired "
-        "and is no longer associated with any user")
+        event.add('description').value = (
+            "The calendar you used has expired "
+            "and is no longer associated with any user"
+        )
         return _render_vcalendar(cal, key)
 
     # always start on the first of this month
     today = datetime.date.today()
-    #first = datetime.date(today.year, today.month, 1)
 
     user_ids = [user.pk]
     for user_ in get_observed_users(user, max_depth=2):
@@ -944,30 +967,27 @@ def calendar_vcal(request, key):
         if not name:
             name = entry.user.username
         data = {
-          'date_from': entry.start.strftime('%d %B %Y'),
-          'date_to': entry.end.strftime('%d %B %Y'),
-          'name': name
+            'date_from': entry.start.strftime('%d %B %Y'),
+            'date_to': entry.end.strftime('%d %B %Y'),
+            'name': name
         }
         return _list_base_url + '?' + urlencode(data, True)
+
     for entry in entries:
         event = cal.add('vevent')
-        event.add('summary').value = '%s Vacation' % make_entry_title(entry, user,
-                                                include_details=False)
+        event.add('summary').value = (
+            '%s Vacation' % make_entry_title(entry, user,
+                                             include_details=False)
+        )
         event.add('dtstart').value = entry.start
         event.add('dtend').value = entry.end
-        #url = (home_url + '?cal_y=%d&cal_m=%d' %
-        #       (slot.date.year, slot.date.month))
         event.add('url').value = make_list_url(entry)
-        #event.add('description').value = entry.details
         event.add('description').value = "Log in to see the details"
 
     return _render_vcalendar(cal, key)
 
 
 def _render_vcalendar(cal, key):
-    #return http.HttpResponse(cal.serialize(),
-    #                         mimetype='text/plain;charset=utf-8'
-    #                         )
     resp = http.HttpResponse(cal.serialize(),
                              mimetype='text/calendar;charset=utf-8'
                              )
@@ -990,10 +1010,11 @@ def about_calendar_url(request):
     data['calendar_url'] = _get_user_calendar_url(request)
     return render(request, 'dates/about-calendar-url.html', data)
 
+
 @login_required
 def duplicate_report(request):
     data = {
-      'filter_errors': None,
+        'filter_errors': None,
     }
 
     if request.method == 'POST':
@@ -1012,7 +1033,8 @@ def duplicate_report(request):
                             or request.user.is_staff):
                         if user != request.user:
                             return http.HttpResponse(
-                                                 "Only available for admins")
+                                "Only available for admins"
+                            )
                 filter_['user'] = user
 
             if form.cleaned_data['since']:

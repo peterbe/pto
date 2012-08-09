@@ -8,15 +8,15 @@ from test_utils import TestCase
 from django.conf import settings
 from django.contrib.auth.models import User
 from pto.apps.dates.models import (
-  BlacklistedUser,
-  FollowingUser,
-  Entry
+    BlacklistedUser,
+    FollowingUser,
+    Entry
 )
 from pto.apps.dates.data import (
-  get_minions,
-  get_taken_info,
-  get_observed_users,
-  get_observing_users
+    get_minions,
+    get_taken_info,
+    get_observed_users,
+    get_observing_users
 )
 from .base import ExtraTestCaseMixin
 
@@ -58,10 +58,10 @@ class DataTestCase(TestCase, ExtraTestCaseMixin):
 
         date = datetime.date(_THIS_YEAR, 11, 23)
         entry = Entry.objects.create(
-          user=user,
-          start=date,
-          end=date,
-          total_hours=settings.WORK_DAY,
+            user=user,
+            start=date,
+            end=date,
+            total_hours=settings.WORK_DAY,
         )
         self._create_entry_hours(entry)
 
@@ -75,10 +75,10 @@ class DataTestCase(TestCase, ExtraTestCaseMixin):
 
         one_week = datetime.timedelta(days=7)
         entry = Entry.objects.create(
-          user=user,
-          start=date + one_week,
-          end=date + one_week,
-          total_hours=settings.WORK_DAY,
+            user=user,
+            start=date + one_week,
+            end=date + one_week,
+            total_hours=settings.WORK_DAY,
         )
         self._create_entry_hours(entry)
 
@@ -86,10 +86,10 @@ class DataTestCase(TestCase, ExtraTestCaseMixin):
         eq_(result['taken'], '1.5 days')
 
         entry = Entry.objects.create(
-          user=user,
-          start=date + one_week * 2,
-          end=date + one_week * 2,
-          total_hours=settings.WORK_DAY / 2,
+            user=user,
+            start=date + one_week * 2,
+            end=date + one_week * 2,
+            total_hours=settings.WORK_DAY / 2,
         )
         self._create_entry_hours(entry, 4)
 
@@ -97,10 +97,10 @@ class DataTestCase(TestCase, ExtraTestCaseMixin):
         eq_(result['taken'], '2 days')
 
         entry = Entry.objects.create(
-          user=user,
-          start=date + one_week * 3,
-          end=date + one_week * 5,
-          total_hours=settings.WORK_DAY * 14,
+            user=user,
+            start=date + one_week * 3,
+            end=date + one_week * 5,
+            total_hours=settings.WORK_DAY * 14,
         )
         self._create_entry_hours(entry)
 
@@ -109,32 +109,32 @@ class DataTestCase(TestCase, ExtraTestCaseMixin):
 
     def test_get_minions(self):
         gary = User.objects.create_user(
-          'gary', 'gary@mozilla.com'
+            'gary', 'gary@mozilla.com'
         )
 
         todd = User.objects.create_user(
-          'todd', 'todd@mozilla.com',
+            'todd', 'todd@mozilla.com',
         )
         profile = todd.get_profile()
         profile.manager = gary.email
         profile.save()
 
         mike = User.objects.create_user(
-          'mike', 'mike@mozilla.com',
+            'mike', 'mike@mozilla.com',
         )
         profile = mike.get_profile()
         profile.manager = todd.email
         profile.save()
 
         laura = User.objects.create_user(
-          'laura', 'laura@mozilla.com',
+            'laura', 'laura@mozilla.com',
         )
         profile = laura.get_profile()
         profile.manager = mike.email
         profile.save()
 
         peter = User.objects.create_user(
-          'peter', 'peter@mozilla.com',
+            'peter', 'peter@mozilla.com',
         )
         profile = peter.get_profile()
         profile.manager = laura.email
@@ -177,18 +177,18 @@ class DataTestCase(TestCase, ExtraTestCaseMixin):
 
     def test_get_observed_users(self):
         gary = User.objects.create_user(
-          'gary', 'gary@mozilla.com'
+            'gary', 'gary@mozilla.com'
         )
 
         todd = User.objects.create_user(
-          'todd', 'todd@mozilla.com',
+            'todd', 'todd@mozilla.com',
         )
         profile = todd.get_profile()
         profile.manager = gary.email
         profile.save()
 
         mike = User.objects.create_user(
-          'mike', 'mike@mozilla.com',
+            'mike', 'mike@mozilla.com',
         )
         profile = mike.get_profile()
         profile.manager = todd.email
@@ -196,21 +196,21 @@ class DataTestCase(TestCase, ExtraTestCaseMixin):
 
         # peer to mike
         ben = User.objects.create_user(
-          'ben', 'ben@mozilla.com',
+            'ben', 'ben@mozilla.com',
         )
         profile = ben.get_profile()
         profile.manager = todd.email
         profile.save()
 
         laura = User.objects.create_user(
-          'laura', 'laura@mozilla.com',
+            'laura', 'laura@mozilla.com',
         )
         profile = laura.get_profile()
         profile.manager = mike.email
         profile.save()
 
         peter = User.objects.create_user(
-          'peter', 'peter@mozilla.com',
+            'peter', 'peter@mozilla.com',
         )
         profile = peter.get_profile()
         profile.manager = laura.email
@@ -218,110 +218,109 @@ class DataTestCase(TestCase, ExtraTestCaseMixin):
 
         # peer to peter
         lars = User.objects.create_user(
-          'lars', 'lars@mozilla.com',
+            'lars', 'lars@mozilla.com',
         )
         profile = lars.get_profile()
         profile.manager = laura.email
         profile.save()
 
-
         ## now we can start the actual testing
         # gary
         ieq_(
-          get_observed_users(gary, depth=1, max_depth=2),
-          [todd, mike, ben]
+            get_observed_users(gary, depth=1, max_depth=2),
+            [todd, mike, ben]
         )
         ieq_(
-          get_observed_users(gary, depth=1, max_depth=1),
-          [todd]
+            get_observed_users(gary, depth=1, max_depth=1),
+            [todd]
         )
 
         # todd
         ieq_(
-          get_observed_users(todd, depth=1, max_depth=2),
-          [mike, laura, ben, gary]
+            get_observed_users(todd, depth=1, max_depth=2),
+            [mike, laura, ben, gary]
         )
         ieq_(
-          get_observed_users(todd, depth=1, max_depth=1),
-          [mike, ben, gary]
+            get_observed_users(todd, depth=1, max_depth=1),
+            [mike, ben, gary]
         )
 
         # mike
         ieq_(
-          get_observed_users(mike, depth=1, max_depth=2),
-          [laura, ben, peter, lars, todd]
+            get_observed_users(mike, depth=1, max_depth=2),
+            [laura, ben, peter, lars, todd]
         )
         ieq_(
-          get_observed_users(mike, depth=1, max_depth=1),
-          [laura, ben, todd]
+            get_observed_users(mike, depth=1, max_depth=1),
+            [laura, ben, todd]
         )
 
         # laura
         ieq_(
-          get_observed_users(laura, depth=1, max_depth=2),
-          [peter, lars, mike]
+            get_observed_users(laura, depth=1, max_depth=2),
+            [peter, lars, mike]
         )
         ieq_(
-          get_observed_users(laura, depth=1, max_depth=1),
-          [peter, lars, mike]
+            get_observed_users(laura, depth=1, max_depth=1),
+            [peter, lars, mike]
         )
 
         # peter
         ieq_(
-          get_observed_users(peter, depth=1, max_depth=2),
-          [lars, laura]
+            get_observed_users(peter, depth=1, max_depth=2),
+            [lars, laura]
         )
         ieq_(
-          get_observed_users(peter, depth=1, max_depth=1),
-          [lars, laura]
+            get_observed_users(peter, depth=1, max_depth=1),
+            [lars, laura]
         )
 
         # add followings
         FollowingUser.objects.create(
-          follower=peter,
-          following=gary
+            follower=peter,
+            following=gary
         )
 
         # peter, again
         ieq_(
-          get_observed_users(peter, depth=1, max_depth=2),
-          [lars, laura, gary]
+            get_observed_users(peter, depth=1, max_depth=2),
+            [lars, laura, gary]
         )
         ieq_(
-          get_observed_users(peter, depth=1, max_depth=1),
-          [lars, laura, gary]
+            get_observed_users(peter, depth=1, max_depth=1),
+            [lars, laura, gary]
         )
 
         # add blacklisting
         BlacklistedUser.objects.create(
-          observer=peter,
-          observable=lars,
+            observer=peter,
+            observable=lars,
         )
 
         # peter, again
         ieq_(
-          get_observed_users(peter, depth=1, max_depth=2),
-          [laura, gary]
+            get_observed_users(peter, depth=1, max_depth=2),
+            [laura, gary]
         )
         ieq_(
-          get_observed_users(peter, depth=1, max_depth=1),
-          [laura, gary]
+            get_observed_users(peter, depth=1, max_depth=1),
+            [laura, gary]
         )
 
     def test_get_observing_users(self):
         gary = User.objects.create_user(
-          'gary', 'gary@mozilla.com'
+            'gary', 'gary@mozilla.com'
         )
 
         todd = User.objects.create_user(
-          'todd', 'todd@mozilla.com',
+            'todd', 'todd@mozilla.com',
         )
         profile = todd.get_profile()
         profile.manager = gary.email
         profile.save()
 
         mike = User.objects.create_user(
-          'mike', 'mike@mozilla.com',
+            'mike', 'mike@mozilla.com',
         )
         profile = mike.get_profile()
         profile.manager = todd.email
@@ -329,21 +328,21 @@ class DataTestCase(TestCase, ExtraTestCaseMixin):
 
         # peer to mike
         ben = User.objects.create_user(
-          'ben', 'ben@mozilla.com',
+            'ben', 'ben@mozilla.com',
         )
         profile = ben.get_profile()
         profile.manager = todd.email
         profile.save()
 
         laura = User.objects.create_user(
-          'laura', 'laura@mozilla.com',
+            'laura', 'laura@mozilla.com',
         )
         profile = laura.get_profile()
         profile.manager = mike.email
         profile.save()
 
         peter = User.objects.create_user(
-          'peter', 'peter@mozilla.com',
+            'peter', 'peter@mozilla.com',
         )
         profile = peter.get_profile()
         profile.manager = laura.email
@@ -351,7 +350,7 @@ class DataTestCase(TestCase, ExtraTestCaseMixin):
 
         # peer to peter
         lars = User.objects.create_user(
-          'lars', 'lars@mozilla.com',
+            'lars', 'lars@mozilla.com',
         )
         profile = lars.get_profile()
         profile.manager = laura.email
@@ -360,104 +359,104 @@ class DataTestCase(TestCase, ExtraTestCaseMixin):
         ## now we can start the actual testing
         # gary
         ieq_(
-          get_observing_users(gary, depth=1, max_depth=2),
-          [todd]
+            get_observing_users(gary, depth=1, max_depth=2),
+            [todd]
         )
         ieq_(
-          get_observing_users(gary, depth=1, max_depth=1),
-          [todd]
+            get_observing_users(gary, depth=1, max_depth=1),
+            [todd]
         )
 
         # todd
         ieq_(
-          get_observing_users(todd, depth=1, max_depth=2),
-          [mike, ben, gary]
+            get_observing_users(todd, depth=1, max_depth=2),
+            [mike, ben, gary]
         )
         ieq_(
-          get_observing_users(todd, depth=1, max_depth=1),
-          [mike, ben, gary]
+            get_observing_users(todd, depth=1, max_depth=1),
+            [mike, ben, gary]
         )
 
         # laura
         ieq_(
-          get_observing_users(laura, depth=1, max_depth=2),
-          [peter, lars, mike, todd]
+            get_observing_users(laura, depth=1, max_depth=2),
+            [peter, lars, mike, todd]
         )
         ieq_(
-          get_observing_users(laura, depth=1, max_depth=1),
-          [peter, lars, mike]
+            get_observing_users(laura, depth=1, max_depth=1),
+            [peter, lars, mike]
         )
 
         # peter
         ieq_(
-          get_observing_users(peter, depth=1, max_depth=2),
-          [lars, laura, mike]
+            get_observing_users(peter, depth=1, max_depth=2),
+            [lars, laura, mike]
         )
         ieq_(
-          get_observing_users(peter, depth=1, max_depth=1),
-          [lars, laura]
+            get_observing_users(peter, depth=1, max_depth=1),
+            [lars, laura]
         )
 
         # add followings
         FollowingUser.objects.create(
-          follower=gary,
-          following=peter
+            follower=gary,
+            following=peter
         )
 
         # peter, again
         ieq_(
-          get_observing_users(peter, depth=1, max_depth=2),
-          [lars, laura, mike, gary]
+            get_observing_users(peter, depth=1, max_depth=2),
+            [lars, laura, mike, gary]
         )
         ieq_(
-          get_observing_users(peter, depth=1, max_depth=1),
-          [lars, laura, gary]
+            get_observing_users(peter, depth=1, max_depth=1),
+            [lars, laura, gary]
         )
 
         # add blacklisting
         BlacklistedUser.objects.create(
-          observer=lars,
-          observable=peter,
+            observer=lars,
+            observable=peter,
         )
 
         # peter, again
         ieq_(
-          get_observing_users(peter, depth=1, max_depth=2),
-          [laura, mike, gary]
+            get_observing_users(peter, depth=1, max_depth=2),
+            [laura, mike, gary]
         )
         ieq_(
-          get_observing_users(peter, depth=1, max_depth=1),
-          [laura, gary]
+            get_observing_users(peter, depth=1, max_depth=1),
+            [laura, gary]
         )
 
         # lars blacklists laura
         BlacklistedUser.objects.create(
-          observer=lars,
-          observable=laura,
+            observer=lars,
+            observable=laura,
         )
 
         # laura, again
         ieq_(
-          get_observing_users(laura, depth=1, max_depth=2),
-          [peter, mike, todd]
+            get_observing_users(laura, depth=1, max_depth=2),
+            [peter, mike, todd]
         )
         ieq_(
-          get_observing_users(laura, depth=1, max_depth=1),
-          [peter, mike]
+            get_observing_users(laura, depth=1, max_depth=1),
+            [peter, mike]
         )
 
         # mike blacklists laura
         BlacklistedUser.objects.create(
-          observer=mike,
-          observable=laura,
+            observer=mike,
+            observable=laura,
         )
 
         # laura, again
         ieq_(
-          get_observing_users(laura, depth=1, max_depth=2),
-          [peter, todd]
+            get_observing_users(laura, depth=1, max_depth=2),
+            [peter, todd]
         )
         ieq_(
-          get_observing_users(laura, depth=1, max_depth=1),
-          [peter]
+            get_observing_users(laura, depth=1, max_depth=1),
+            [peter]
         )

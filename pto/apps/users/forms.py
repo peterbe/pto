@@ -35,7 +35,7 @@ class ProfileForm(BaseModelForm):
 
     class Meta:
         model = UserProfile
-        fields = ('city',)
+        fields = ('city', 'country', 'email_unsubscribe')
 
     def __init__(self, *args, **kwargs):
         super(ProfileForm, self).__init__(*args, **kwargs)

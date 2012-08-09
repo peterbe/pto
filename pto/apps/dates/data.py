@@ -4,9 +4,9 @@
 
 import datetime
 from django.conf import settings
-from .models import Entry, Hours, BlacklistedUser, FollowingUser, UserKey
+from .models import Entry, BlacklistedUser, FollowingUser
 from .utils.countrytotals import UnrecognizedCountryError, get_country_totals
-from pto.apps.users.models import UserProfile, User
+from pto.apps.users.models import UserProfile
 
 
 def get_taken_info(user):
@@ -25,9 +25,9 @@ def get_taken_info(user):
     last_date = datetime.date(today.year + 1, 1, 1)
     from django.db.models import Sum
     qs = Entry.objects.filter(
-      user=user,
-      start__gte=start_date,
-      end__lt=last_date
+        user=user,
+        start__gte=start_date,
+        end__lt=last_date
     )
     agg = qs.aggregate(Sum('total_hours'))
     total_hours = agg['total_hours__sum']
@@ -108,11 +108,15 @@ def get_observed_users(this_user, depth=1, max_depth=2):
     """
     users = []
 
+    # build up a list of all observable blacklistings first
+    # to avoid having to do a look up for each user later
+    blacklisted_observables = [
+        each['observable'] for each in
+        BlacklistedUser.objects.filter(observer=this_user).values('observable')
+    ]
+
     def is_blacklisted(user):
-        # XXX this can be optimized by pulling down the entire list once first
-        return (BlacklistedUser.objects
-                .filter(observer=this_user, observable=user)
-                .exists())
+        return user.pk in blacklisted_observables
 
     for user in get_minions(this_user, depth=depth, max_depth=max_depth):
         if user not in users:
@@ -146,11 +150,15 @@ def get_observing_users(this_user, depth=1, max_depth=2):
     if max_depth > 2:  # pragma: no cover
         raise NotImplementedError("Feature not implemented yet")
 
+    blacklisted_observers = [
+        each['observer'] for each in
+        BlacklistedUser.objects
+            .filter(observable=this_user)
+            .values('observer')
+    ]
+
     def is_blacklisted(user):
-        # XXX this can be optimized by pulling down the entire list once first
-        return (BlacklistedUser.objects
-                .filter(observer=user, observable=this_user)
-                .exists())
+        return user.pk in blacklisted_observers
 
     users = []
     for user in get_minions(this_user, depth=depth, max_depth=1):
