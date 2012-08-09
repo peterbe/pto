@@ -17,3 +17,8 @@
 
 # Mocking
 mock
+
+# for making migrations
+django-extensions
+
+-e git+https://github.com/jbalogh/check.git#egg=check

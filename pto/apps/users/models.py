@@ -43,6 +43,7 @@ class UserProfile(models.Model):
     city = models.CharField(max_length=100, blank=True)
     notes = models.TextField(blank=True)
     hr_manager = models.BooleanField(default=False)
+    email_subscribe = models.BooleanField(default=False)
 
     def __repr__(self):  # pragma: no cover
         return "<UserProfile: %s>" % self.user

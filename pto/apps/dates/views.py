@@ -34,6 +34,13 @@ import utils
 import forms
 from .decorators import json_view
 from .csv_export import UnicodeWriter as CSVUnicodeWriter
+from .data import (
+  get_minions,
+  get_followed_users,
+  get_observed_users,
+  get_observing_users,
+  get_taken_info
+)
 
 
 def valid_email(value):
@@ -113,52 +120,6 @@ def _get_user_calendar_url(request):
     base_url = '%s://%s' % (request.is_secure() and 'https' or 'http',
                             RequestSite(request).domain)
     return base_url + reverse('dates.calendar_vcal', args=(user_key.key,))
-
-
-def get_taken_info(user):
-    data = {}
-
-    profile = user.get_profile()
-    if profile.country:
-        data['country'] = profile.country
-        try:
-            data['country_totals'] = get_country_totals(profile.country)
-        except UnrecognizedCountryError:
-            data['unrecognized_country'] = True
-
-    today = datetime.date.today()
-    start_date = datetime.date(today.year, 1, 1)
-    last_date = datetime.date(today.year + 1, 1, 1)
-    from django.db.models import Sum
-    qs = Entry.objects.filter(
-      user=user,
-      start__gte=start_date,
-      end__lt=last_date
-    )
-    agg = qs.aggregate(Sum('total_hours'))
-    total_hours = agg['total_hours__sum']
-    if total_hours is None:
-        total_hours = 0
-    data['taken'] = _friendly_format_hours(total_hours)
-
-    return data
-
-
-def _friendly_format_hours(total_hours):
-    days = 1.0 * total_hours / settings.WORK_DAY
-    hours = total_hours % settings.WORK_DAY
-
-    if not total_hours:
-        return '0 days'
-    elif total_hours < settings.WORK_DAY:
-        return '%s hours' % total_hours
-    elif total_hours == settings.WORK_DAY:
-        return '1 day'
-    else:
-        if not hours:
-            return '%d days' % days
-        else:
-            return '%s days' % days
 
 
 def get_right_nows():
@@ -327,73 +288,6 @@ def calendar_events(request):
     return {'events': entries, 'colors': colors}
 
 
-def get_minions(user, depth=1, max_depth=2):
-    minions = []
-    for minion in (UserProfile.objects.filter(manager_user=user)
-                   .select_related('manager_user')
-                   .order_by('manager_user')):
-        minions.append(minion.user)
-
-        if depth < max_depth:
-            minions.extend(get_minions(minion.user,
-                                       depth=depth + 1,
-                                       max_depth=max_depth))
-    return minions
-
-
-def get_siblings(user):
-    profile = user.get_profile()
-    if not profile.manager_user:
-        return []
-    users = []
-    for profile in (UserProfile.objects
-                    .filter(manager_user=profile.manager_user)
-                    .exclude(pk=user.pk)
-                    .select_related('user')):
-        users.append(profile.user)
-    return users
-
-
-def get_followed_users(user):
-    users = []
-    for each in (FollowingUser.objects
-                 .filter(follower=user)
-                 .select_related('following')):
-        users.append(each.following)
-    return users
-
-
-def get_observed_users(this_user, depth=1, max_depth=2):
-    users = []
-
-    def is_blacklisted(user):
-        return (BlacklistedUser.objects
-                .filter(observer=this_user, observable=user)
-                .exists())
-
-    for user in get_minions(this_user, depth=depth, max_depth=max_depth):
-        if user not in users:
-            if not is_blacklisted(user):
-                users.append(user)
-
-    for user in get_siblings(this_user):
-        if user not in users:
-            if not is_blacklisted(user):
-                users.append(user)
-
-    profile = this_user.get_profile()
-    manager = profile.manager_user
-    if manager and manager not in users:
-        if not is_blacklisted(manager):
-            users.append(manager)
-
-    for user in get_followed_users(this_user):
-        if user not in users:
-            users.append(user)
-
-    return users
-
-
 @transaction.commit_on_success
 @login_required
 def notify(request):
@@ -417,9 +311,18 @@ def notify(request):
             messages.info(request, 'Entry added, now specify hours')
             url = reverse('dates.hours', args=[entry.pk])
             request.session['notify_extra'] = notify
+
+            cache_key = 'notify_subscribers-%s' % entry.pk
+            if form.cleaned_data['notify_subscribers']:
+                cache.set(cache_key, True, 60 * 60)
+            else:
+                cache.delete(cache_key)
+
             return redirect(url)
     else:
-        initial = {}
+        initial = {
+            'notify_subscribers': True,
+        }
         if request.GET.get('start'):
             try:
                 initial['start'] = parse_datetime(request.GET['start'])
@@ -485,22 +388,26 @@ def hours(request, pk):
                            in extra_users.split(';')
                            if x.strip()]
 
+            cache_key = 'notify_subscribers-%s' % entry.pk
+
             success, email_addresses = send_email_notification(
               entry,
               extra_users,
               is_edit=is_edit,
+              notify_subscribers=cache.get(cache_key)
             )
             assert success
+            cache.delete(cache_key)
 
-            #messages.info(request,
-            #  '%s hours of vacation logged.' % total_hours
-            #)
+            cache_key = 'email_addresses_notified-%s' % entry.pk
+            cache.set(cache_key, email_addresses, 60 * 60)
+
             recently_created = make_entry_title(entry, request.user)
             cache_key = 'recently_created_%s' % request.user.pk
             cache.set(cache_key, recently_created, 60)
 
             url = reverse('dates.emails_sent', args=[entry.pk])
-            url += '?' + urlencode({'e': email_addresses}, True)
+
             return redirect(url)
     else:
         initial = {}
@@ -565,9 +472,6 @@ def save_entry_hours(entry, form):
                   hours=hours_.hours * -1,
                   date=date,
                 )
-            #hours_.hours = hours  # nasty stuff!
-            #hours_.birthday = birthday
-            #hours_.save()
         except Hours.DoesNotExist:
             # nothing to credit
             pass
@@ -578,17 +482,16 @@ def save_entry_hours(entry, form):
           birthday=birthday,
         )
         total_hours += hours
-    #raise NotImplementedError
 
     is_edit = entry.total_hours is not None
-    #if entry.total_hours is not None:
     entry.total_hours = total_hours
     entry.save()
 
     return total_hours, is_edit
 
 
-def send_email_notification(entry, extra_users, is_edit=False):
+def send_email_notification(entry, extra_users, is_edit=False,
+                            notify_subscribers=False):
     email_addresses = []
     for profile in (UserProfile.objects
                      .filter(hr_manager=True,
@@ -603,6 +506,13 @@ def send_email_notification(entry, extra_users, is_edit=False):
 
     if extra_users:
         email_addresses.extend(extra_users)
+
+    if notify_subscribers:
+        users = get_observing_users(entry.user)
+        email_addresses.extend(
+          [x.email for x in users if x.email]
+        )
+
     email_addresses = list(set(email_addresses))  # get rid of dupes
     if not email_addresses:
         email_addresses = [settings.FALLBACK_TO_ADDRESS]
@@ -648,7 +558,8 @@ def emails_sent(request, pk):
         if not (request.user.is_staff or request.user.is_superuser):
             return http.HttpResponseForbidden('insufficient access')
 
-    emails = request.REQUEST.getlist('e')
+    cache_key = 'email_addresses_notified-%s' % entry.pk
+    emails = cache.get(cache_key, [])
     if isinstance(emails, basestring):
         emails = [emails]
     data['emails'] = emails
@@ -855,6 +766,25 @@ def following(request):
     return render(request, 'dates/following.html', data)
 
 
+@login_required
+@json_view
+def followers_json(request):
+    you = request.user
+    users = get_observing_users(you)
+
+    def name(user):
+        if user.first_name:
+            return ('%s %s' % (user.first_name, user.last_name)).strip()
+        elif user.email:
+            return user.email
+        return user.username
+
+    return {
+        'count': len(users),
+        'names': sorted([name(x) for x in users]),
+    }
+
+
 @json_view
 @login_required
 @transaction.commit_on_success
@@ -864,7 +794,7 @@ def save_following(request):
     if not search:
         return http.HttpResponseBadRequest('Missing search')
 
-    if (-1 < search.rfind('<') < search.rfind('@') < search.rfind('>')):
+    if -1 < search.rfind('<') < search.rfind('@') < search.rfind('>'):
         try:
             email = re.findall('<([\w\.\-]+@[\w\.\-]+)>', search)[0]
             email = email.strip()

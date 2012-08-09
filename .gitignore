@@ -19,10 +19,10 @@ pto/settings/local*
 */settings/local.py
 *.js.old
 TODO
-cover/
+/cover/
 sample_data.py
 /build/
-puppet/manifests/build/
+/puppet/manifests/build/
 /collected/
 /static/
 .vagrant

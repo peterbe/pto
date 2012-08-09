@@ -8,6 +8,7 @@ from . import views
 urlpatterns = patterns('',
     url(r'^$', views.home, name='dates.home'),
     url(r'^notify/$', views.notify, name='dates.notify'),
+    url(r'^notify/followers.json$', views.followers_json, name='dates.followers_json'),
     url(r'^notify/cancel/$', views.cancel_notify, name='dates.cancel_notify'),
     url(r'^(?P<pk>\d+)/hours/$', views.hours, name='dates.hours'),
     url(r'^(?P<pk>\d+)/sent/$', views.emails_sent, name='dates.emails_sent'),

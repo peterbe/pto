@@ -28,6 +28,7 @@ from mock import Mock
 import ldap
 from pto.apps.users.utils import ldap_lookup
 from pto.apps.users.utils.ldap_mock import MockLDAP
+from .base import ExtraTestCaseMixin
 
 
 def unicode_csv_reader(unicode_csv_data,
@@ -45,50 +46,8 @@ def utf_8_encoder(unicode_csv_data, encoding):
     for line in unicode_csv_data:
         yield line.encode(encoding)
 
-_THIS_YEAR = datetime.date.today().year
 
-class ViewsTestMixin(object):
-    def _login(self, user=None):
-        if not user:
-            user = User.objects.create(
-              username='peter',
-              email='pbengtsson@mozilla.com',
-              first_name='Peter',
-              last_name='Bengtsson',
-            )
-        user.set_password('secret')
-        user.save()
-        assert self.client.login(username=user.username, password='secret')
-        return user
-
-    def _create_hr_manager(self, username='jill', email='jill@mozilla.com'):
-        user = User.objects.create(
-          username=username,
-          email=email
-        )
-        profile = user.get_profile()
-        profile.hr_manager = True
-        profile.save()
-        return user
-
-    def _create_entry_hours(self, entry, *hours):
-        date = entry.start
-        i = 0
-        while date <= entry.end:
-            try:
-                h = hours[i]
-            except IndexError:
-                h = 8
-            Hours.objects.create(
-              entry=entry,
-              date=date,
-              hours=h,
-            )
-            i += 1
-            date += datetime.timedelta(days=1)
-
-
-class ViewsTest(TestCase, ViewsTestMixin):
+class ViewsTest(TestCase, ExtraTestCaseMixin):
 
     def setUp(self):
         super(ViewsTest, self).setUp()
@@ -846,74 +805,6 @@ class ViewsTest(TestCase, ViewsTestMixin):
         assert len(mail.outbox)
         email = mail.outbox[-1]
 
-    def test_get_minions(self):
-        from pto.apps.dates.views import get_minions
-        gary = User.objects.create_user(
-          'gary', 'gary@mozilla.com'
-        )
-
-        todd = User.objects.create_user(
-          'todd', 'todd@mozilla.com',
-        )
-        profile = todd.get_profile()
-        profile.manager = gary.email
-        profile.save()
-
-        mike = User.objects.create_user(
-          'mike', 'mike@mozilla.com',
-        )
-        profile = mike.get_profile()
-        profile.manager = todd.email
-        profile.save()
-
-        laura = User.objects.create_user(
-          'laura', 'laura@mozilla.com',
-        )
-        profile = laura.get_profile()
-        profile.manager = mike.email
-        profile.save()
-
-        peter = User.objects.create_user(
-          'peter', 'peter@mozilla.com',
-        )
-        profile = peter.get_profile()
-        profile.manager = laura.email
-        profile.save()
-
-        users = get_minions(gary, max_depth=1)
-        eq_(users, [todd])
-
-        users = get_minions(gary, max_depth=2)
-        eq_(users, [todd, mike])
-
-        users = get_minions(gary, max_depth=3)
-        eq_(users, [todd, mike, laura])
-
-        users = get_minions(gary, max_depth=4)
-        eq_(users, [todd, mike, laura, peter])
-
-        users = get_minions(gary, max_depth=10)
-        eq_(users, [todd, mike, laura, peter])
-
-        # from todd's perspective
-        users = get_minions(todd, max_depth=1)
-        eq_(users, [mike])
-
-        users = get_minions(todd, max_depth=2)
-        eq_(users, [mike, laura])
-
-        users = get_minions(todd, max_depth=3)
-        eq_(users, [mike, laura, peter])
-
-        users = get_minions(todd, max_depth=10)
-        eq_(users, [mike, laura, peter])
-
-        # from laura's perspective
-        users = get_minions(laura, max_depth=1)
-        eq_(users, [peter])
-
-        users = get_minions(laura, max_depth=99)
-        eq_(users, [peter])
 
     def test_enter_reversal_pto(self):
         monday = datetime.date(2011, 7, 25)
@@ -1531,86 +1422,6 @@ class ViewsTest(TestCase, ViewsTestMixin):
 
         sum_hours = sum(x.total_hours for x in Entry.objects.all())
         eq_(sum_hours, settings.WORK_DAY * 5 + 0 + -8)
-
-    def test_get_taken_info(self):
-        user = User.objects.create(username='bob')
-        from pto.apps.dates.views import get_taken_info
-
-        def function():
-            return get_taken_info(user)
-
-        result = function()
-        eq_(result['taken'], '0 days')
-        ok_(not result.get('unrecognized_country'))
-        ok_(not result.get('country_total'))
-
-        profile = user.get_profile()
-        profile.country = 'US'
-        profile.save()
-        result = function()
-        ok_(not result.get('unrecognized_country'))
-        ok_(result.get('country_totals'))
-        ok_(result.get('country'), 'US')
-
-        profile.country = 'New Zealand'
-        profile.save()
-        result = function()
-        ok_(result.get('unrecognized_country'))
-        ok_(not result.get('country_totals'))
-        ok_(result.get('country'), 'New Zealand')
-
-
-        date = datetime.date(_THIS_YEAR, 11, 23)
-        entry = Entry.objects.create(
-          user=user,
-          start=date,
-          end=date,
-          total_hours=settings.WORK_DAY,
-        )
-        self._create_entry_hours(entry)
-
-
-        result = function()
-        eq_(result['taken'], '1 day')
-
-        entry.total_hours = settings.WORK_DAY / 2
-        entry.save()
-        result = function()
-        eq_(result['taken'], '%s hours' % (settings.WORK_DAY / 2))
-
-        one_week = datetime.timedelta(days=7)
-        entry = Entry.objects.create(
-          user=user,
-          start=date + one_week,
-          end=date + one_week,
-          total_hours=settings.WORK_DAY,
-        )
-        self._create_entry_hours(entry)
-
-        result = function()
-        eq_(result['taken'], '1.5 days')
-
-        entry = Entry.objects.create(
-          user=user,
-          start=date + one_week * 2,
-          end=date + one_week * 2,
-          total_hours=settings.WORK_DAY / 2,
-        )
-        self._create_entry_hours(entry, 4)
-
-        result = function()
-        eq_(result['taken'], '2 days')
-
-        entry = Entry.objects.create(
-          user=user,
-          start=date + one_week * 3,
-          end=date + one_week * 5,
-          total_hours=settings.WORK_DAY * 14,
-        )
-        self._create_entry_hours(entry)
-
-        result = function()
-        eq_(result['taken'], '16 days')
 
     def test_people_in_calendar(self):
 
@@ -2278,3 +2089,84 @@ class ViewsTest(TestCase, ViewsTestMixin):
         details = set([x['title'].split(',')[1].strip() for x in struct
                        if x['title'].count(',')])
         eq_(details, set([]))
+
+    def test_followers_json(self):
+        url = reverse('dates.followers_json')
+        assert self.client.get(url).status_code == 302  # nog logged in
+
+        todd = User.objects.create_user(username='todd', password='test')
+        mike = User.objects.create_user(username='mike')
+        ben = User.objects.create_user(username='ben')
+        laura = User.objects.create_user(username='laura', password='test')
+        peter = User.objects.create_user(username='peter')
+        lars = User.objects.create_user(username='lars')
+
+        def get(url):
+            response = self.client.get(url)
+            assert response.status_code == 200
+            return json.loads(response.content)
+
+        assert self.client.login(username='todd', password='test')
+        response = get(url)
+        eq_(response['count'], 0)
+        eq_(response['names'], [])
+
+        self._make_manager(mike, todd)
+        self._make_manager(ben, todd)
+        self._make_manager(laura, mike)
+        self._make_manager(peter, laura)
+        self._make_manager(lars, laura)
+
+        response = get(url)
+        eq_(response['count'], 2)
+        eq_(response['names'], ['ben', 'mike'])
+
+        assert self.client.login(username='laura', password='test')
+        response = get(url)
+        eq_(response['count'], 4)
+        eq_(response['names'], ['lars', 'mike', 'peter', 'todd'])
+
+
+    def test_notify_with_notify_subscribers(self):
+        todd = User.objects.create_user(username='todd')
+        mike = User.objects.create_user(username='mike')
+        ben = User.objects.create_user(username='ben')
+        laura = User.objects.create_user(username='laura', password='test')
+        peter = User.objects.create_user(username='peter')
+        lars = User.objects.create_user(username='lars')
+
+        for user in User.objects.all():
+            user.email = '%s@mozilla.com' % user.username
+            user.save()
+
+        self._make_manager(mike, todd)
+        self._make_manager(ben, todd)
+        self._make_manager(laura, mike)
+        self._make_manager(peter, laura)
+        self._make_manager(lars, laura)
+
+        assert self.client.login(username='laura', password='test')
+        url = reverse('dates.notify')
+        monday = datetime.date(2011, 7, 25)
+
+        response = self.client.post(url, {
+            'start': monday,
+            'end': monday,
+            'details': "Going camping",
+            'notify_subscribers': True,
+        })
+        assert response.status_code == 302
+
+        entry, = Entry.objects.all()
+        url = reverse('dates.hours', args=[entry.pk])
+        self.assertRedirects(response, url)
+
+        data = {
+            monday.strftime('d-%Y%m%d'): str(settings.WORK_DAY),
+        }
+        response = self.client.post(url, data, follow=True)
+        content = response.content.split('id="content"')[1]
+        assert 'Email sent to' in content
+        ok_('mike@mozilla.com' in content)
+        ok_('todd@mozilla.com' in content)
+        ok_('lars@mozilla.com' in content)

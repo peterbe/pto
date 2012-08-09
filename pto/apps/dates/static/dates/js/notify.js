@@ -153,15 +153,49 @@ var StartEndDatepickers = (function() {
   }
 })();
 
-function moveManagersNotified() {
-  var tr_extra = $('#id_notify').parents('tr');
-  var new_tr = $('<tr>');
-  $('#managers-notified td').each(function(i, td) {
-    $(td).detach().appendTo(new_tr);
-  });
-  new_tr.insertBefore(tr_extra);
-  $('label', tr_extra).text("Additional to notify");
-}
+
+var Utils = (function() {
+  var _first_followers_text;
+
+  return {
+     moveManagersNotified: function() {
+       var tr_extra = $('#id_notify').parents('tr');
+       var new_tr = $('<tr>');
+       $('#managers-notified td').each(function(i, td) {
+         $(td).detach().appendTo(new_tr);
+       });
+       new_tr.insertBefore(tr_extra);
+       $('label', tr_extra).text("Additional to notify:");
+
+     },
+    loadFollowersHelpText: function() {
+      $.getJSON('/notify/followers.json', function(response) {
+        var prior = $('#id_notify_subscribers');
+        _first_followers_text = response.count + ' followers';
+        $('<a href="#" title="Click to see who they are">')
+          .addClass('followers-hint')
+            .text(_first_followers_text)
+              .click(function() {
+                if ($(this).text() == 'close') {
+                  $(this).text(_first_followers_text);
+                } else {
+                  $(this).text('close');
+                }
+                $('.followers-list').toggle();
+                return false;
+              })
+                .insertAfter(prior);
+        $('<span>')
+          .addClass('followers-list')
+            .text(response.names.join(', '))
+              .insertAfter(prior)
+                .hide();
+      });
+    }
+  }
+
+})();
+
 
 var dateFormat = 'DD, MM d, yy';
 $(function() {
@@ -174,5 +208,6 @@ $(function() {
   }
 
   AutocompleteNotify.init('id_notify', '/autocomplete/users/');
-  moveManagersNotified();
+  Utils.moveManagersNotified();
+  Utils.loadFollowersHelpText();
 });

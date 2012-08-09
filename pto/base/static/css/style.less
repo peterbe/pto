@@ -1,3 +1,5 @@
+@nice-black: rgb(55,55,55);
+
 * {
   margin:0;
   padding:0;
@@ -43,13 +45,13 @@ body {
   margin:0;
 }
 a {
-  color:#acd1e3;
+  color: #acd1e3;
 }
 a:hover {
   text-decoration:underline;
 }
 em {
-  font-style:italic;
+  font-style: italic;
 }
 #page {
   width:90%;
@@ -63,13 +65,13 @@ em {
   }
 }
 section {
-  display:block;
-  color:black;
-  background-color:white;
-  padding:1em;
-  border-radius:0.5em;
-  margin-top:1em;
-  min-height:300px;
+  display: block;
+  color: @nice-black;
+  background-color: white;
+  padding: 1em;
+  border-radius: 0.5em;
+  margin-top: 1em;
+  min-height: 300px;
 }
 input[size="10"] {
   width:12ex;
@@ -113,7 +115,7 @@ button#filter {
     padding-right:0.5em;
     a {
       text-decoration:none;
-      color:black;
+      color: @nice-black;
       cursor:pointer;
       padding:0.25em;
     }
@@ -175,7 +177,7 @@ strong {
 #pto {
   padding-top:0.25em;
   background-color:white;
-  color:black;
+  color: @nice-black;
   td.action, #no-match {
     text-align:center;
   }

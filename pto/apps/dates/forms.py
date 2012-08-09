@@ -53,15 +53,25 @@ class BaseForm(_BaseForm, forms.Form):
 class AddForm(BaseForm):
     start = forms.DateField(required=True)
     end = forms.DateField(required=True)
-    details = forms.CharField(required=False,
-                              widget=forms.widgets.Textarea(attrs={
-                                'rows': 4,
-                                'cols': 50
-                              }))
-    notify = forms.CharField(label="People to notify", required=False,
-                             widget=forms.widgets.TextInput(attrs={
-                               'size': 50
-                             }))
+    details = forms.CharField(
+        required=False,
+        widget=forms.widgets.Textarea(attrs={
+            'rows': 4,
+            'cols': 50
+        })
+    )
+    notify = forms.CharField(
+        label="People to notify",
+        required=False,
+        widget=forms.widgets.TextInput(attrs={
+            'size': 50
+        })
+    )
+
+    notify_subscribers = forms.BooleanField(
+        label="Notify followers",
+        required=False,
+    )
 
     def __init__(self, user, *args, **kwargs):
         self.user = user
