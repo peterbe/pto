@@ -38,10 +38,12 @@ JINGO_EXCLUDE_APPS = (
 
 MIDDLEWARE_CLASSES = list(MIDDLEWARE_CLASSES)
 MIDDLEWARE_CLASSES.remove('funfactory.middleware.LocaleURLMiddleware')
-MIDDLEWARE_CLASSES.append('commonware.middleware.HidePasswordOnException')
 MIDDLEWARE_CLASSES.append('mobility.middleware.DetectMobileMiddleware')
 MIDDLEWARE_CLASSES.append('mobility.middleware.XMobileMiddleware')
 MIDDLEWARE_CLASSES = tuple(MIDDLEWARE_CLASSES)
+MIDDLEWARE_CLASSES += (
+    'commonware.middleware.ScrubRequestOnException',
+)
 
 ROOT_URLCONF = 'pto.urls'
 

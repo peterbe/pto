@@ -37,6 +37,9 @@ class MozillaLDAPBackend(LDAPBackend):
     the *email address* and returns the username for that one.
     """
 
+    supports_inactive_user = True
+
+
     def get_or_create_user(self, username, ldap_user):
         """
         This must return a (User, created) 2-tuple for the given LDAP user.
