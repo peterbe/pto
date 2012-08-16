@@ -11,12 +11,11 @@
     <link rel="shortcut icon" type="image/x-icon" href="{{ static("img/favicon.ico") }}">
     <title>{% block page_title %}Mozilla PTO{% endblock %}</title>
 
-    {#<link rel="stylesheet" href="{{ static("css/style.css") }}">#}
     {% compress css %}
     <link type="text/less" rel="stylesheet" href="{{ static("css/style.less") }}">
     <link rel="stylesheet" href="{{ static("css/libs/jquery_ui/redmond/jquery-ui-1.8.20.datepicker.autocomplete.dialog.css") }}">
     {% endcompress %}
-
+    
     {% block extra_site_css %}
     {% endblock %}
   </head>
@@ -24,7 +23,7 @@
   <div id="page">
 
   <header>
-    <h1><a href="/">PTO Notification</a></h1>
+    <h1><a href="/">Mozilla Vacation</a></h1>
     {% if request.user.is_authenticated() %}
     <nav>
       <ul id="menu">

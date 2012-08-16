@@ -23,5 +23,5 @@ cover/
 sample_data.py
 build/
 collected/
-static/
+/static/
 .vagrant
