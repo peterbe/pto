@@ -21,7 +21,8 @@ pto/settings/local*
 TODO
 cover/
 sample_data.py
-build/
-collected/
+/build/
+puppet/manifests/build/
+/collected/
 /static/
 .vagrant

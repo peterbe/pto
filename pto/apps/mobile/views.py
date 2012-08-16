@@ -2,8 +2,10 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 
+import time
 import datetime
 from django import http
+from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.views.decorators.http import require_POST
@@ -40,33 +42,31 @@ def appcache(request):
 def right_now(request):
     if not request.user.is_authenticated():  # XXX improve this
         return {'error': 'Not logged in'}
-    from pto.apps.dates.views import get_right_nows, get_upcomings
     from pto.apps.dates.helpers import format_date
-    right_nows, right_now_users = get_right_nows()
-    upcomings, upcoming_users = get_upcomings(14)
+    from pto.apps.dates.views import get_observed_users, make_entry_title
 
     now = []
-    for user in right_now_users:
-        descriptions = []
-        for days_left, entry in right_nows[user]:
-            description = 'ends in '
-            if days_left == 1:
-                description += '1 day '
-            else:
-                description += '%d days ' % days_left
-            description += 'on %s' % format_date(None, entry.end, shorter=True)
-            descriptions.append(description)
-        name = user.get_full_name()
-        if not name:
-            name = user.username
-        now.append({'name': name,
-                    'email': user.email,
-                    'descriptions': descriptions})
-
     upcoming = []
-    for user in upcoming_users:
-        descriptions = []
-        for days, entry in upcomings[user]:
+    user_ids = [request.user.pk]
+    for user_ in get_observed_users(request.user, max_depth=2):
+        user_ids.append(user_.pk)
+
+    start = today = datetime.datetime.utcnow()
+    end = start + datetime.timedelta(days=90)
+    for entry in (Entry.objects
+                   .filter(user__in=user_ids,
+                           total_hours__gte=0,
+                           total_hours__isnull=False)
+                   .select_related('user')
+                   .exclude(Q(end__lt=start) | Q(start__gt=end))):
+        row = {}
+        name = entry.user.get_full_name()
+        if not name:
+            name = entry.user.username
+        row['name'] = name
+        row['email'] = entry.user.email
+        if entry.start > today.date():
+            days = (entry.start - today.date()).days
             description = 'starts in '
             if days == 1:
                 description += '1 day '
@@ -77,15 +77,18 @@ def right_now(request):
             else:
                 description += '%d days ' % days
             description += 'on %s' % format_date(None, entry.end, shorter=True)
-            descriptions.append(description)
-        name = user.get_full_name()
-        if not name:
-            name = user.username
-        upcoming.append({
-          'name': name,
-          'email': user.email,
-          'descriptions': descriptions
-        })
+            row['descriptions'] = [description]
+            upcoming.append(row)
+        else:
+            days_left = (entry.end - today.date()).days
+            description = 'ends in '
+            if days_left == 1:
+                description += '1 day '
+            else:
+                description += '%d days ' % days_left
+            description += 'on %s' % format_date(None, entry.end, shorter=True)
+            row['descriptions'] = [description]
+            now.append(row)
 
     return {'now': now, 'upcoming': upcoming}
 
