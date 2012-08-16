@@ -38,10 +38,10 @@ JINGO_EXCLUDE_APPS = (
 
 MIDDLEWARE_CLASSES = list(MIDDLEWARE_CLASSES)
 MIDDLEWARE_CLASSES.remove('funfactory.middleware.LocaleURLMiddleware')
-MIDDLEWARE_CLASSES.append('mobility.middleware.DetectMobileMiddleware')
-MIDDLEWARE_CLASSES.append('mobility.middleware.XMobileMiddleware')
 MIDDLEWARE_CLASSES = tuple(MIDDLEWARE_CLASSES)
 MIDDLEWARE_CLASSES += (
+    'mobility.middleware.DetectMobileMiddleware',
+    'mobility.middleware.XMobileMiddleware',
     'commonware.middleware.ScrubRequestOnException',
 )
 
@@ -111,9 +111,9 @@ LOGIN_REDIRECT_URL = '/'
 DEFAULT_DATE_FORMAT = '%A, %B %d, %Y'
 WORK_DAY = 8  # hours
 
-EMAIL_SUBJECT = 'PTO notification from %(first_name)s %(last_name)s'
-EMAIL_SUBJECT_EDIT = 'PTO update from %(first_name)s %(last_name)s'
-EMAIL_SIGNATURE = "The Mozilla PTO"
+EMAIL_SUBJECT = 'Vacation notification from %(first_name)s %(last_name)s'
+EMAIL_SUBJECT_EDIT = 'Vacation update from %(first_name)s %(last_name)s'
+EMAIL_SIGNATURE = "Mozilla Vacation"
 FALLBACK_TO_ADDRESS = 'jvandeven@mozilla.com'
 
 # People you're not allowed to notify additionally

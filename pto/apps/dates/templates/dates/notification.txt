@@ -5,7 +5,7 @@
  -->
 #}
 
-{{ user.first_name }} {{ user.last_name }} has submitted {{ entry.total_days }} days of PTO starting {{ start_date }}{% if not entry.details %}.{% else %} with the details:
+{{ user.first_name }} {{ user.last_name }} has submitted {{ entry.total_days }} days of vacation starting {{ start_date }}{% if not entry.details %}.{% else %} with the details:
 {{ line_indent(entry.details) }}{% endif %}
 
 --
