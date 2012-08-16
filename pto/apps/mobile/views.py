@@ -22,7 +22,7 @@ MOBILE_DATE_FORMAT = '%Y-%m-%d'
 
 def home(request):
     data = {}
-    data['page_title'] = 'Mozilla PTO'
+    data['page_title'] = 'Mozilla Vacation'
     # not fully developed so disabled for now
     data['use_manifest'] = False#True#not settings.DEBUG
 

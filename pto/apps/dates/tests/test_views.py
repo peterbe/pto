@@ -257,7 +257,7 @@ class ViewsTest(TestCase, ViewsTestMixin):
         ok_(entry.details in email.body)
         ok_(entry.start.strftime(settings.DEFAULT_DATE_FORMAT)
             in email.body)
-        ok_('submitted 1.5 days of PTO' in email.body)
+        ok_('submitted 1.5 days of vacation' in email.body)
 
         eq_(email.cc, [peter.email])
         ok_('--\n%s' % settings.EMAIL_SIGNATURE in email.body)

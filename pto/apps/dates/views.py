@@ -398,7 +398,7 @@ def get_observed_users(this_user, depth=1, max_depth=2):
 @login_required
 def notify(request):
     data = {}
-    data['page_title'] = "Notify about new PTO"
+    data['page_title'] = "Notify about new vacation"
     if request.method == 'POST':
         form = forms.AddForm(request.user, data=request.POST)
         if form.is_valid():
@@ -493,7 +493,7 @@ def hours(request, pk):
             assert success
 
             #messages.info(request,
-            #  '%s hours of PTO logged.' % total_hours
+            #  '%s hours of vacation logged.' % total_hours
             #)
             recently_created = make_entry_title(entry, request.user)
             cache_key = 'recently_created_%s' % request.user.pk
@@ -971,7 +971,7 @@ def calendar_vcal(request, key):
                             RequestSite(request).domain)
     home_url = base_url + '/'
     cal = vobject.iCalendar()
-    cal.add('x-wr-calname').value = 'Mozilla PTO'
+    cal.add('x-wr-calname').value = 'Mozilla Vacation'
 
     try:
         user = UserKey.objects.get(key=key).user
@@ -1021,7 +1021,7 @@ def calendar_vcal(request, key):
         return _list_base_url + '?' + urlencode(data, True)
     for entry in entries:
         event = cal.add('vevent')
-        event.add('summary').value = '%s PTO' % make_entry_title(entry, user,
+        event.add('summary').value = '%s Vacation' % make_entry_title(entry, user,
                                                 include_details=False)
         event.add('dtstart').value = entry.start
         event.add('dtend').value = entry.end
